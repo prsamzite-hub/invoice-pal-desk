@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppUploadRouteImport } from './routes/app.upload'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppDocumentsRouteImport } from './routes/app.documents'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 
@@ -36,6 +37,11 @@ const AppUploadRoute = AppUploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDocumentsRoute = AppDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/documents': typeof AppDocumentsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/upload': typeof AppUploadRoute
   '/app/': typeof AppIndexRoute
 }
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/documents': typeof AppDocumentsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/upload': typeof AppUploadRoute
   '/app': typeof AppIndexRoute
 }
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/documents': typeof AppDocumentsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/upload': typeof AppUploadRoute
   '/app/': typeof AppIndexRoute
 }
@@ -78,16 +87,24 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/analytics'
     | '/app/documents'
+    | '/app/settings'
     | '/app/upload'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/analytics' | '/app/documents' | '/app/upload' | '/app'
+  to:
+    | '/'
+    | '/app/analytics'
+    | '/app/documents'
+    | '/app/settings'
+    | '/app/upload'
+    | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/app/analytics'
     | '/app/documents'
+    | '/app/settings'
     | '/app/upload'
     | '/app/'
   fileRoutesById: FileRoutesById
@@ -127,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUploadRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/documents': {
       id: '/app/documents'
       path: '/documents'
@@ -147,6 +171,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppUploadRoute: typeof AppUploadRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -154,6 +179,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppDocumentsRoute: AppDocumentsRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppUploadRoute: AppUploadRoute,
   AppIndexRoute: AppIndexRoute,
 }
