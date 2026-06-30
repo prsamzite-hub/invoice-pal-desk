@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Filter, Plus } from "lucide-react";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { SearchBar } from "@/components/atoms/search-bar";
 import { DocumentCard, type DocumentCardData } from "@/components/atoms/document-card";
+import { DocumentDetailSheet } from "@/components/document-detail-sheet";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/documents")({
@@ -30,6 +32,8 @@ const DOCS: DocumentCardData[] = [
 const TABS = ["All", "Receipts", "Invoices", "Unpaid"] as const;
 
 function DocumentsPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = DOCS.find((d) => d.id === selectedId) ?? null;
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -69,9 +73,15 @@ function DocumentsPage() {
 
       <div className="flex flex-col gap-3">
         {DOCS.map((d) => (
-          <DocumentCard key={d.id} doc={d} />
+          <DocumentCard key={d.id} doc={d} onClick={() => setSelectedId(d.id)} />
         ))}
       </div>
+
+      <DocumentDetailSheet
+        doc={selected}
+        open={selectedId !== null}
+        onOpenChange={(o) => !o && setSelectedId(null)}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Wallet,
@@ -15,6 +16,7 @@ import { StatCard } from "@/components/atoms/stat-card";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { DocumentCard, type DocumentCardData } from "@/components/atoms/document-card";
 import { BudgetProgressBar } from "@/components/atoms/budget-progress-bar";
+import { DocumentDetailSheet } from "@/components/document-detail-sheet";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/")({
@@ -69,6 +71,8 @@ const SAMPLE_DOCS: DocumentCardData[] = [
 ];
 
 function DashboardPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = SAMPLE_DOCS.find((d) => d.id === selectedId) ?? null;
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
