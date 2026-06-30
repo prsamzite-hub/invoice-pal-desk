@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/atoms/page-header";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/atoms/empty-state";
 
-export const Route = createFileRoute("/app/upload")({
+export const Route = createFileRoute("/_authenticated/app/upload")({
   head: () => ({
     meta: [
       { title: "Upload — Kvittr" },

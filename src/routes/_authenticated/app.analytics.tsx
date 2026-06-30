@@ -7,7 +7,7 @@ import { MoneyAmount } from "@/components/atoms/money-amount";
 import { BudgetProgressBar } from "@/components/atoms/budget-progress-bar";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/app/analytics")({
+export const Route = createFileRoute("/_authenticated/app/analytics")({
   head: () => ({
     meta: [
       { title: "Analytics & budgets — Kvittr" },

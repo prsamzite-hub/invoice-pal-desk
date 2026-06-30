@@ -17,7 +17,7 @@ import { DocumentCard, type DocumentCardData } from "@/components/atoms/document
 import { BudgetProgressBar } from "@/components/atoms/budget-progress-bar";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/app/")({
+export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
     meta: [
       { title: "Dashboard — Kvittr" },

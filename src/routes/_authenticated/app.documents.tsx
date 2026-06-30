@@ -6,7 +6,7 @@ import { SearchBar } from "@/components/atoms/search-bar";
 import { DocumentCard, type DocumentCardData } from "@/components/atoms/document-card";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/app/documents")({
+export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
     meta: [
       { title: "Documents — Kvittr" },
