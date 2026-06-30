@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Wallet,
@@ -15,9 +16,10 @@ import { StatCard } from "@/components/atoms/stat-card";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { DocumentCard, type DocumentCardData } from "@/components/atoms/document-card";
 import { BudgetProgressBar } from "@/components/atoms/budget-progress-bar";
+import { DocumentDetailSheet } from "@/components/document-detail-sheet";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/app/")({
+export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
     meta: [
       { title: "Dashboard — Kvittr" },
@@ -69,6 +71,8 @@ const SAMPLE_DOCS: DocumentCardData[] = [
 ];
 
 function DashboardPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = SAMPLE_DOCS.find((d) => d.id === selectedId) ?? null;
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -125,7 +129,7 @@ function DashboardPage() {
           </div>
           <div className="flex flex-col gap-3">
             {SAMPLE_DOCS.map((d) => (
-              <DocumentCard key={d.id} doc={d} />
+              <DocumentCard key={d.id} doc={d} onClick={() => setSelectedId(d.id)} />
             ))}
           </div>
         </div>
@@ -146,6 +150,12 @@ function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <DocumentDetailSheet
+        doc={selected}
+        open={selectedId !== null}
+        onOpenChange={(o) => !o && setSelectedId(null)}
+      />
     </div>
   );
 }

@@ -1,11 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { LogOut, Mail, User } from "lucide-react";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { InboundEmailCard } from "@/components/inbound-email-card";
+import { getMyProfile } from "@/lib/profile.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/settings")({
+export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Kvittr" },
@@ -16,6 +22,19 @@ export const Route = createFileRoute("/app/settings")({
 });
 
 function SettingsPage() {
+  const navigate = useNavigate();
+  const fetchProfile = useServerFn(getMyProfile);
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile"],
+    queryFn: () => fetchProfile(),
+  });
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    toast.success("Du er logget ud");
+    navigate({ to: "/auth", replace: true });
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Settings" description="Make Kvittr feel like home." />
@@ -23,10 +42,12 @@ function SettingsPage() {
       <section className="shadow-soft flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-base font-bold text-foreground">Profile</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field icon={User} label="Display name" value="Kira" />
-          <Field icon={Mail} label="Email" value="kira@example.dk" />
+          <Field icon={User} label="Display name" value={profile?.display_name ?? "—"} />
+          <Field icon={Mail} label="Currency" value={profile?.currency ?? "DKK"} />
         </div>
       </section>
+
+      <InboundEmailCard token={profile?.email_inbox_token ?? null} />
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
@@ -40,11 +61,9 @@ function SettingsPage() {
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-base font-bold text-foreground">Account</h2>
-        <p className="text-sm text-muted-foreground">
-          Sign-out and account management will be wired up once authentication is enabled.
-        </p>
+        <p className="text-sm text-muted-foreground">Sign out of Kvittr on this device.</p>
         <div>
-          <Button variant="outline" className="rounded-full" disabled>
+          <Button variant="outline" className="rounded-full" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>
