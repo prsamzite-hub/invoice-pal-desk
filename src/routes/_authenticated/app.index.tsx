@@ -129,7 +129,7 @@ function DashboardPage() {
           </div>
           <div className="flex flex-col gap-3">
             {SAMPLE_DOCS.map((d) => (
-              <DocumentCard key={d.id} doc={d} />
+              <DocumentCard key={d.id} doc={d} onClick={() => setSelectedId(d.id)} />
             ))}
           </div>
         </div>
@@ -150,6 +150,12 @@ function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <DocumentDetailSheet
+        doc={selected}
+        open={selectedId !== null}
+        onOpenChange={(o) => !o && setSelectedId(null)}
+      />
     </div>
   );
 }
