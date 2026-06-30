@@ -46,10 +46,10 @@ function LandingPage() {
         <nav className="flex items-center gap-2">
           <ThemeToggle />
           <Button asChild variant="ghost" className="rounded-full">
-            <Link to="/app">Sign in</Link>
+            <Link to="/auth">Sign in</Link>
           </Button>
           <Button asChild className="rounded-full">
-            <Link to="/app">
+            <Link to="/auth">
               Get started
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
@@ -77,7 +77,7 @@ function LandingPage() {
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" className="rounded-full">
-                  <Link to="/app">
+                  <Link to="/auth">
                     Open my wallet
                     <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Link>
@@ -146,7 +146,7 @@ function LandingPage() {
             </p>
             <div className="mt-6 flex justify-center">
               <Button asChild size="lg" className="rounded-full">
-                <Link to="/app">
+                <Link to="/auth">
                   Open Kvittr
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
