@@ -58,9 +58,16 @@ export async function extractReceiptFromText(text: string): Promise<ExtractedDoc
 }
 
 const EXTRACT_SYS =
-  "Extract structured receipt/invoice data from the provided image or text. Respond with JSON ONLY matching: " +
-  '{"company":string,"amount":number,"currency":string,"date":"YYYY-MM-DD","due_date":"YYYY-MM-DD"|null,"document_type":"receipt"|"invoice","category":string,"notes":string|null}. ' +
-  "Use DKK if currency unclear. document_type=invoice when a payment due date is present. category should be one of: Groceries, Utilities, Subscriptions, Dining, Transport, Shopping, Health, Other.";
+  "You extract structured data from receipts and invoices (often Danish/European). " +
+  "Read carefully, including small/faded print. Company is the store/merchant brand (e.g. 'BR', 'Netto', 'Rema 1000'), not an address line. " +
+  "Numbers may use comma as decimal separator (e.g. '74,25' = 74.25). Convert all amounts to numbers with a dot. " +
+  "amount = the final total the customer paid (after discounts, incl. VAT/moms). " +
+  "Extract every purchased line item with its description and line total; include quantity and unit price when visible. Discounts/rabat can be negative line items. " +
+  "Respond with JSON ONLY matching: " +
+  '{"company":string,"amount":number,"currency":string,"date":"YYYY-MM-DD","due_date":"YYYY-MM-DD"|null,"document_type":"receipt"|"invoice","category":string,"notes":string|null,' +
+  '"items":[{"description":string,"quantity":number|null,"unit_price":number|null,"total":number}]}. ' +
+  "Use DKK if currency unclear. document_type=invoice when a payment due date is present. " +
+  "category ∈ {Groceries, Utilities, Subscriptions, Dining, Transport, Shopping, Health, Other}.";
 
 export async function extractReceiptFromImage(
   base64: string,
