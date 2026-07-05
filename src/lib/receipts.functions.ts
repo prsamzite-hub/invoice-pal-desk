@@ -42,7 +42,11 @@ export const uploadReceipt = createServerFn({ method: "POST" })
     };
     try {
       if (isImage) {
-        const base64 = btoa(String.fromCharCode(...bytes));
+        let bin = "";
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+          bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        }
+        const base64 = btoa(bin);
         extracted = await extractReceiptFromImage(base64, file.type);
       }
     } catch (e) {
