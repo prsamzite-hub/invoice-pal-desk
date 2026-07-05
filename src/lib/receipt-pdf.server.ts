@@ -120,9 +120,51 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
     color: ink,
   });
 
+  // Items table
+  y -= 100;
+  const items = data.items ?? [];
+  if (items.length > 0) {
+    page.drawText("Items", { x: 48, y, size: 9, font, color: muted });
+    y -= 18;
+    // Header row
+    page.drawText("Description", { x: 48, y, size: 9, font: bold, color: ink });
+    page.drawText("Qty", { x: width - 240, y, size: 9, font: bold, color: ink });
+    page.drawText("Unit", { x: width - 190, y, size: 9, font: bold, color: ink });
+    const totalHeaderW = bold.widthOfTextAtSize("Total", 9);
+    page.drawText("Total", { x: width - 48 - totalHeaderW, y, size: 9, font: bold, color: ink });
+    y -= 8;
+    page.drawLine({ start: { x: 48, y }, end: { x: width - 48, y }, thickness: 0.5, color: line });
+    y -= 14;
+
+    const descMaxW = width - 48 - 260;
+    for (const it of items) {
+      if (y < 120) break;
+      // Truncate description if too long
+      let desc = it.description || "";
+      while (font.widthOfTextAtSize(desc, 10) > descMaxW && desc.length > 3) {
+        desc = desc.slice(0, -2);
+      }
+      if (desc !== (it.description || "")) desc = desc.slice(0, -1) + "…";
+      page.drawText(desc, { x: 48, y, size: 10, font, color: ink });
+      if (it.quantity != null) {
+        page.drawText(String(it.quantity), { x: width - 240, y, size: 10, font, color: ink });
+      }
+      if (it.unit_price != null) {
+        page.drawText(fmtMoney(it.unit_price, data.currency || "DKK"), {
+          x: width - 190, y, size: 10, font, color: ink,
+        });
+      }
+      const totalText = fmtMoney(it.total, data.currency || "DKK");
+      const tW = font.widthOfTextAtSize(totalText, 10);
+      page.drawText(totalText, { x: width - 48 - tW, y, size: 10, font, color: ink });
+      y -= 16;
+    }
+    y -= 8;
+  }
+
   // Notes
   if (data.notes) {
-    y -= 100;
+    if (y < 140) y = 140;
     page.drawText("Notes", { x: 48, y, size: 9, font, color: muted });
     y -= 16;
     const words = data.notes.split(/\s+/);
