@@ -9,11 +9,13 @@ export const uploadReceipt = createServerFn({ method: "POST" })
     if (!(data instanceof FormData)) throw new Error("Expected FormData");
     const file = data.get("file");
     if (!(file instanceof File)) throw new Error("Missing file");
-    return { file };
+    const langRaw = data.get("lang");
+    const lang: "da" | "en" = langRaw === "en" ? "en" : "da";
+    return { file, lang };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { file } = data;
+    const { file, lang } = data;
     const { extractReceiptFromImage } = await import("./ai-gateway.server");
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
 
