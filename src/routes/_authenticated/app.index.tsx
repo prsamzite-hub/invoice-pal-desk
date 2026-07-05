@@ -211,31 +211,6 @@ function DashboardPage() {
 }
 
 
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-foreground">June budget</h2>
-          <div className="shadow-soft flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
-            <BudgetProgressBar label="Overall" spent={4287.5} budget={6000} />
-            <div className="h-px bg-border" />
-            <BudgetProgressBar label="Groceries" spent={1850} budget={2500} />
-            <BudgetProgressBar label="Utilities" spent={892} budget={1200} />
-            <BudgetProgressBar label="Subscriptions" spent={620} budget={500} />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <CategoryTile icon={ShoppingBag} label="Groceries" tone="mint" />
-            <CategoryTile icon={Zap} label="Utilities" tone="sky" />
-            <CategoryTile icon={Coffee} label="Dining" tone="peach" />
-          </div>
-        </div>
-      </section>
-
-      <DocumentDetailSheet
-        doc={selected}
-        open={selectedId !== null}
-        onOpenChange={(o) => !o && setSelectedId(null)}
-      />
-    </div>
-  );
-}
 
 function CategoryTile({
   icon: Icon,
