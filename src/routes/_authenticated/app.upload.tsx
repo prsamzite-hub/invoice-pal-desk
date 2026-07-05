@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/atoms/empty-state";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { PdfViewerDialog } from "@/components/pdf-viewer-dialog";
+import { useLang } from "@/lib/i18n";
 import {
   uploadReceipt,
   listMyReceipts,
