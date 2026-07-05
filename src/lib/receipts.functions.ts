@@ -88,6 +88,7 @@ export const uploadReceipt = createServerFn({ method: "POST" })
       notes: row.notes,
       items: (extracted as { items?: Array<{ description: string; quantity?: number | null; unit_price?: number | null; total: number }> }).items ?? [],
       receipt_id: row.id,
+      lang,
     });
     const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
     const up2 = await supabase.storage
