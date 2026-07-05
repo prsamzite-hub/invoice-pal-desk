@@ -1,5 +1,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
 import { SearchBar } from "@/components/atoms/search-bar";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
@@ -12,6 +13,7 @@ export function AppTopbar() {
         <SearchBar />
       </div>
       <div className="flex flex-1 items-center justify-end gap-1 sm:flex-none">
+        <LanguageToggle />
         <ThemeToggle />
         <Button variant="ghost" size="icon" aria-label="Notifications" className="rounded-full">
           <Bell className="h-4 w-4" />
