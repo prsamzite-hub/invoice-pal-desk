@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import {
   Wallet,
   AlertCircle,
@@ -18,6 +20,8 @@ import { DocumentCard, type DocumentCardData } from "@/components/atoms/document
 import { BudgetProgressBar } from "@/components/atoms/budget-progress-bar";
 import { DocumentDetailSheet } from "@/components/document-detail-sheet";
 import { Button } from "@/components/ui/button";
+import { listMyReceipts, getReceiptPdfUrl } from "@/lib/receipts.functions";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -71,35 +75,75 @@ const SAMPLE_DOCS: DocumentCardData[] = [
 ];
 
 function DashboardPage() {
+  const { t } = useLang();
+  const listFn = useServerFn(listMyReceipts);
+  const pdfUrlFn = useServerFn(getReceiptPdfUrl);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = SAMPLE_DOCS.find((d) => d.id === selectedId) ?? null;
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  const receipts = useQuery({ queryKey: ["receipts"], queryFn: () => listFn() });
+
+  const liveDocs: DocumentCardData[] = useMemo(() => {
+    return (receipts.data ?? []).slice(0, 6).map((r) => ({
+      id: r.id,
+      company: r.company,
+      amount: Number(r.amount),
+      currency: r.currency,
+      issuedDate: r.issued_date ?? r.created_at,
+      dueDate: r.due_date,
+      status: (r.status as "paid" | "unpaid" | "overdue") ?? "paid",
+      type: (r.document_type as "receipt" | "invoice") ?? "receipt",
+      category: r.category ? { label: r.category, tone: "lavender" } : undefined,
+    }));
+  }, [receipts.data]);
+
+  const docs = liveDocs.length > 0 ? liveDocs : SAMPLE_DOCS;
+  const isLive = liveDocs.length > 0;
+  const selected = docs.find((d) => d.id === selectedId) ?? null;
+
+  const openDoc = async (id: string) => {
+    setSelectedId(id);
+    setPdfUrl(null);
+    if (!isLive) return;
+    try {
+      const { url } = await pdfUrlFn({ data: { id } });
+      setPdfUrl(url);
+    } catch {
+      setPdfUrl(null);
+    }
+  };
+
+  const totalMonth = docs.reduce((s, d) => s + d.amount, 0);
+  const unpaidTotal = docs.filter((d) => d.status !== "paid").reduce((s, d) => s + d.amount, 0);
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="God morgen, K 👋"
-        description="Here's how your kvitteringer are stacking up this month."
+        title={t("dashboard.greeting")}
+        description={t("dashboard.subtitle")}
         actions={
           <Button asChild className="rounded-full">
             <Link to="/app/upload">
               <Upload className="mr-2 h-4 w-4" />
-              Add document
+              {t("dashboard.add")}
             </Link>
           </Button>
         }
       />
 
+
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Spent this month"
-          value={<MoneyAmount value={4287.5} size="lg" />}
-          hint="+12% vs. May"
+          value={<MoneyAmount value={totalMonth} size="lg" />}
+          hint={isLive ? `${docs.length} documents` : "+12% vs. May"}
           icon={Wallet}
           tone="lavender"
         />
         <StatCard
           label="Unpaid invoices"
-          value={<MoneyAmount value={1091} size="lg" />}
-          hint="2 invoices waiting"
+          value={<MoneyAmount value={unpaidTotal} size="lg" />}
+          hint={`${docs.filter((d) => d.status !== "paid").length} waiting`}
           icon={AlertCircle}
           tone="butter"
         />
@@ -112,8 +156,8 @@ function DashboardPage() {
         />
         <StatCard
           label="Tracked documents"
-          value={<span className="tabular-nums">128</span>}
-          hint="+9 this month"
+          value={<span className="tabular-nums">{docs.length}</span>}
+          hint="live from your uploads"
           icon={TrendingUp}
           tone="mint"
         />
@@ -122,22 +166,22 @@ function DashboardPage() {
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Recent activity</h2>
+            <h2 className="text-lg font-bold text-foreground">{t("dashboard.recent")}</h2>
             <Button variant="ghost" asChild className="rounded-full">
-              <Link to="/app/documents">View all</Link>
+              <Link to="/app/documents">{t("dashboard.viewAll")}</Link>
             </Button>
           </div>
           <div className="flex flex-col gap-3">
-            {SAMPLE_DOCS.map((d) => (
-              <DocumentCard key={d.id} doc={d} onClick={() => setSelectedId(d.id)} />
+            {docs.map((d) => (
+              <DocumentCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />
             ))}
           </div>
         </div>
 
         <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-foreground">June budget</h2>
+          <h2 className="text-lg font-bold text-foreground">Budget</h2>
           <div className="shadow-soft flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
-            <BudgetProgressBar label="Overall" spent={4287.5} budget={6000} />
+            <BudgetProgressBar label="Overall" spent={totalMonth} budget={6000} />
             <div className="h-px bg-border" />
             <BudgetProgressBar label="Groceries" spent={1850} budget={2500} />
             <BudgetProgressBar label="Utilities" spent={892} budget={1200} />
@@ -154,11 +198,19 @@ function DashboardPage() {
       <DocumentDetailSheet
         doc={selected}
         open={selectedId !== null}
-        onOpenChange={(o) => !o && setSelectedId(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSelectedId(null);
+            setPdfUrl(null);
+          }
+        }}
+        fileUrl={pdfUrl}
       />
     </div>
   );
 }
+
+
 
 function CategoryTile({
   icon: Icon,

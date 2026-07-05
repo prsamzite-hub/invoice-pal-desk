@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/atoms/empty-state";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { PdfViewerDialog } from "@/components/pdf-viewer-dialog";
+import { useLang } from "@/lib/i18n";
 import {
   uploadReceipt,
   listMyReceipts,
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/app/upload")({
 });
 
 function UploadPage() {
+  const { lang } = useLang();
   const qc = useQueryClient();
   const uploadFn = useServerFn(uploadReceipt);
   const listFn = useServerFn(listMyReceipts);
@@ -49,6 +51,7 @@ function UploadPage() {
     mutationFn: async (file: File) => {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("lang", lang);
       return await uploadFn({ data: fd });
     },
     onSuccess: (row) => {

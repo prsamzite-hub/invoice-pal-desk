@@ -9,11 +9,13 @@ export const uploadReceipt = createServerFn({ method: "POST" })
     if (!(data instanceof FormData)) throw new Error("Expected FormData");
     const file = data.get("file");
     if (!(file instanceof File)) throw new Error("Missing file");
-    return { file };
+    const langRaw = data.get("lang");
+    const lang: "da" | "en" = langRaw === "en" ? "en" : "da";
+    return { file, lang };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { file } = data;
+    const { file, lang } = data;
     const { extractReceiptFromImage } = await import("./ai-gateway.server");
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
 
@@ -86,6 +88,7 @@ export const uploadReceipt = createServerFn({ method: "POST" })
       notes: row.notes,
       items: (extracted as { items?: Array<{ description: string; quantity?: number | null; unit_price?: number | null; total: number }> }).items ?? [],
       receipt_id: row.id,
+      lang,
     });
     const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
     const up2 = await supabase.storage

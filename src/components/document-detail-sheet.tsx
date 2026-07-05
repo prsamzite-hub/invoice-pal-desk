@@ -86,7 +86,12 @@ export function DocumentDetailSheet({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 pt-2">
-                <Button variant="outline" className="rounded-full" disabled={!fileUrl}>
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  disabled={!fileUrl}
+                  onClick={() => fileUrl && window.open(fileUrl, "_blank")}
+                >
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </Button>

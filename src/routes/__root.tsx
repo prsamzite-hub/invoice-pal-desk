@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { LanguageProvider } from "@/lib/i18n";
 
 
 function NotFoundComponent() {
@@ -133,10 +134,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthListener />
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster />
+        <LanguageProvider>
+          <AuthListener />
+          <Outlet />
+          <Toaster />
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
