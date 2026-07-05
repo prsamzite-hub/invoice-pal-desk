@@ -74,6 +74,60 @@ export type Database = {
         }
         Relationships: []
       }
+      receipts: {
+        Row: {
+          amount: number
+          category: string | null
+          company: string
+          created_at: string
+          currency: string
+          document_type: string
+          due_date: string | null
+          id: string
+          issued_date: string | null
+          notes: string | null
+          original_path: string | null
+          pdf_path: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          company?: string
+          created_at?: string
+          currency?: string
+          document_type?: string
+          due_date?: string | null
+          id?: string
+          issued_date?: string | null
+          notes?: string | null
+          original_path?: string | null
+          pdf_path?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          company?: string
+          created_at?: string
+          currency?: string
+          document_type?: string
+          due_date?: string | null
+          id?: string
+          issued_date?: string | null
+          notes?: string | null
+          original_path?: string | null
+          pdf_path?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
