@@ -80,6 +80,7 @@ export const uploadReceipt = createServerFn({ method: "POST" })
       document_type: (row.document_type as "receipt" | "invoice") ?? "receipt",
       category: row.category,
       notes: row.notes,
+      items: (extracted as { items?: Array<{ description: string; quantity?: number | null; unit_price?: number | null; total: number }> }).items ?? [],
       receipt_id: row.id,
     });
     const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
