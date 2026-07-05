@@ -2,6 +2,13 @@
 // Uses fetch directly (OpenAI-compatible chat completions) to avoid pulling
 // the AI SDK in for this scaffold endpoint.
 
+export interface ExtractedLineItem {
+  description: string;
+  quantity?: number | null;
+  unit_price?: number | null;
+  total: number;
+}
+
 export interface ExtractedDocument {
   company: string;
   amount: number;
@@ -9,6 +16,7 @@ export interface ExtractedDocument {
   date: string; // ISO yyyy-mm-dd
   due_date?: string | null;
   document_type: "receipt" | "invoice";
+  items?: ExtractedLineItem[];
 }
 
 export async function extractReceiptFromText(text: string): Promise<ExtractedDocument> {
