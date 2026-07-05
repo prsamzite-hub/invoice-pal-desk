@@ -1,5 +1,12 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
+export interface ReceiptPdfLineItem {
+  description: string;
+  quantity?: number | null;
+  unit_price?: number | null;
+  total: number;
+}
+
 export interface ReceiptPdfData {
   company: string;
   amount: number;
@@ -9,6 +16,7 @@ export interface ReceiptPdfData {
   document_type: "receipt" | "invoice";
   category?: string | null;
   notes?: string | null;
+  items?: ReceiptPdfLineItem[];
   receipt_id: string;
 }
 
