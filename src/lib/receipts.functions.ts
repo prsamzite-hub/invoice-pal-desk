@@ -42,7 +42,11 @@ export const uploadReceipt = createServerFn({ method: "POST" })
     };
     try {
       if (isImage) {
-        const base64 = btoa(String.fromCharCode(...bytes));
+        let bin = "";
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+          bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        }
+        const base64 = btoa(bin);
         extracted = await extractReceiptFromImage(base64, file.type);
       }
     } catch (e) {
@@ -80,6 +84,7 @@ export const uploadReceipt = createServerFn({ method: "POST" })
       document_type: (row.document_type as "receipt" | "invoice") ?? "receipt",
       category: row.category,
       notes: row.notes,
+      items: (extracted as { items?: Array<{ description: string; quantity?: number | null; unit_price?: number | null; total: number }> }).items ?? [],
       receipt_id: row.id,
     });
     const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
