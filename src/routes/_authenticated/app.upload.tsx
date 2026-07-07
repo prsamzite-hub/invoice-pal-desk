@@ -21,8 +21,8 @@ import {
 export const Route = createFileRoute("/_authenticated/app/upload")({
   head: () => ({
     meta: [
-      { title: "Upload — Kvittr" },
-      { name: "description", content: "Drop a receipt or invoice and Kvittr will read it for you." },
+      { title: "Upload — Kvitregn" },
+      { name: "description", content: "Læg en kvittering eller faktura ind — Kvitregn læser den for dig." },
     ],
   }),
   component: UploadPage,
@@ -55,14 +55,14 @@ function UploadPage() {
       return await uploadFn({ data: fd });
     },
     onSuccess: (row) => {
-      toast.success(`Added ${row.company}`, {
-        description: "We extracted the details and generated a PDF.",
+      toast.success(`Tilføjet ${row.company}`, {
+        description: "Vi aflæste detaljerne og genererede en PDF.",
       });
       qc.invalidateQueries({ queryKey: ["receipts"] });
     },
     onError: (e: unknown) => {
-      toast.error("Upload failed", {
-        description: e instanceof Error ? e.message : "Please try again.",
+      toast.error("Upload mislykkedes", {
+        description: e instanceof Error ? e.message : "Prøv igen.",
       });
     },
   });
@@ -78,8 +78,8 @@ function UploadPage() {
       const { url } = await pdfUrlFn({ data: { id } });
       setPdfState({ open: true, url, title });
     } catch (e) {
-      toast.error("Could not open PDF", {
-        description: e instanceof Error ? e.message : "Try again",
+      toast.error("Kunne ikke åbne PDF", {
+        description: e instanceof Error ? e.message : "Prøv igen",
       });
       setPdfState({ open: false, url: null, title: "" });
     }
@@ -90,8 +90,8 @@ function UploadPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Add a document"
-        description="Snap, drop, or attach — we'll fill in the rest."
+        title="Tilføj et dokument"
+        description="Tag et billede, træk det ind eller vedhæft — vi udfylder resten."
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -109,10 +109,10 @@ function UploadPage() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground">
-                {isBusy ? "Reading your document…" : "Drop your receipts here"}
+                {isBusy ? "Læser dit dokument…" : "Slip dine kvitteringer her"}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                PDFs, photos, screenshots — anything works. We'll turn each one into a clean PDF.
+                PDF'er, billeder, screenshots — alt virker. Vi laver hver enkelt til en pæn PDF.
               </p>
             </div>
             <input
@@ -128,7 +128,7 @@ function UploadPage() {
             />
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button className="rounded-full" onClick={() => inputRef.current?.click()} disabled={isBusy}>
-                Choose files
+                Vælg filer
               </Button>
               <Button
                 variant="outline"
@@ -136,7 +136,7 @@ function UploadPage() {
                 onClick={() => inputRef.current?.click()}
                 disabled={isBusy}
               >
-                Take a photo
+                Tag et billede
               </Button>
             </div>
           </div>
@@ -147,31 +147,31 @@ function UploadPage() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-foreground">AI does the typing</h3>
+            <h3 className="text-base font-bold text-foreground">AI klarer skrivearbejdet</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Kvittr reads each document, prefills the company, amount, date, and category, then
-              generates a polished PDF you can share.
+              Kvitregn læser hvert dokument, udfylder firma, beløb, dato og kategori — og genererer
+              en pæn PDF, du kan dele.
             </p>
           </div>
           <ul className="flex flex-col gap-2 text-sm text-foreground">
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Works in Danish & English
+              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Virker på dansk og engelsk
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Detects receipt vs. invoice
+              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Skelner kvittering fra faktura
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Generates a printable PDF
+              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Laver en printbar PDF
             </li>
           </ul>
         </aside>
       </div>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold text-foreground">Recent uploads</h2>
+        <h2 className="text-lg font-bold text-foreground">Seneste uploads</h2>
         {receipts.isLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+            <Loader2 className="h-4 w-4 animate-spin" /> Indlæser…
           </div>
         ) : receipts.data && receipts.data.length > 0 ? (
           <div className="flex flex-col gap-2">
@@ -190,8 +190,8 @@ function UploadPage() {
                       <StatusBadge status={r.status as "paid" | "unpaid" | "overdue"} />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {r.issued_date ?? ""} · {r.category ?? "Uncategorized"} ·{" "}
-                      {r.document_type}
+                      {r.issued_date ?? ""} · {r.category ?? "Ukategoriseret"} ·{" "}
+                      {r.document_type === "invoice" ? "faktura" : "kvittering"}
                     </p>
                   </div>
                 </div>
@@ -204,7 +204,7 @@ function UploadPage() {
                     disabled={!r.pdf_path}
                     onClick={() => openPdf(r.id, `${r.company} — ${r.issued_date ?? ""}`)}
                   >
-                    <Eye className="mr-1.5 h-3.5 w-3.5" /> View PDF
+                    <Eye className="mr-1.5 h-3.5 w-3.5" /> Se PDF
                   </Button>
                   <Button
                     size="sm"
@@ -225,8 +225,8 @@ function UploadPage() {
         ) : (
           <EmptyState
             icon={FileText}
-            title="Nothing here yet"
-            description="Once you upload your first document, it'll appear here while we extract the details."
+            title="Ingen dokumenter endnu"
+            description="Så snart du uploader dit første dokument, dukker det op her mens vi aflæser detaljerne."
           />
         )}
       </section>
