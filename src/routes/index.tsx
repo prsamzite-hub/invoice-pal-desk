@@ -1,4 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Sparkles,
   Receipt,
@@ -13,6 +14,7 @@ import { StatusBadge } from "@/components/atoms/status-badge";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { CompanyAvatar } from "@/components/atoms/company-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +36,15 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) navigate({ to: "/app", replace: true });
+    });
+    return () => { active = false; };
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
