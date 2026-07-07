@@ -14,8 +14,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Kvittr" },
-      { name: "description", content: "Manage your Kvittr profile, theme and account." },
+      { title: "Indstillinger — Kvitregn" },
+      { name: "description", content: "Administrer din Kvitregn-profil, tema og konto." },
     ],
   }),
   component: SettingsPage,
@@ -37,13 +37,13 @@ function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Settings" description="Make Kvittr feel like home." />
+      <PageHeader title="Indstillinger" description="Gør Kvitregn til dit eget." />
 
       <section className="shadow-soft flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-bold text-foreground">Profile</h2>
+        <h2 className="text-base font-bold text-foreground">Profil</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field icon={User} label="Display name" value={profile?.display_name ?? "—"} />
-          <Field icon={Mail} label="Currency" value={profile?.currency ?? "DKK"} />
+          <Field icon={User} label="Vist navn" value={profile?.display_name ?? "—"} />
+          <Field icon={Mail} label="Valuta" value={profile?.currency ?? "DKK"} />
         </div>
       </section>
 
@@ -52,20 +52,20 @@ function SettingsPage() {
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-foreground">Appearance</h2>
-            <p className="text-sm text-muted-foreground">Toggle between light and dark.</p>
+            <h2 className="text-base font-bold text-foreground">Udseende</h2>
+            <p className="text-sm text-muted-foreground">Skift mellem lyst og mørkt tema.</p>
           </div>
           <ThemeToggle />
         </div>
       </section>
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-bold text-foreground">Account</h2>
-        <p className="text-sm text-muted-foreground">Sign out of Kvittr on this device.</p>
+        <h2 className="text-base font-bold text-foreground">Konto</h2>
+        <p className="text-sm text-muted-foreground">Log ud af Kvitregn på denne enhed.</p>
         <div>
           <Button variant="outline" className="rounded-full" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
-            Sign out
+            Log ud
           </Button>
         </div>
       </section>
