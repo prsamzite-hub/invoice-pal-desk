@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { danishAuthError } from "@/lib/auth-errors";
+import { danishAuthError, EMAIL_EXISTS_MESSAGE } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -72,11 +72,19 @@ function AuthPage() {
           options: { emailRedirectTo: `${window.location.origin}/app` },
         });
         if (error) throw error;
+        // Supabase may return a success response with an obfuscated user when
+        // the email is already registered (identities array is empty).
+        const identities = (data.user as { identities?: unknown[] } | null)?.identities;
+        if (data.user && Array.isArray(identities) && identities.length === 0) {
+          showEmailExistsToast();
+          return;
+        }
         if (!data.session) {
           toast.success("Tjek din email for at bekræfte din konto.");
           return;
         }
         toast.success("Velkommen til Kvittr! 🎉");
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -85,10 +93,24 @@ function AuthPage() {
       await router.invalidate();
       navigate({ to: "/app" });
     } catch (err) {
-      toast.error(danishAuthError(err));
+      const msg = danishAuthError(err);
+      if (msg === EMAIL_EXISTS_MESSAGE) showEmailExistsToast();
+      else toast.error(msg);
     } finally {
       setLoading(false);
     }
+  }
+
+  function showEmailExistsToast() {
+    toast.error(EMAIL_EXISTS_MESSAGE, {
+      action: {
+        label: "Log ind",
+        onClick: () => {
+          setView("signin");
+          setPassword("");
+        },
+      },
+    });
   }
 
   async function onForgot(e: React.FormEvent) {
