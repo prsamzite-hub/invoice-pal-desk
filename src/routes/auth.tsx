@@ -93,7 +93,9 @@ function AuthPage() {
       await router.invalidate();
       navigate({ to: "/app" });
     } catch (err) {
-      toast.error(danishAuthError(err));
+      const msg = danishAuthError(err);
+      if (msg === EMAIL_EXISTS_MESSAGE) showEmailExistsToast();
+      else toast.error(msg);
     } finally {
       setLoading(false);
     }
