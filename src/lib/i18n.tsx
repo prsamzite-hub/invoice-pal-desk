@@ -76,13 +76,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("da");
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem("kvittr.lang") : null;
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("kvitregn.lang") : null;
     if (stored === "da" || stored === "en") setLangState(stored);
   }, []);
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    if (typeof window !== "undefined") window.localStorage.setItem("kvittr.lang", l);
+    if (typeof window !== "undefined") window.localStorage.setItem("kvitregn.lang", l);
   };
 
   const t = (k: Key) => DICT[lang][k] ?? DICT.en[k] ?? k;
