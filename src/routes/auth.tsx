@@ -99,6 +99,18 @@ function AuthPage() {
     }
   }
 
+  function showEmailExistsToast() {
+    toast.error(EMAIL_EXISTS_MESSAGE, {
+      action: {
+        label: "Log ind",
+        onClick: () => {
+          setView("signin");
+          setPassword("");
+        },
+      },
+    });
+  }
+
   async function onForgot(e: React.FormEvent) {
     e.preventDefault();
     const parsed = z.string().trim().email().safeParse(email);
