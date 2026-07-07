@@ -9,8 +9,15 @@ export function danishAuthError(err: unknown): string {
   if (raw.includes("email not confirmed") || raw.includes("not confirmed")) {
     return "Din email er ikke bekræftet endnu. Tjek din indbakke for et bekræftelseslink.";
   }
-  if (raw.includes("user already registered") || raw.includes("already registered") || raw.includes("already exists")) {
-    return "Der findes allerede en bruger med denne email. Prøv at logge ind i stedet.";
+  if (
+    raw.includes("user already registered") ||
+    raw.includes("already registered") ||
+    raw.includes("already exists") ||
+    raw.includes("email address is already") ||
+    raw.includes("email already") ||
+    raw.includes("duplicate")
+  ) {
+    return EMAIL_EXISTS_MESSAGE;
   }
   if (raw.includes("password should be") || raw.includes("weak password") || raw.includes("password is too short") || raw.includes("at least")) {
     return "Adgangskoden er for svag. Brug mindst 8 tegn med både bogstaver og tal.";
