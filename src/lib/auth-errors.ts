@@ -1,4 +1,7 @@
 // Map Supabase auth errors to friendly Danish messages.
+export const EMAIL_EXISTS_MESSAGE =
+  "Der findes allerede en konto med denne email — log ind i stedet.";
+
 export function danishAuthError(err: unknown): string {
   const raw = (err instanceof Error ? err.message : String(err ?? "")).toLowerCase();
   if (!raw) return "Noget gik galt. Prøv igen.";
