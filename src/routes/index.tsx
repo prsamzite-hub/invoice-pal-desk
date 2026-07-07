@@ -1,4 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Sparkles,
   Receipt,
@@ -13,6 +14,7 @@ import { StatusBadge } from "@/components/atoms/status-badge";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { CompanyAvatar } from "@/components/atoms/company-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
