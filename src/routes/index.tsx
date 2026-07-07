@@ -5,7 +5,7 @@ import {
   Receipt,
   ShieldCheck,
   Search,
-  PieChart,
+  FileText,
   ArrowRight,
 } from "lucide-react";
 
@@ -19,16 +19,16 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Kvittr — Receipts & invoices, finally in one place" },
+      { title: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
       {
         name: "description",
         content:
-          "A playful, calm home for every kvittering and faktura. Upload, search, and pay — built for Denmark.",
+          "Kvitregn er en rolig og legesyg mappe til hver kvittering og faktura. Upload, søg og find dem igen — bygget til Danmark.",
       },
-      { property: "og:title", content: "Kvittr — Receipts & invoices, finally in one place" },
+      { property: "og:title", content: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
       {
         property: "og:description",
-        content: "Never lose a receipt. Never miss an invoice. Kvittr is your friendly document wallet.",
+        content: "Mist aldrig en kvittering. Kvitregn er din venlige digitale dokumentmappe.",
       },
     ],
   }),
@@ -52,16 +52,16 @@ function LandingPage() {
           <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-hero shadow-soft">
             <Sparkles className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-xl font-extrabold tracking-tight text-foreground">kvittr</span>
+          <span className="text-xl font-extrabold tracking-tight text-foreground">Kvitregn</span>
         </Link>
         <nav className="flex items-center gap-2">
           <ThemeToggle />
           <Button asChild variant="ghost" className="rounded-full">
-            <Link to="/auth">Sign in</Link>
+            <Link to="/auth">Log ind</Link>
           </Button>
           <Button asChild className="rounded-full">
             <Link to="/auth">
-              Get started
+              Kom i gang
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
           </Button>
@@ -74,42 +74,44 @@ function LandingPage() {
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
             <div className="flex flex-col gap-6">
               <span className="inline-flex w-fit items-center gap-2 rounded-full bg-lavender px-3 py-1 text-xs font-semibold text-lavender-foreground">
-                <Sparkles className="h-3.5 w-3.5" /> Made in Denmark · launching in DKK
+                <Sparkles className="h-3.5 w-3.5" /> Lavet i Danmark · priser i DKK
               </span>
               <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Every receipt and invoice,{" "}
+                Hver kvittering og faktura,{" "}
                 <span className="bg-gradient-hero rounded-2xl px-2 py-1 text-primary">
-                  in one happy wallet.
+                  samlet ét sted.
                 </span>
               </h1>
               <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-                Kvittr keeps every kvittering and faktura tidy, searchable, and paid on time —
-                so the shoebox under your bed can finally retire.
+                Kvitregn holder styr på hver kvittering og faktura — pænt, søgbart og altid ved
+                hånden. Skoæsken under sengen kan endelig gå på pension.
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" className="rounded-full">
                   <Link to="/auth">
-                    Open my wallet
+                    Åbn min mappe
                     <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="rounded-full">
-                  <Link to="/app/upload">See it in action</Link>
+                  <a href="#preview">Se hvordan det ser ud</a>
                 </Button>
               </div>
               <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-status-paid-foreground" />
-                  Private by default
+                  Privat som standard
                 </li>
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-lavender-foreground" />
-                  AI fills the boring fields
+                  AI udfylder de kedelige felter
                 </li>
               </ul>
             </div>
 
-            <HeroPreview />
+            <div id="preview">
+              <HeroPreview />
+            </div>
           </div>
         </section>
 
@@ -117,10 +119,10 @@ function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
           <div className="mb-10 max-w-2xl">
             <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-              A calmer way to handle paperwork.
+              En roligere måde at holde styr på papirerne.
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Built around three things: capture it, find it, pay it.
+              Bygget omkring tre ting: gem det, find det, del det.
             </p>
           </div>
 
@@ -128,20 +130,20 @@ function LandingPage() {
             <FeatureCard
               tone="lavender"
               icon={Receipt}
-              title="Capture anything"
-              body="Drag in a PDF, snap a photo, forward an email — Kvittr reads it and files it for you."
+              title="Upload alt"
+              body="Træk en PDF ind eller tag et billede — Kvitregn læser det og arkiverer det for dig."
             />
             <FeatureCard
               tone="sky"
               icon={Search}
-              title="Find it in a second"
-              body="Search by company, date, or amount. Filters that actually understand a kvittering."
+              title="Find det på et sekund"
+              body="Søg efter firma, dato eller beløb. Filtre der faktisk forstår en kvittering."
             />
             <FeatureCard
               tone="mint"
-              icon={PieChart}
-              title="Pay on time, every time"
-              body="See unpaid invoices at a glance, set monthly budgets, and never miss a due date."
+              icon={FileText}
+              title="Altid en pæn PDF"
+              body="Hvert dokument bliver til en ren, delbar PDF — klar til bogholderen eller din egen mappe."
             />
           </div>
         </section>
@@ -150,15 +152,15 @@ function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
           <div className="shadow-pop relative overflow-hidden rounded-3xl bg-gradient-hero p-10 text-center sm:p-16">
             <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight text-primary sm:text-4xl">
-              Bring your paperwork home.
+              Få styr på papirerne.
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-base text-primary/80">
-              Start your wallet in under a minute. It's free while we build.
+              Kom i gang på under et minut. Gratis mens vi bygger.
             </p>
             <div className="mt-6 flex justify-center">
               <Button asChild size="lg" className="rounded-full">
                 <Link to="/auth">
-                  Open Kvittr
+                  Åbn Kvitregn
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
@@ -168,9 +170,13 @@ function LandingPage() {
       </main>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6">
-          <span>© 2026 Kvittr · Made with care in Copenhagen</span>
-          <span>kvittr.dk</span>
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6">
+          <span>© 2026 Kvitregn · Lavet med omhu i København</span>
+          <div className="flex items-center gap-4">
+            <Link to="/terms" className="hover:text-foreground">Vilkår</Link>
+            <Link to="/privacy" className="hover:text-foreground">Privatlivspolitik</Link>
+            <span>kvitregn.dk</span>
+          </div>
         </div>
       </footer>
     </div>
@@ -214,19 +220,19 @@ function HeroPreview() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              June total
+              Juni i alt
             </p>
             <MoneyAmount value={4287.5} size="xl" className="block text-foreground" />
           </div>
           <span className="inline-flex items-center gap-1 rounded-full bg-mint px-2.5 py-1 text-xs font-semibold text-mint-foreground">
-            +12% vs. May
+            +12% vs. maj
           </span>
         </div>
 
         <div className="flex flex-col gap-3">
-          <PreviewRow company="Netto" amount={247.5} status="paid" date="26 Jun" />
-          <PreviewRow company="Ørsted" amount={892} status="unpaid" date="Due 5 Jul" />
-          <PreviewRow company="Telenor" amount={199} status="overdue" date="Due 25 Jun" />
+          <PreviewRow company="Netto" amount={247.5} status="paid" date="26. jun" />
+          <PreviewRow company="Ørsted" amount={892} status="unpaid" date="Forfalder 5. jul" />
+          <PreviewRow company="Telenor" amount={199} status="overdue" date="Forfalder 25. jun" />
         </div>
       </div>
     </div>

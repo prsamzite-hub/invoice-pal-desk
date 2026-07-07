@@ -21,11 +21,11 @@ import {
 } from "@/components/ui/sidebar";
 
 const ITEMS = [
-  { title: "Dashboard", url: "/app", icon: LayoutDashboard },
-  { title: "Documents", url: "/app/documents", icon: Receipt },
+  { title: "Oversigt", url: "/app", icon: LayoutDashboard },
+  { title: "Dokumenter", url: "/app/documents", icon: Receipt },
   { title: "Upload", url: "/app/upload", icon: Upload },
-  { title: "Analytics", url: "/app/analytics", icon: PieChart },
-  { title: "Settings", url: "/app/settings", icon: Settings },
+  { title: "Analyse", url: "/app/analytics", icon: PieChart },
+  { title: "Indstillinger", url: "/app/settings", icon: Settings },
 ] as const;
 
 export function AppSidebar() {
@@ -41,13 +41,13 @@ export function AppSidebar() {
             <Sparkles className="h-4 w-4 text-primary" />
           </div>
           <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            kvittr
+            Kvitregn
           </span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Wallet</SidebarGroupLabel>
+          <SidebarGroupLabel>Min mappe</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {ITEMS.map((item) => (

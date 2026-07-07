@@ -26,8 +26,8 @@ import { useLang } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Kvittr" },
-      { name: "description", content: "Your monthly spending at a glance with Kvittr." },
+      { title: "Oversigt — Kvitregn" },
+      { name: "description", content: "Dit månedlige forbrug i overblik med Kvitregn." },
     ],
   }),
   component: DashboardPage,
@@ -41,7 +41,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     issuedDate: "2026-06-26",
     status: "paid",
     type: "receipt",
-    category: { label: "Groceries", tone: "mint" },
+    category: { label: "Dagligvarer", tone: "mint" },
   },
   {
     id: "2",
@@ -51,7 +51,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     dueDate: "2026-07-05",
     status: "unpaid",
     type: "invoice",
-    category: { label: "Utilities", tone: "sky" },
+    category: { label: "Forsyning", tone: "sky" },
   },
   {
     id: "3",
@@ -61,7 +61,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     dueDate: "2026-06-25",
     status: "overdue",
     type: "invoice",
-    category: { label: "Subscriptions", tone: "lavender" },
+    category: { label: "Abonnementer", tone: "lavender" },
   },
   {
     id: "4",
@@ -70,7 +70,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     issuedDate: "2026-06-15",
     status: "paid",
     type: "receipt",
-    category: { label: "Dining", tone: "peach" },
+    category: { label: "Mad ude", tone: "peach" },
   },
 ];
 
@@ -134,30 +134,30 @@ function DashboardPage() {
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Spent this month"
+          label="Brugt i denne måned"
           value={<MoneyAmount value={totalMonth} size="lg" />}
-          hint={isLive ? `${docs.length} documents` : "+12% vs. May"}
+          hint={isLive ? `${docs.length} dokumenter` : "+12% vs. maj"}
           icon={Wallet}
           tone="lavender"
         />
         <StatCard
-          label="Unpaid invoices"
+          label="Ubetalte fakturaer"
           value={<MoneyAmount value={unpaidTotal} size="lg" />}
-          hint={`${docs.filter((d) => d.status !== "paid").length} waiting`}
+          hint={`${docs.filter((d) => d.status !== "paid").length} venter`}
           icon={AlertCircle}
           tone="butter"
         />
         <StatCard
-          label="Due this week"
+          label="Forfalder i denne uge"
           value={<MoneyAmount value={199} size="lg" />}
-          hint="Telenor · overdue"
+          hint="Telenor · forfalden"
           icon={CalendarClock}
           tone="peach"
         />
         <StatCard
-          label="Tracked documents"
+          label="Registrerede dokumenter"
           value={<span className="tabular-nums">{docs.length}</span>}
-          hint="live from your uploads"
+          hint="live fra dine uploads"
           icon={TrendingUp}
           tone="mint"
         />
@@ -181,16 +181,16 @@ function DashboardPage() {
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-bold text-foreground">Budget</h2>
           <div className="shadow-soft flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
-            <BudgetProgressBar label="Overall" spent={totalMonth} budget={6000} />
+            <BudgetProgressBar label="I alt" spent={totalMonth} budget={6000} />
             <div className="h-px bg-border" />
-            <BudgetProgressBar label="Groceries" spent={1850} budget={2500} />
-            <BudgetProgressBar label="Utilities" spent={892} budget={1200} />
-            <BudgetProgressBar label="Subscriptions" spent={620} budget={500} />
+            <BudgetProgressBar label="Dagligvarer" spent={1850} budget={2500} />
+            <BudgetProgressBar label="Forsyning" spent={892} budget={1200} />
+            <BudgetProgressBar label="Abonnementer" spent={620} budget={500} />
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <CategoryTile icon={ShoppingBag} label="Groceries" tone="mint" />
-            <CategoryTile icon={Zap} label="Utilities" tone="sky" />
-            <CategoryTile icon={Coffee} label="Dining" tone="peach" />
+            <CategoryTile icon={ShoppingBag} label="Dagligvarer" tone="mint" />
+            <CategoryTile icon={Zap} label="Forsyning" tone="sky" />
+            <CategoryTile icon={Coffee} label="Mad ude" tone="peach" />
           </div>
         </div>
       </section>

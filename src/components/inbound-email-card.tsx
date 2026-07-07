@@ -7,13 +7,13 @@ import { toast } from "sonner";
 
 export function InboundEmailCard({ token }: { token: string | null }) {
   const [copied, setCopied] = useState(false);
-  const address = token ? `${token}@receipts.kvittr.dk` : "—";
+  const address = token ? `${token}@receipts.kvitregn.dk` : "—";
 
   function copy() {
     if (!token) return;
     navigator.clipboard.writeText(address).then(() => {
       setCopied(true);
-      toast.success("Email copied to clipboard");
+      toast.success("Email kopieret til udklipsholderen");
       setTimeout(() => setCopied(false), 1800);
     });
   }
@@ -25,9 +25,9 @@ export function InboundEmailCard({ token }: { token: string | null }) {
           <Mail className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="text-base font-bold text-foreground">Forward receipts by email</h2>
+          <h2 className="text-base font-bold text-foreground">Videresend kvitteringer på email</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Send eller videresend dine kvitteringer hertil — Kvittr læser dem automatisk.
+            Send eller videresend dine kvitteringer hertil — Kvitregn læser dem automatisk.
           </p>
         </div>
       </div>
@@ -44,20 +44,17 @@ export function InboundEmailCard({ token }: { token: string | null }) {
 
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="gmail">
-          <AccordionTrigger className="text-sm">Set up forwarding in Gmail</AccordionTrigger>
+          <AccordionTrigger className="text-sm">Sådan sætter du videresendelse op i Gmail</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground">
-            Settings → Forwarding and POP/IMAP → Add a forwarding address. Paste your Kvittr
-            address above and create a filter for receipts (e.g. matches "kvittering" OR "receipt").
-            <br /><br />
-            <strong>Dansk:</strong> Indstillinger → Videresendelse → Tilføj en adresse, og opret et
-            filter med ordet "kvittering".
+            Indstillinger → Videresendelse og POP/IMAP → Tilføj en videresendelsesadresse. Indsæt
+            din Kvitregn-adresse ovenfor og opret et filter, der matcher "kvittering" eller "receipt".
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="outlook">
-          <AccordionTrigger className="text-sm">Set up forwarding in Outlook / Hotmail</AccordionTrigger>
+          <AccordionTrigger className="text-sm">Sådan sætter du videresendelse op i Outlook / Hotmail</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground">
-            Settings → Mail → Rules → Add new rule. Condition: subject contains "receipt" or
-            "kvittering". Action: forward to your Kvittr address above.
+            Indstillinger → Mail → Regler → Tilføj ny regel. Betingelse: emne indeholder "kvittering"
+            eller "receipt". Handling: videresend til din Kvitregn-adresse ovenfor.
           </AccordionContent>
         </AccordionItem>
       </Accordion>

@@ -13,8 +13,8 @@ import { danishAuthError } from "@/lib/auth-errors";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Nulstil adgangskode — Kvittr" },
-      { name: "description", content: "Vælg en ny adgangskode til din Kvittr-konto." },
+      { title: "Nulstil adgangskode — Kvitregn" },
+      { name: "description", content: "Vælg en ny adgangskode til din Kvitregn-konto." },
     ],
   }),
   component: ResetPasswordPage,
@@ -83,7 +83,7 @@ function ResetPasswordPage() {
     <div className="relative min-h-screen overflow-hidden bg-gradient-hero">
       <Link to="/" className="absolute left-6 top-6 inline-flex items-center gap-2 text-sm font-bold text-foreground">
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-lavender text-lavender-foreground">K</span>
-        Kvittr
+        Kvitregn
       </Link>
 
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">

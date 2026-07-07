@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Kvittr design system — playful, accessible, clean.
+ * Kvitregn design system — playful, accessible, clean.
  * Pastel palette on light, muted deep-indigo on dark.
  * All colors in oklch. No ad-hoc colors in components.
  */

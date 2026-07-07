@@ -15,18 +15,18 @@ import { useLang } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/app/analytics")({
   head: () => ({
     meta: [
-      { title: "Analytics & budgets — Kvittr" },
-      { name: "description", content: "See where your kroner go and stay on top of monthly budgets." },
+      { title: "Analyse & budgetter — Kvitregn" },
+      { name: "description", content: "Se hvor dine kroner går hen og hold styr på dine månedlige budgetter." },
     ],
   }),
   component: AnalyticsPage,
 });
 
 const CATEGORIES: Array<{ label: string; value: number; tone: "mint" | "peach" | "lavender" | "butter" | "sky" }> = [
-  { label: "Groceries", value: 1850, tone: "mint" },
-  { label: "Utilities", value: 892, tone: "sky" },
-  { label: "Subscriptions", value: 620, tone: "lavender" },
-  { label: "Dining", value: 410, tone: "peach" },
+  { label: "Dagligvarer", value: 1850, tone: "mint" },
+  { label: "Forsyning", value: 892, tone: "sky" },
+  { label: "Abonnementer", value: 620, tone: "lavender" },
+  { label: "Mad ude", value: 410, tone: "peach" },
   { label: "Shopping", value: 515, tone: "butter" },
 ];
 
@@ -39,15 +39,15 @@ const TONE_BG = {
 } as const;
 
 const DEFAULT_BUDGETS: Record<string, number> = {
-  Overall: 6000,
-  Groceries: 2500,
-  Utilities: 1200,
-  Subscriptions: 500,
-  Dining: 800,
+  "I alt": 6000,
+  Dagligvarer: 2500,
+  Forsyning: 1200,
+  Abonnementer: 500,
+  "Mad ude": 800,
   Shopping: 1000,
 };
 
-const STORAGE_KEY = "kvittr.budgets";
+const STORAGE_KEY = "kvitregn.budgets";
 
 function loadBudgets(): Record<string, number> {
   if (typeof window === "undefined") return DEFAULT_BUDGETS;
@@ -94,7 +94,7 @@ function AnalyticsPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title={t("analytics.title")}
-        description="June 2026 · all amounts in DKK"
+        description="Juni 2026 · alle beløb i DKK"
         actions={
           <Button variant="outline" className="rounded-full" onClick={openEdit}>
             <Pencil className="mr-2 h-4 w-4" />
@@ -104,15 +104,15 @@ function AnalyticsPage() {
       />
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Spent this month" value={<MoneyAmount value={total} size="lg" />} hint="+12% vs. May" icon={Wallet} tone="lavender" />
-        <StatCard label="Avg. monthly" value={<MoneyAmount value={3920} size="lg" />} hint="Last 6 months" icon={TrendingUp} tone="sky" />
-        <StatCard label="Saved vs. budget" value={<MoneyAmount value={Math.max(0, budgets.Overall - total)} size="lg" />} hint={`${Math.max(0, Math.round(((budgets.Overall - total) / budgets.Overall) * 100))}% under target`} icon={PiggyBank} tone="mint" />
+        <StatCard label="Brugt i denne måned" value={<MoneyAmount value={total} size="lg" />} hint="+12% vs. maj" icon={Wallet} tone="lavender" />
+        <StatCard label="Gennemsnit pr. måned" value={<MoneyAmount value={3920} size="lg" />} hint="Sidste 6 måneder" icon={TrendingUp} tone="sky" />
+        <StatCard label="Sparet i forhold til budget" value={<MoneyAmount value={Math.max(0, budgets["I alt"] - total)} size="lg" />} hint={`${Math.max(0, Math.round(((budgets["I alt"] - total) / budgets["I alt"]) * 100))}% under målet`} icon={PiggyBank} tone="mint" />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="shadow-soft lg:col-span-3 flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-bold text-foreground">Spend by category</h2>
+            <h2 className="text-lg font-bold text-foreground">Forbrug pr. kategori</h2>
             <MoneyAmount value={total} size="md" className="text-muted-foreground" />
           </div>
           <div className="flex h-3 w-full overflow-hidden rounded-full">
@@ -137,10 +137,10 @@ function AnalyticsPage() {
         </div>
 
         <div className="shadow-soft lg:col-span-2 flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
-          <h2 className="text-lg font-bold text-foreground">Budgets</h2>
-          <BudgetProgressBar label="Overall" spent={total} budget={budgets.Overall} />
+          <h2 className="text-lg font-bold text-foreground">Budgetter</h2>
+          <BudgetProgressBar label="I alt" spent={total} budget={budgets["I alt"]} />
           <div className="h-px bg-border" />
-          {Object.keys(DEFAULT_BUDGETS).filter((k) => k !== "Overall").map((label) => (
+          {Object.keys(DEFAULT_BUDGETS).filter((k) => k !== "I alt").map((label) => (
             <BudgetProgressBar
               key={label}
               label={label}
@@ -152,12 +152,12 @@ function AnalyticsPage() {
       </section>
 
       <section className="shadow-soft rounded-2xl border border-border bg-card p-6">
-        <h2 className="mb-4 text-lg font-bold text-foreground">Monthly trend</h2>
+        <h2 className="mb-4 text-lg font-bold text-foreground">Månedlig udvikling</h2>
         <div className="flex h-40 items-end gap-3">
           {[3200, 4100, 3650, 4480, 3920, total].map((v, i) => {
             const max = Math.max(3200, 4100, 3650, 4480, 3920, total);
             const h = Math.round((v / max) * 100);
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+            const months = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun"];
             return (
               <div key={i} className="flex flex-1 flex-col items-center gap-2">
                 <div className={`w-full rounded-t-xl ${i === 5 ? "bg-primary" : "bg-lavender"}`} style={{ height: `${h}%` }} />

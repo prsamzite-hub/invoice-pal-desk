@@ -17,8 +17,8 @@ import { useLang } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
     meta: [
-      { title: "Documents — Kvittr" },
-      { name: "description", content: "All your receipts and invoices, searchable and filterable." },
+      { title: "Dokumenter — Kvitregn" },
+      { name: "description", content: "Alle dine kvitteringer og fakturaer — søgbare og filtrerbare." },
     ],
   }),
   component: DocumentsPage,
@@ -148,7 +148,7 @@ function DocumentsPage() {
 
       {receipts.isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          <Loader2 className="h-4 w-4 animate-spin" /> Indlæser…
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState

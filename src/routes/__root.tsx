@@ -22,16 +22,16 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Siden blev ikke fundet</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          Den side, du leder efter, findes ikke eller er blevet flyttet.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Til forsiden
           </Link>
         </div>
       </div>
@@ -50,10 +50,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Siden kunne ikke indlæses
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Noget gik galt hos os. Prøv at genindlæse eller gå tilbage til forsiden.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -63,13 +63,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Prøv igen
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Til forsiden
           </a>
         </div>
       </div>
@@ -82,27 +82,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Kvittr — Receipts & invoices, finally in one place" },
+      { title: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
       {
         name: "description",
         content:
-          "Kvittr is a friendly wallet for every receipt and invoice. Upload, track, and pay — never lose a kvittering again.",
+          "Kvitregn er en venlig digital mappe til hver kvittering og faktura. Upload, søg og find dem igen — bygget til Danmark.",
       },
-      { name: "author", content: "Kvittr" },
-      { property: "og:title", content: "Kvittr — Receipts & invoices, finally in one place" },
+      { name: "author", content: "Kvitregn" },
+      { property: "og:title", content: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
       {
         property: "og:description",
         content:
-          "A playful, calm home for every receipt and invoice. Built for Denmark, starting in DKK.",
+          "En rolig og legesyg mappe til hver kvittering og faktura. Bygget til Danmark, i DKK.",
       },
+      { property: "og:site_name", content: "Kvitregn" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Kvittr — Receipts & invoices, finally in one place" },
-      { name: "description", content: "A playful, calm home for every kvittering and faktura. Upload, search, and pay — built for Denmark." },
-      { property: "og:description", content: "A playful, calm home for every kvittering and faktura. Upload, search, and pay — built for Denmark." },
-      { name: "twitter:description", content: "A playful, calm home for every kvittering and faktura. Upload, search, and pay — built for Denmark." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9ca49665-2a63-43eb-b775-c4385b2dd4dd/id-preview-625f4e66--3dad2624-ee7e-4c67-a16b-30b5beb2e66c.lovable.app-1783265627261.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9ca49665-2a63-43eb-b775-c4385b2dd4dd/id-preview-625f4e66--3dad2624-ee7e-4c67-a16b-30b5beb2e66c.lovable.app-1783265627261.png" },
+      { name: "twitter:title", content: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
+      { name: "twitter:description", content: "Mist aldrig en kvittering. Kvitregn er din venlige digitale dokumentmappe." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -122,7 +119,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="da" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

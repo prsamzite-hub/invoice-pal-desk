@@ -15,8 +15,8 @@ import { danishAuthError, EMAIL_EXISTS_MESSAGE } from "@/lib/auth-errors";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Log ind eller opret bruger — Kvittr" },
-      { name: "description", content: "Log ind på Kvittr og hold styr på dine kvitteringer og fakturaer." },
+      { title: "Log ind eller opret bruger — Kvitregn" },
+      { name: "description", content: "Log ind på Kvitregn og hold styr på dine kvitteringer og fakturaer." },
     ],
   }),
   component: AuthPage,
@@ -83,7 +83,7 @@ function AuthPage() {
           toast.success("Tjek din email for at bekræfte din konto.");
           return;
         }
-        toast.success("Velkommen til Kvittr! 🎉");
+        toast.success("Velkommen til Kvitregn! 🎉");
 
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -167,7 +167,7 @@ function AuthPage() {
     <div className="relative min-h-screen overflow-hidden bg-gradient-hero">
       <Link to="/" className="absolute left-6 top-6 inline-flex items-center gap-2 text-sm font-bold text-foreground">
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-lavender text-lavender-foreground">K</span>
-        Kvittr
+        Kvitregn
       </Link>
 
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
@@ -269,7 +269,10 @@ function AuthPage() {
               </Button>
 
               <p className="mt-6 text-center text-xs text-muted-foreground">
-                Ved at fortsætte accepterer du Kvittrs vilkår.
+                Ved at fortsætte accepterer du Kvitregns{" "}
+                <Link to="/terms" className="underline hover:text-foreground">vilkår</Link>
+                {" "}og{" "}
+                <Link to="/privacy" className="underline hover:text-foreground">privatlivspolitik</Link>.
               </p>
             </>
           )}
