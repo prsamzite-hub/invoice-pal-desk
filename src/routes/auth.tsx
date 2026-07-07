@@ -72,11 +72,19 @@ function AuthPage() {
           options: { emailRedirectTo: `${window.location.origin}/app` },
         });
         if (error) throw error;
+        // Supabase may return a success response with an obfuscated user when
+        // the email is already registered (identities array is empty).
+        const identities = (data.user as { identities?: unknown[] } | null)?.identities;
+        if (data.user && Array.isArray(identities) && identities.length === 0) {
+          showEmailExistsToast();
+          return;
+        }
         if (!data.session) {
           toast.success("Tjek din email for at bekræfte din konto.");
           return;
         }
         toast.success("Velkommen til Kvittr! 🎉");
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
