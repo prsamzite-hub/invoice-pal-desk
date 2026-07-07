@@ -41,7 +41,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     issuedDate: "2026-06-26",
     status: "paid",
     type: "receipt",
-    category: { label: "Groceries", tone: "mint" },
+    category: { label: "Dagligvarer", tone: "mint" },
   },
   {
     id: "2",
@@ -51,7 +51,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     dueDate: "2026-07-05",
     status: "unpaid",
     type: "invoice",
-    category: { label: "Utilities", tone: "sky" },
+    category: { label: "Forsyning", tone: "sky" },
   },
   {
     id: "3",
@@ -61,7 +61,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     dueDate: "2026-06-25",
     status: "overdue",
     type: "invoice",
-    category: { label: "Subscriptions", tone: "lavender" },
+    category: { label: "Abonnementer", tone: "lavender" },
   },
   {
     id: "4",
@@ -70,7 +70,7 @@ const SAMPLE_DOCS: DocumentCardData[] = [
     issuedDate: "2026-06-15",
     status: "paid",
     type: "receipt",
-    category: { label: "Dining", tone: "peach" },
+    category: { label: "Mad ude", tone: "peach" },
   },
 ];
 
