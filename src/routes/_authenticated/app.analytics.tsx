@@ -398,40 +398,85 @@ function AnalyticsPage() {
             />
           </div>
         </div>
-        <div className="h-56 w-full">
+        <div className="h-56 w-full text-muted-foreground">
           <ResponsiveContainer width="100%" height="100%">
             {prefs.trend === "bar" ? (
-              <BarChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+              <BarChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="currentColor"
+                  opacity={0.15}
+                />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  tick={{ fill: "currentColor" }}
+                />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
                   fontSize={12}
+                  tick={{ fill: "currentColor" }}
                   tickFormatter={(v) => dkk.format(v)}
                   width={80}
                 />
-                <Tooltip formatter={(v: number) => dkk.format(v)} />
-                <Bar dataKey="value" fill="var(--primary)" radius={[8, 8, 0, 0]} />
+                <Tooltip
+                  content={<BrandTooltip />}
+                  cursor={{ fill: BRAND_PRIMARY, opacity: 0.08 }}
+                />
+                <Bar
+                  dataKey="value"
+                  name="Forbrug"
+                  fill={BRAND_PRIMARY}
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={48}
+                />
               </BarChart>
             ) : (
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+              <LineChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="brandLineFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={BRAND_PRIMARY} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={BRAND_PRIMARY} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="currentColor"
+                  opacity={0.15}
+                />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  tick={{ fill: "currentColor" }}
+                />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
                   fontSize={12}
+                  tick={{ fill: "currentColor" }}
                   tickFormatter={(v) => dkk.format(v)}
                   width={80}
                 />
-                <Tooltip formatter={(v: number) => dkk.format(v)} />
+                <Tooltip
+                  content={<BrandTooltip />}
+                  cursor={{ stroke: BRAND_PRIMARY, strokeOpacity: 0.3, strokeWidth: 1 }}
+                />
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke="var(--primary)"
+                  name="Forbrug"
+                  stroke={BRAND_PRIMARY}
                   strokeWidth={2.5}
-                  dot={{ r: 4 }}
+                  fill="url(#brandLineFill)"
+                  dot={{ r: 4, fill: BRAND_PRIMARY, stroke: BRAND_PRIMARY }}
+                  activeDot={{ r: 6, fill: BRAND_PRIMARY_DARK, stroke: "var(--card)", strokeWidth: 2 }}
                 />
               </LineChart>
             )}
