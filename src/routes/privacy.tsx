@@ -8,6 +8,7 @@ export const Route = createFileRoute("/privacy")({
       { name: "description", content: "Sådan behandler Kvitregn dine personoplysninger og dokumenter." },
       { property: "og:title", content: "Privatlivspolitik — Kvitregn" },
       { property: "og:description", content: "Sådan behandler Kvitregn dine personoplysninger." },
+      { property: "og:url", content: "https://kvitregn.dk/privacy" },
     ],
     links: [{ rel: "canonical", href: "https://kvitregn.dk/privacy" }],
   }),
