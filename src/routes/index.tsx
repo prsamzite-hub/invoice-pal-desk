@@ -30,6 +30,15 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Mist aldrig en kvittering. Kvitregn er din venlige digitale dokumentmappe.",
       },
+      { property: "og:url", content: "https://invoice-pal-desk.lovable.app/" },
+      { property: "og:image", content: "https://invoice-pal-desk.lovable.app/__l5e/assets-v1/9be3c540-f8d9-4cac-abeb-40c530cee740/kvitregn-og.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://invoice-pal-desk.lovable.app/__l5e/assets-v1/9be3c540-f8d9-4cac-abeb-40c530cee740/kvitregn-og.png" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://invoice-pal-desk.lovable.app/" },
     ],
   }),
   component: LandingPage,
@@ -48,11 +57,9 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-hero shadow-soft">
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
-          <span className="text-xl font-extrabold tracking-tight text-foreground">Kvitregn</span>
+        <Link to="/" className="flex items-center gap-2" aria-label="Kvitregn — forside">
+          <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-10 w-auto dark:hidden" />
+          <img src="/brand/lockup-on-dark.png" alt="Kvitregn" className="hidden h-10 w-auto dark:block" />
         </Link>
         <nav className="flex items-center gap-2">
           <ThemeToggle />
@@ -170,12 +177,16 @@ function LandingPage() {
       </main>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6">
-          <span>© 2026 Kvitregn · Lavet med omhu i København</span>
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
+          <div className="flex items-center gap-3">
+            <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-7 w-auto dark:hidden" />
+            <img src="/brand/lockup-on-dark.png" alt="Kvitregn" className="hidden h-7 w-auto dark:block" />
+            <span className="hidden sm:inline">· Lavet med omhu i København</span>
+          </div>
           <div className="flex items-center gap-4">
             <Link to="/terms" className="hover:text-foreground">Vilkår</Link>
             <Link to="/privacy" className="hover:text-foreground">Privatlivspolitik</Link>
-            <span>kvitregn.dk</span>
+            <a href="https://kvitregn.dk" className="hover:text-foreground">kvitregn.dk</a>
           </div>
         </div>
       </footer>

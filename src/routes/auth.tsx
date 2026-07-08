@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Loader2, Mail, Sparkles, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -165,16 +165,15 @@ function AuthPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-hero">
-      <Link to="/" className="absolute left-6 top-6 inline-flex items-center gap-2 text-sm font-bold text-foreground">
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-lavender text-lavender-foreground">K</span>
-        Kvitregn
+      <Link to="/" className="absolute left-6 top-6 inline-flex items-center gap-2" aria-label="Kvitregn — forside">
+        <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-10 w-auto" />
       </Link>
 
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
         <div className="shadow-card rounded-3xl border border-border bg-card p-8">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-mint text-mint-foreground">
-              <Sparkles className="h-6 w-6" />
+            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-soft">
+              <img src="/brand/icon.svg" alt="" aria-hidden="true" className="h-8 w-8" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
               {view === "forgot" ? "Nulstil adgangskode" : "Velkommen"}
