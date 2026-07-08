@@ -220,7 +220,9 @@ function AnalyticsPage() {
     return series.map((p) => ({ name: p.label, value: p.value }));
   }, [prefs.grouping, total]);
 
-  const pieData = CATEGORIES.map((c) => ({ name: c.label, value: c.value }));
+  const pieData = [...CATEGORIES]
+    .sort((a, b) => b.value - a.value)
+    .map((c) => ({ name: c.label, value: c.value }));
 
   return (
     <div className="flex flex-col gap-8">
