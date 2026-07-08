@@ -281,7 +281,7 @@ function DocumentsPage() {
                     <SelectContent>
                       <SelectItem value="all">Alle kategorier</SelectItem>
                       {CATEGORIES.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                        <SelectItem key={c} value={c}>{labelForCategory(c)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
