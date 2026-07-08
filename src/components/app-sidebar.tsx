@@ -36,13 +36,22 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <Link to="/app" className="flex items-center gap-2 px-2 py-2">
-          <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-hero shadow-soft">
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
-          <span className="text-lg font-extrabold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            Kvitregn
-          </span>
+        <Link to="/app" aria-label="Kvitregn" className="flex items-center px-2 py-2">
+          <img
+            src="/brand/icon.svg"
+            alt=""
+            className="h-8 w-8 shrink-0"
+          />
+          <img
+            src="/brand/wordmark-on-light.svg"
+            alt="Kvitregn"
+            className="ml-2 h-6 w-auto dark:hidden group-data-[collapsible=icon]:hidden"
+          />
+          <img
+            src="/brand/wordmark-on-dark.svg"
+            alt="Kvitregn"
+            className="ml-2 hidden h-6 w-auto dark:block group-data-[collapsible=icon]:!hidden"
+          />
         </Link>
       </SidebarHeader>
       <SidebarContent>

@@ -4,6 +4,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { SearchBar } from "@/components/atoms/search-bar";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
+import { UserMenu } from "@/components/user-menu";
 
 export function AppTopbar() {
   return (
@@ -18,9 +19,7 @@ export function AppTopbar() {
         <Button variant="ghost" size="icon" aria-label="Notifikationer" className="rounded-full">
           <Bell className="h-4 w-4" />
         </Button>
-        <div className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-lavender text-sm font-bold text-lavender-foreground">
-          K
-        </div>
+        <UserMenu />
       </div>
     </header>
   );
