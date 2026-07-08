@@ -148,11 +148,11 @@
   --sidebar-ring: oklch(0.62 0.05 235);
 
   /* Gradients & shadows */
-  --gradient-hero: linear-gradient(135deg, var(--lavender) 0%, var(--sky) 50%, var(--mint) 100%);
-  --gradient-card: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.985 0.012 95) 100%);
-  --shadow-soft: 0 1px 2px oklch(0.22 0.04 280 / 0.04), 0 4px 14px oklch(0.22 0.04 280 / 0.06);
-  --shadow-card: 0 1px 2px oklch(0.22 0.04 280 / 0.04), 0 8px 24px oklch(0.22 0.04 280 / 0.08);
-  --shadow-pop: 0 12px 40px oklch(0.45 0.16 280 / 0.18);
+  --gradient-hero: linear-gradient(135deg, oklch(0.92 0.03 235) 0%, oklch(0.965 0.012 90) 55%, oklch(0.90 0.06 165) 100%);
+  --gradient-card: linear-gradient(180deg, oklch(0.99 0.006 90) 0%, oklch(0.955 0.012 90) 100%);
+  --shadow-soft: 0 1px 2px oklch(0.24 0.006 90 / 0.05), 0 4px 14px oklch(0.24 0.006 90 / 0.07);
+  --shadow-card: 0 1px 2px oklch(0.24 0.006 90 / 0.05), 0 8px 24px oklch(0.24 0.006 90 / 0.08);
+  --shadow-pop: 0 12px 40px oklch(0.24 0.006 90 / 0.18);
 }
 
 .dark {
