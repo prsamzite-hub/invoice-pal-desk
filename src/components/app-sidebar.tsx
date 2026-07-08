@@ -5,7 +5,6 @@ import {
   Upload,
   PieChart,
   Settings,
-  Sparkles,
 } from "lucide-react";
 
 import {
