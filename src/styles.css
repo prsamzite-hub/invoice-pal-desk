@@ -82,34 +82,35 @@
 :root {
   --radius: 0.875rem;
 
-  /* Soft warm off-white base */
-  --background: oklch(0.99 0.005 95);
-  --foreground: oklch(0.22 0.04 280);
+  /* Brand cream base */
+  --background: oklch(0.965 0.012 90);
+  --foreground: oklch(0.24 0.006 90);
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.04 280);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.04 280);
+  --card: oklch(0.99 0.006 90);
+  --card-foreground: oklch(0.24 0.006 90);
+  --popover: oklch(0.99 0.006 90);
+  --popover-foreground: oklch(0.24 0.006 90);
 
-  /* Primary = deep playful indigo */
-  --primary: oklch(0.45 0.16 280);
-  --primary-foreground: oklch(0.98 0.01 280);
+  /* Primary = brand ink */
+  --primary: oklch(0.24 0.006 90);
+  --primary-foreground: oklch(0.965 0.012 90);
 
-  --secondary: oklch(0.96 0.02 280);
-  --secondary-foreground: oklch(0.28 0.06 280);
+  --secondary: oklch(0.93 0.012 90);
+  --secondary-foreground: oklch(0.28 0.008 90);
 
-  --muted: oklch(0.96 0.01 95);
-  --muted-foreground: oklch(0.50 0.03 280);
+  --muted: oklch(0.94 0.010 90);
+  --muted-foreground: oklch(0.48 0.012 240);
 
-  --accent: oklch(0.92 0.06 320);
-  --accent-foreground: oklch(0.28 0.10 320);
+  /* Accent = dusty blue */
+  --accent: oklch(0.88 0.035 235);
+  --accent-foreground: oklch(0.30 0.05 235);
 
   --destructive: oklch(0.62 0.21 25);
   --destructive-foreground: oklch(0.99 0.005 95);
 
-  --border: oklch(0.92 0.01 280);
-  --input: oklch(0.92 0.01 280);
-  --ring: oklch(0.65 0.14 280);
+  --border: oklch(0.90 0.012 90);
+  --input: oklch(0.90 0.012 90);
+  --ring: oklch(0.62 0.05 235);
 
   /* Pastel palette */
   --mint: oklch(0.90 0.07 165);
