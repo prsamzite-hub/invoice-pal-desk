@@ -47,12 +47,16 @@ export const Route = createFileRoute("/_authenticated/app/analytics")({
   component: AnalyticsPage,
 });
 
+const BRAND_PRIMARY = "#6b93a8";
+const BRAND_PRIMARY_DARK = "#4d7488";
+const BRAND_INK = "#23241f";
+
 const CATEGORY_COLORS: Record<string, string> = {
-  Dagligvarer: "var(--mint)",
-  Forsyning: "var(--sky)",
-  Abonnementer: "var(--lavender)",
-  "Mad ude": "var(--peach)",
-  Shopping: "var(--butter)",
+  Dagligvarer: "#6b93a8",
+  Forsyning: "#8fb3c4",
+  Abonnementer: "#4d7488",
+  "Mad ude": "#c5a880",
+  Shopping: "#a8846b",
 };
 
 const CATEGORIES: Array<{ label: string; value: number }> = [
