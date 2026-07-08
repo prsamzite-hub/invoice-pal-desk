@@ -438,7 +438,7 @@ function AnalyticsPage() {
                 />
               </BarChart>
             ) : (
-              <LineChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <AreaChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="brandLineFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={BRAND_PRIMARY} stopOpacity={0.28} />
@@ -470,7 +470,7 @@ function AnalyticsPage() {
                   content={<BrandTooltip />}
                   cursor={{ stroke: BRAND_PRIMARY, strokeOpacity: 0.3, strokeWidth: 1 }}
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="value"
                   name="Forbrug"
@@ -480,7 +480,7 @@ function AnalyticsPage() {
                   dot={{ r: 4, fill: BRAND_PRIMARY, stroke: BRAND_PRIMARY }}
                   activeDot={{ r: 6, fill: BRAND_PRIMARY_DARK, stroke: "var(--card)", strokeWidth: 2 }}
                 />
-              </LineChart>
+              </AreaChart>
             )}
           </ResponsiveContainer>
         </div>
