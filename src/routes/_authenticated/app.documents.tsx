@@ -33,6 +33,19 @@ import {
   listMyReceipts,
 } from "@/lib/receipts.functions";
 
+const CATEGORY_LABELS_DA: Record<string, string> = {
+  Groceries: "Dagligvarer",
+  Utilities: "Forsyning",
+  Subscriptions: "Abonnementer",
+  Dining: "Mad ude",
+  Transport: "Transport",
+  Shopping: "Shopping",
+  Health: "Sundhed",
+  Other: "Andet",
+};
+const labelForCategory = (c?: string | null) =>
+  (c && CATEGORY_LABELS_DA[c]) || c || "Andet";
+
 export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
     meta: [
