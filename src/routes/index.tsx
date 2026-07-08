@@ -58,8 +58,8 @@ function LandingPage() {
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
         <Link to="/" className="flex items-center gap-2" aria-label="Kvitregn — forside">
-          <img src="/brand/lockup-on-light.svg" alt="Kvitregn" className="h-8 w-auto dark:hidden" />
-          <img src="/brand/lockup-on-dark.svg" alt="Kvitregn" className="hidden h-8 w-auto dark:block" />
+          <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-8 w-auto dark:hidden" />
+          <img src="/brand/lockup-on-dark.png" alt="Kvitregn" className="hidden h-8 w-auto dark:block" />
         </Link>
         <nav className="flex items-center gap-2">
           <ThemeToggle />
@@ -179,8 +179,8 @@ function LandingPage() {
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
           <div className="flex items-center gap-3">
-            <img src="/brand/lockup-on-light.svg" alt="Kvitregn" className="h-6 w-auto dark:hidden" />
-            <img src="/brand/lockup-on-dark.svg" alt="Kvitregn" className="hidden h-6 w-auto dark:block" />
+            <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-6 w-auto dark:hidden" />
+            <img src="/brand/lockup-on-dark.png" alt="Kvitregn" className="hidden h-6 w-auto dark:block" />
             <span className="hidden sm:inline">· Lavet med omhu i København</span>
           </div>
           <div className="flex items-center gap-4">
