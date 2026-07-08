@@ -351,7 +351,7 @@ function DocumentsPage() {
               </Badge>
             )}
             {category !== "all" && (
-              <Badge variant="secondary" className="rounded-full">{category}</Badge>
+              <Badge variant="secondary" className="rounded-full">{labelForCategory(category)}</Badge>
             )}
             {dateFrom && (
               <Badge variant="secondary" className="rounded-full">Fra {dateFrom}</Badge>
