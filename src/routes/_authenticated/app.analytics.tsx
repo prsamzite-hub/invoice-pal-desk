@@ -312,24 +312,47 @@ function AnalyticsPage() {
               </ul>
             </>
           ) : (
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
+            <div className="flex flex-col gap-5 md:flex-row md:items-center">
+              <div className="h-64 w-full md:w-1/2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={55}
+                      outerRadius={95}
+                      paddingAngle={2}
+                      stroke="var(--card)"
+                      strokeWidth={2}
+                    >
+                      {pieData.map((entry) => (
+                        <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<BrandTooltip />} cursor={false} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="flex w-full flex-col gap-2 md:w-1/2">
+                {pieData.map((entry) => (
+                  <li
+                    key={entry.name}
+                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5"
                   >
-                    {pieData.map((entry) => (
-                      <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => dkk.format(v)} />
-                </PieChart>
-              </ResponsiveContainer>
+                    <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-full"
+                        style={{ background: CATEGORY_COLORS[entry.name] }}
+                      />
+                      {entry.name}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
+                      {dkk.format(entry.value)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
