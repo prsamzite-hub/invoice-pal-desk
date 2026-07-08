@@ -128,8 +128,10 @@ function DocumentsPage() {
   }, [receipts.data]);
 
   const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    const numericTerm = term ? parseFloat(term.replace(/\./g, "").replace(",", ".")) : NaN;
+    const term = q.trim();
+    const lowered = term.toLowerCase();
+    const normalized = term.replace(/\s/g, "").replace(",", ".");
+    const isAmountPrefix = /^\d+(\.\d*)?$/.test(normalized) && normalized.length > 0;
     const list = docs.filter((d) => {
       if (typeFilter !== "all" && d.type !== typeFilter) return false;
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
@@ -137,12 +139,18 @@ function DocumentsPage() {
       if (dateFrom && d.dateIso < dateFrom) return false;
       if (dateTo && d.dateIso > dateTo) return false;
       if (!term) return true;
+      const catLabel = labelForCategory(d.categoryRaw).toLowerCase();
       const inText =
-        d.company.toLowerCase().includes(term) ||
-        (d.categoryRaw ?? "").toLowerCase().includes(term) ||
-        (d.notes ?? "").toLowerCase().includes(term);
-      const inAmount =
-        !Number.isNaN(numericTerm) && Math.abs(d.amountNumber - numericTerm) < 0.01;
+        d.company.toLowerCase().includes(lowered) ||
+        (d.categoryRaw ?? "").toLowerCase().includes(lowered) ||
+        catLabel.includes(lowered) ||
+        (d.notes ?? "").toLowerCase().includes(lowered);
+      let inAmount = false;
+      if (isAmountPrefix) {
+        const amtStr = String(d.amountNumber);
+        const amtFixed = d.amountNumber.toFixed(2);
+        inAmount = amtStr.startsWith(normalized) || amtFixed.startsWith(normalized);
+      }
       return inText || inAmount;
     });
 
