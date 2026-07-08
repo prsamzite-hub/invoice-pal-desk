@@ -18,7 +18,7 @@ export interface DocumentCardData {
 }
 
 function formatDate(iso: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("da-DK", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -50,12 +50,12 @@ export function DocumentCard({
           <p className="truncate text-sm font-semibold text-foreground">{doc.company}</p>
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <TypeIcon className="h-3 w-3" />
-            {doc.type === "invoice" ? "Invoice" : "Receipt"}
+            {doc.type === "invoice" ? "Faktura" : "Kvittering"}
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{formatDate(doc.issuedDate)}</span>
-          {doc.dueDate ? <span>· Due {formatDate(doc.dueDate)}</span> : null}
+          {doc.dueDate ? <span>· Forfald {formatDate(doc.dueDate)}</span> : null}
           {doc.category ? (
             <CategoryChip label={doc.category.label} tone={doc.category.tone ?? "lavender"} />
           ) : null}
