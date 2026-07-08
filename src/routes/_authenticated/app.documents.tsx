@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Filter, Loader2, Plus, X } from "lucide-react";
+import { FileText, Filter, Plus, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { SearchBar } from "@/components/atoms/search-bar";
