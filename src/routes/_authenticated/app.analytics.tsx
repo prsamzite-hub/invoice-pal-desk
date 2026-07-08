@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, Wallet, PiggyBank, Pencil } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -47,12 +47,16 @@ export const Route = createFileRoute("/_authenticated/app/analytics")({
   component: AnalyticsPage,
 });
 
+const BRAND_PRIMARY = "#6b93a8";
+const BRAND_PRIMARY_DARK = "#4d7488";
+const BRAND_INK = "#23241f";
+
 const CATEGORY_COLORS: Record<string, string> = {
-  Dagligvarer: "var(--mint)",
-  Forsyning: "var(--sky)",
-  Abonnementer: "var(--lavender)",
-  "Mad ude": "var(--peach)",
-  Shopping: "var(--butter)",
+  Dagligvarer: "#6b93a8",
+  Forsyning: "#8fb3c4",
+  Abonnementer: "#4d7488",
+  "Mad ude": "#c5a880",
+  Shopping: "#a8846b",
 };
 
 const CATEGORIES: Array<{ label: string; value: number }> = [
@@ -137,6 +141,27 @@ const dkk = new Intl.NumberFormat("da-DK", {
   maximumFractionDigits: 0,
 });
 
+function BrandTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-soft">
+      {label != null && (
+        <div className="mb-1 font-semibold text-foreground">{label}</div>
+      )}
+      {payload.map((p: any) => (
+        <div key={p.name ?? p.dataKey} className="flex items-center gap-2 text-foreground">
+          <span
+            className="h-2.5 w-2.5 rounded-full"
+            style={{ background: p.color ?? p.payload?.fill ?? BRAND_PRIMARY }}
+          />
+          <span className="text-muted-foreground">{p.name}</span>
+          <span className="font-semibold">{dkk.format(p.value as number)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AnalyticsPage() {
   const { t } = useLang();
   const total = CATEGORIES.reduce((s, c) => s + c.value, 0);
@@ -195,7 +220,9 @@ function AnalyticsPage() {
     return series.map((p) => ({ name: p.label, value: p.value }));
   }, [prefs.grouping, total]);
 
-  const pieData = CATEGORIES.map((c) => ({ name: c.label, value: c.value }));
+  const pieData = [...CATEGORIES]
+    .sort((a, b) => b.value - a.value)
+    .map((c) => ({ name: c.label, value: c.value }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -285,24 +312,47 @@ function AnalyticsPage() {
               </ul>
             </>
           ) : (
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
+            <div className="flex flex-col gap-5 md:flex-row md:items-center">
+              <div className="h-64 w-full md:w-1/2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={55}
+                      outerRadius={95}
+                      paddingAngle={2}
+                      stroke="var(--card)"
+                      strokeWidth={2}
+                    >
+                      {pieData.map((entry) => (
+                        <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<BrandTooltip />} cursor={false} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="flex w-full flex-col gap-2 md:w-1/2">
+                {pieData.map((entry) => (
+                  <li
+                    key={entry.name}
+                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5"
                   >
-                    {pieData.map((entry) => (
-                      <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => dkk.format(v)} />
-                </PieChart>
-              </ResponsiveContainer>
+                    <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-full"
+                        style={{ background: CATEGORY_COLORS[entry.name] }}
+                      />
+                      {entry.name}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
+                      {dkk.format(entry.value)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
@@ -348,42 +398,87 @@ function AnalyticsPage() {
             />
           </div>
         </div>
-        <div className="h-56 w-full">
+        <div className="h-56 w-full text-muted-foreground">
           <ResponsiveContainer width="100%" height="100%">
             {prefs.trend === "bar" ? (
-              <BarChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+              <BarChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="currentColor"
+                  opacity={0.15}
+                />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  tick={{ fill: "currentColor" }}
+                />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
                   fontSize={12}
+                  tick={{ fill: "currentColor" }}
                   tickFormatter={(v) => dkk.format(v)}
                   width={80}
                 />
-                <Tooltip formatter={(v: number) => dkk.format(v)} />
-                <Bar dataKey="value" fill="var(--primary)" radius={[8, 8, 0, 0]} />
+                <Tooltip
+                  content={<BrandTooltip />}
+                  cursor={{ fill: BRAND_PRIMARY, opacity: 0.08 }}
+                />
+                <Bar
+                  dataKey="value"
+                  name="Forbrug"
+                  fill={BRAND_PRIMARY}
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={48}
+                />
               </BarChart>
             ) : (
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+              <AreaChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="brandLineFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={BRAND_PRIMARY} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={BRAND_PRIMARY} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="currentColor"
+                  opacity={0.15}
+                />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  tick={{ fill: "currentColor" }}
+                />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
                   fontSize={12}
+                  tick={{ fill: "currentColor" }}
                   tickFormatter={(v) => dkk.format(v)}
                   width={80}
                 />
-                <Tooltip formatter={(v: number) => dkk.format(v)} />
-                <Line
+                <Tooltip
+                  content={<BrandTooltip />}
+                  cursor={{ stroke: BRAND_PRIMARY, strokeOpacity: 0.3, strokeWidth: 1 }}
+                />
+                <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="var(--primary)"
+                  name="Forbrug"
+                  stroke={BRAND_PRIMARY}
                   strokeWidth={2.5}
-                  dot={{ r: 4 }}
+                  fill="url(#brandLineFill)"
+                  dot={{ r: 4, fill: BRAND_PRIMARY, stroke: BRAND_PRIMARY }}
+                  activeDot={{ r: 6, fill: BRAND_PRIMARY_DARK, stroke: "var(--card)", strokeWidth: 2 }}
                 />
-              </LineChart>
+              </AreaChart>
             )}
           </ResponsiveContainer>
         </div>
