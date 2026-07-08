@@ -39,7 +39,12 @@ export function AppSidebar() {
           <img
             src="/brand/icon.svg"
             alt=""
-            className="h-8 w-8 shrink-0"
+            className="h-8 w-8 shrink-0 dark:hidden"
+          />
+          <img
+            src="/brand/icon-on-dark.svg"
+            alt=""
+            className="hidden h-8 w-8 shrink-0 dark:block"
           />
           <img
             src="/brand/wordmark-on-light.svg"

@@ -166,14 +166,16 @@ function AuthPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-hero">
       <Link to="/" className="absolute left-6 top-6 inline-flex items-center gap-2" aria-label="Kvitregn — forside">
-        <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-10 w-auto" />
+        <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-10 w-auto dark:hidden" />
+        <img src="/brand/lockup-on-dark.png" alt="Kvitregn" className="hidden h-10 w-auto dark:block" />
       </Link>
 
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
         <div className="shadow-card rounded-3xl border border-border bg-card p-8">
           <div className="mb-6 text-center">
             <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-soft">
-              <img src="/brand/icon.svg" alt="" aria-hidden="true" className="h-8 w-8" />
+              <img src="/brand/icon.svg" alt="" aria-hidden="true" className="h-8 w-8 dark:hidden" />
+              <img src="/brand/icon-on-dark.svg" alt="" aria-hidden="true" className="hidden h-8 w-8 dark:block" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
               {view === "forgot" ? "Nulstil adgangskode" : "Velkommen"}

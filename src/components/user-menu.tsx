@@ -39,7 +39,8 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Brugermenu"
-        className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#6b93a8] text-sm font-bold text-[#f5f2ea] outline-none ring-offset-background transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        title="Brugermenu"
+        className="ml-1 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[#6b93a8] text-sm font-bold text-[#f5f2ea] outline-none ring-1 ring-transparent ring-offset-2 ring-offset-background transition hover:brightness-110 hover:ring-[#6b93a8]/50 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:ring-[#6b93a8]"
       >
         {initial}
       </DropdownMenuTrigger>
