@@ -2,41 +2,62 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Loader2 } from "lucide-react";
+import { FileText, Filter, Loader2, Plus, X } from "lucide-react";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { SearchBar } from "@/components/atoms/search-bar";
 import { DocumentCard, type DocumentCardData } from "@/components/atoms/document-card";
-import { DocumentDetailSheet } from "@/components/document-detail-sheet";
+import { DocumentDetailSheet, type DetailRow } from "@/components/document-detail-sheet";
 import { EmptyState } from "@/components/atoms/empty-state";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
-import { listMyReceipts, getReceiptPdfUrl } from "@/lib/receipts.functions";
-import { useLang } from "@/lib/i18n";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { deriveReceiptStatus, type ReceiptStatus } from "@/components/atoms/status-badge";
+import {
+  CATEGORIES,
+  getReceiptPdfUrl,
+  listMyReceipts,
+} from "@/lib/receipts.functions";
 
 export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
     meta: [
       { title: "Dokumenter — Kvitregn" },
-      { name: "description", content: "Alle dine kvitteringer og fakturaer — søgbare og filtrerbare." },
+      {
+        name: "description",
+        content: "Alle dine kvitteringer og fakturaer — søgbare og filtrerbare.",
+      },
     ],
   }),
   component: DocumentsPage,
 });
 
-type Tab = "all" | "receipts" | "invoices" | "unpaid";
+type TypeFilter = "all" | "receipt" | "invoice";
+type StatusFilter = "all" | "paid" | "unpaid" | "overdue";
+type SortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "company_asc";
 
 const CATEGORY_TONE: Record<string, "mint" | "peach" | "lavender" | "butter" | "sky"> = {
   Groceries: "mint",
-  Dagligvarer: "mint",
   Utilities: "sky",
-  Forsyning: "sky",
   Subscriptions: "lavender",
-  Abonnementer: "lavender",
   Dining: "peach",
-  Mad: "peach",
   Shopping: "butter",
   Transport: "sky",
+  Health: "mint",
+  Other: "lavender",
 };
 
 function toneFor(cat?: string | null) {
@@ -44,55 +65,96 @@ function toneFor(cat?: string | null) {
   return CATEGORY_TONE[cat] ?? "lavender";
 }
 
-function deriveStatus(row: { status: string; due_date: string | null }): "paid" | "unpaid" | "overdue" {
-  if (row.status === "paid") return "paid";
-  const today = new Date().toISOString().slice(0, 10);
-  if (row.due_date && row.due_date < today) return "overdue";
-  return "unpaid";
+interface EnrichedDoc extends DocumentCardData {
+  notes: string | null;
+  categoryRaw: string | null;
+  amountNumber: number;
+  dateIso: string;
 }
 
 function DocumentsPage() {
-  const { t } = useLang();
   const listFn = useServerFn(listMyReceipts);
   const pdfUrlFn = useServerFn(getReceiptPdfUrl);
 
-  const [tab, setTab] = useState<Tab>("all");
   const [q, setQ] = useState("");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [category, setCategory] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [sort, setSort] = useState<SortKey>("date_desc");
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const receipts = useQuery({ queryKey: ["receipts"], queryFn: () => listFn() });
 
-  const docs: DocumentCardData[] = useMemo(() => {
+  const docs: EnrichedDoc[] = useMemo(() => {
     const rows = receipts.data ?? [];
-    return rows.map((r) => ({
-      id: r.id,
-      company: r.company,
-      amount: Number(r.amount),
-      currency: r.currency,
-      issuedDate: r.issued_date ?? r.created_at,
-      dueDate: r.due_date,
-      status: deriveStatus(r),
-      type: (r.document_type as "receipt" | "invoice") ?? "receipt",
-      category: r.category ? { label: r.category, tone: toneFor(r.category) } : undefined,
-    }));
+    return rows.map((r) => {
+      const status: ReceiptStatus = deriveReceiptStatus(r);
+      return {
+        id: r.id,
+        company: r.company,
+        amount: Number(r.amount),
+        amountNumber: Number(r.amount),
+        currency: r.currency,
+        issuedDate: r.issued_date ?? r.created_at,
+        dateIso: (r.issued_date ?? r.created_at).slice(0, 10),
+        dueDate: r.due_date,
+        status,
+        type: (r.document_type as "receipt" | "invoice") ?? "receipt",
+        category: r.category
+          ? { label: r.category, tone: toneFor(r.category) }
+          : undefined,
+        categoryRaw: r.category ?? null,
+        notes: r.notes ?? null,
+      };
+    });
   }, [receipts.data]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return docs.filter((d) => {
-      if (tab === "receipts" && d.type !== "receipt") return false;
-      if (tab === "invoices" && d.type !== "invoice") return false;
-      if (tab === "unpaid" && d.status === "paid") return false;
+    const numericTerm = term ? parseFloat(term.replace(/\./g, "").replace(",", ".")) : NaN;
+    const list = docs.filter((d) => {
+      if (typeFilter !== "all" && d.type !== typeFilter) return false;
+      if (statusFilter !== "all" && d.status !== statusFilter) return false;
+      if (category !== "all" && d.categoryRaw !== category) return false;
+      if (dateFrom && d.dateIso < dateFrom) return false;
+      if (dateTo && d.dateIso > dateTo) return false;
       if (!term) return true;
-      return (
+      const inText =
         d.company.toLowerCase().includes(term) ||
-        (d.category?.label ?? "").toLowerCase().includes(term)
-      );
+        (d.categoryRaw ?? "").toLowerCase().includes(term) ||
+        (d.notes ?? "").toLowerCase().includes(term);
+      const inAmount =
+        !Number.isNaN(numericTerm) && Math.abs(d.amountNumber - numericTerm) < 0.01;
+      return inText || inAmount;
     });
-  }, [docs, tab, q]);
 
-  const selected = docs.find((d) => d.id === selectedId) ?? null;
+    list.sort((a, b) => {
+      switch (sort) {
+        case "date_asc":
+          return a.dateIso.localeCompare(b.dateIso);
+        case "amount_desc":
+          return b.amountNumber - a.amountNumber;
+        case "amount_asc":
+          return a.amountNumber - b.amountNumber;
+        case "company_asc":
+          return a.company.localeCompare(b.company, "da");
+        case "date_desc":
+        default:
+          return b.dateIso.localeCompare(a.dateIso);
+      }
+    });
+    return list;
+  }, [docs, q, typeFilter, statusFilter, category, dateFrom, dateTo, sort]);
+
+  const selected: DetailRow | null = useMemo(() => {
+    const found = docs.find((d) => d.id === selectedId);
+    if (!found) return null;
+    return { ...found, notes: found.notes };
+  }, [docs, selectedId]);
 
   const openDoc = async (id: string) => {
     setSelectedId(id);
@@ -105,59 +167,214 @@ function DocumentsPage() {
     }
   };
 
-  const TABS: Array<{ id: Tab; label: string }> = [
-    { id: "all", label: t("docs.tab.all") },
-    { id: "receipts", label: t("docs.tab.receipts") },
-    { id: "invoices", label: t("docs.tab.invoices") },
-    { id: "unpaid", label: t("docs.tab.unpaid") },
-  ];
+  const activeFilterCount =
+    (typeFilter !== "all" ? 1 : 0) +
+    (statusFilter !== "all" ? 1 : 0) +
+    (category !== "all" ? 1 : 0) +
+    (dateFrom ? 1 : 0) +
+    (dateTo ? 1 : 0);
+
+  const clearFilters = () => {
+    setTypeFilter("all");
+    setStatusFilter("all");
+    setCategory("all");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const isEmpty = (receipts.data?.length ?? 0) === 0;
+  const noMatches = !isEmpty && filtered.length === 0;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={t("docs.title")}
-        description={t("docs.description")}
+        title="Dokumenter"
+        description="Alle dine kvitteringer og fakturaer."
         actions={
           <Button asChild className="rounded-full">
             <Link to="/app/upload">
               <Plus className="mr-2 h-4 w-4" />
-              {t("docs.new")}
+              Nyt dokument
             </Link>
           </Button>
         }
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <SearchBar value={q} onChange={setQ} placeholder={t("docs.search")} />
-        <div className="inline-flex rounded-full bg-muted p-1">
-          {TABS.map((tt) => (
-            <button
-              key={tt.id}
-              onClick={() => setTab(tt.id)}
-              className={
-                tab === tt.id
-                  ? "rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-soft"
-                  : "rounded-full px-3 py-1 text-xs font-medium text-muted-foreground"
-              }
-            >
-              {tt.label}
-            </button>
-          ))}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SearchBar
+            value={q}
+            onChange={setQ}
+            placeholder="Søg efter firma, beløb, note…"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="rounded-full">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Filtre
+                  {activeFilterCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 rounded-full">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Type</Label>
+                    <Select
+                      value={typeFilter}
+                      onValueChange={(v) => setTypeFilter(v as TypeFilter)}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle</SelectItem>
+                        <SelectItem value="receipt">Kvittering</SelectItem>
+                        <SelectItem value="invoice">Faktura</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Status</Label>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle</SelectItem>
+                        <SelectItem value="paid">Betalt</SelectItem>
+                        <SelectItem value="unpaid">Ubetalt</SelectItem>
+                        <SelectItem value="overdue">Forfalden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label>Kategori</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle kategorier</SelectItem>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="from">Fra dato</Label>
+                    <Input
+                      id="from"
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="to">Til dato</Label>
+                    <Input
+                      id="to"
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {activeFilterCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    className="w-full rounded-full"
+                    onClick={clearFilters}
+                  >
+                    <X className="mr-2 h-4 w-4" /> Nulstil filtre
+                  </Button>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="w-44 rounded-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date_desc">Nyeste først</SelectItem>
+                <SelectItem value="date_asc">Ældste først</SelectItem>
+                <SelectItem value="amount_desc">Højeste beløb</SelectItem>
+                <SelectItem value="amount_asc">Laveste beløb</SelectItem>
+                <SelectItem value="company_asc">Firma A–Å</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>Filtre aktive:</span>
+            {typeFilter !== "all" && (
+              <Badge variant="secondary" className="rounded-full">
+                {typeFilter === "receipt" ? "Kvittering" : "Faktura"}
+              </Badge>
+            )}
+            {statusFilter !== "all" && (
+              <Badge variant="secondary" className="rounded-full">
+                {statusFilter === "paid"
+                  ? "Betalt"
+                  : statusFilter === "unpaid"
+                    ? "Ubetalt"
+                    : "Forfalden"}
+              </Badge>
+            )}
+            {category !== "all" && (
+              <Badge variant="secondary" className="rounded-full">{category}</Badge>
+            )}
+            {dateFrom && (
+              <Badge variant="secondary" className="rounded-full">Fra {dateFrom}</Badge>
+            )}
+            {dateTo && (
+              <Badge variant="secondary" className="rounded-full">Til {dateTo}</Badge>
+            )}
+          </div>
+        )}
       </div>
 
       {receipts.isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Indlæser…
         </div>
-      ) : filtered.length === 0 ? (
+      ) : isEmpty ? (
         <EmptyState
           icon={FileText}
-          title={t("docs.empty")}
-          description={t("docs.emptyDesc")}
+          title="Ingen dokumenter endnu"
+          description="Upload din første kvittering eller faktura, så samler vi alt her — søgbart, sorterbart og klar til deling."
+          action={
+            <Button asChild className="rounded-full">
+              <Link to="/app/upload">
+                <Plus className="mr-2 h-4 w-4" />
+                Upload dit første dokument
+              </Link>
+            </Button>
+          }
+        />
+      ) : noMatches ? (
+        <EmptyState
+          icon={FileText}
+          title="Ingen dokumenter matcher"
+          description="Prøv at ændre din søgning eller nulstille filtrene."
+          action={
+            <Button variant="outline" className="rounded-full" onClick={clearFilters}>
+              <X className="mr-2 h-4 w-4" /> Nulstil filtre
+            </Button>
+          }
         />
       ) : (
         <div className="flex flex-col gap-3">
+          <p className="text-xs text-muted-foreground">
+            Viser {filtered.length} af {docs.length} dokument{docs.length === 1 ? "" : "er"}
+          </p>
           {filtered.map((d) => (
             <DocumentCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />
           ))}

@@ -249,3 +249,115 @@ export const getReceiptPdfUrl = createServerFn({ method: "POST" })
     if (signed.error) throw signed.error;
     return { url: signed.data.signedUrl };
   });
+
+export const getReceiptOriginalUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("receipts")
+      .select("original_path, user_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row || row.user_id !== userId || !row.original_path) throw new Error("Not found");
+    const signed = await supabase.storage
+      .from("receipts")
+      .createSignedUrl(row.original_path, 60 * 10);
+    if (signed.error) throw signed.error;
+    return { url: signed.data.signedUrl };
+  });
+
+export const updateReceipt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; fields: ExtractedFields }) => {
+    if (!data?.id) throw new Error("Missing id");
+    const f = data.fields;
+    if (!f?.company || f.company.trim().length === 0) throw new Error("Firma mangler");
+    if (!Number.isFinite(Number(f.amount)) || Number(f.amount) <= 0)
+      throw new Error("Beløb skal være større end 0");
+    if (!f.issued_date) throw new Error("Dato mangler");
+    return {
+      id: data.id,
+      fields: {
+        company: f.company.trim(),
+        amount: Number(f.amount),
+        currency: (f.currency || "DKK").toUpperCase(),
+        issued_date: f.issued_date,
+        due_date: f.due_date || null,
+        document_type: f.document_type === "invoice" ? "invoice" : "receipt",
+        category: f.category || null,
+        notes: f.notes || null,
+      } as ExtractedFields,
+    };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const f = data.fields;
+    const { data: existing, error: exErr } = await supabase
+      .from("receipts")
+      .select("status")
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (exErr) throw exErr;
+    if (!existing) throw new Error("Ikke fundet");
+    const nextStatus = existing.status === "paid" ? "paid" : f.due_date ? "unpaid" : "paid";
+    const { data: row, error } = await supabase
+      .from("receipts")
+      .update({
+        company: f.company,
+        amount: f.amount,
+        currency: f.currency,
+        issued_date: f.issued_date,
+        due_date: f.due_date,
+        document_type: f.document_type,
+        category: f.category,
+        notes: f.notes,
+        status: nextStatus,
+      })
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const markReceiptPaid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; paid: boolean }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("receipts")
+      .update({ status: data.paid ? "paid" : "unpaid" })
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteReceipt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("receipts")
+      .select("id, user_id, original_path, pdf_path")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row || row.user_id !== userId) throw new Error("Ikke fundet");
+    const paths = [row.original_path, row.pdf_path].filter(Boolean) as string[];
+    if (paths.length > 0) {
+      await supabase.storage.from("receipts").remove(paths);
+    }
+    const del = await supabase.from("receipts").delete().eq("id", data.id).eq("user_id", userId);
+    if (del.error) throw del.error;
+    return { ok: true };
+  });
