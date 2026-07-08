@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Filter, Loader2, Plus, X } from "lucide-react";
+import { FileText, Filter, Plus, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { SearchBar } from "@/components/atoms/search-bar";
@@ -342,8 +343,20 @@ function DocumentsPage() {
       </div>
 
       {receipts.isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Indlæser…
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="shadow-soft flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : isEmpty ? (
         <EmptyState
