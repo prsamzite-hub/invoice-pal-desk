@@ -155,8 +155,8 @@ function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title={t("dashboard.greeting")}
-        description={`Overblik for ${monthLabel}`}
+        title="Oversigt"
+        description={`${t("dashboard.greeting")} · ${monthLabel}`}
         actions={
           <Button asChild className="rounded-full">
             <Link to="/app/upload">
