@@ -82,24 +82,37 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
+      { title: "Kvitregn" },
       {
         name: "description",
         content:
           "Kvitregn er en venlig digital mappe til hver kvittering og faktura. Upload, søg og find dem igen — bygget til Danmark.",
       },
       { name: "author", content: "Kvitregn" },
-      { property: "og:title", content: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
-      {
-        property: "og:description",
-        content:
-          "En rolig og legesyg mappe til hver kvittering og faktura. Bygget til Danmark, i DKK.",
-      },
       { property: "og:site_name", content: "Kvitregn" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Kvitregn — Saml dine kvitteringer og fakturaer ét sted" },
-      { name: "twitter:description", content: "Mist aldrig en kvittering. Kvitregn er din venlige digitale dokumentmappe." },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Kvitregn",
+              url: "https://kvitregn.dk",
+              logo: "https://kvitregn.dk/brand/lockup-on-light.png",
+            },
+            {
+              "@type": "WebSite",
+              name: "Kvitregn",
+              url: "https://kvitregn.dk",
+            },
+          ],
+        }),
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
