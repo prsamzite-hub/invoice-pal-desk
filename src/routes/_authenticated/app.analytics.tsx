@@ -362,7 +362,7 @@ function AnalyticsPage() {
                   width={80}
                 />
                 <Tooltip formatter={(v: number) => dkk.format(v)} />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="value" fill="var(--primary)" radius={[8, 8, 0, 0]} />
               </BarChart>
             ) : (
               <LineChart data={trendData}>
@@ -379,7 +379,7 @@ function AnalyticsPage() {
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke="hsl(var(--primary))"
+                  stroke="var(--primary)"
                   strokeWidth={2.5}
                   dot={{ r: 4 }}
                 />
