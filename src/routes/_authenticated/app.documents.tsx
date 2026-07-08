@@ -33,6 +33,19 @@ import {
   listMyReceipts,
 } from "@/lib/receipts.functions";
 
+const CATEGORY_LABELS_DA: Record<string, string> = {
+  Groceries: "Dagligvarer",
+  Utilities: "Forsyning",
+  Subscriptions: "Abonnementer",
+  Dining: "Mad ude",
+  Transport: "Transport",
+  Shopping: "Shopping",
+  Health: "Sundhed",
+  Other: "Andet",
+};
+const labelForCategory = (c?: string | null) =>
+  (c && CATEGORY_LABELS_DA[c]) || c || "Andet";
+
 export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
     meta: [
@@ -106,7 +119,7 @@ function DocumentsPage() {
         status,
         type: (r.document_type as "receipt" | "invoice") ?? "receipt",
         category: r.category
-          ? { label: r.category, tone: toneFor(r.category) }
+          ? { label: labelForCategory(r.category), tone: toneFor(r.category) }
           : undefined,
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
@@ -115,8 +128,10 @@ function DocumentsPage() {
   }, [receipts.data]);
 
   const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    const numericTerm = term ? parseFloat(term.replace(/\./g, "").replace(",", ".")) : NaN;
+    const term = q.trim();
+    const lowered = term.toLowerCase();
+    const normalized = term.replace(/\s/g, "").replace(",", ".");
+    const isAmountPrefix = /^\d+(\.\d*)?$/.test(normalized) && normalized.length > 0;
     const list = docs.filter((d) => {
       if (typeFilter !== "all" && d.type !== typeFilter) return false;
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
@@ -124,12 +139,18 @@ function DocumentsPage() {
       if (dateFrom && d.dateIso < dateFrom) return false;
       if (dateTo && d.dateIso > dateTo) return false;
       if (!term) return true;
+      const catLabel = labelForCategory(d.categoryRaw).toLowerCase();
       const inText =
-        d.company.toLowerCase().includes(term) ||
-        (d.categoryRaw ?? "").toLowerCase().includes(term) ||
-        (d.notes ?? "").toLowerCase().includes(term);
-      const inAmount =
-        !Number.isNaN(numericTerm) && Math.abs(d.amountNumber - numericTerm) < 0.01;
+        d.company.toLowerCase().includes(lowered) ||
+        (d.categoryRaw ?? "").toLowerCase().includes(lowered) ||
+        catLabel.includes(lowered) ||
+        (d.notes ?? "").toLowerCase().includes(lowered);
+      let inAmount = false;
+      if (isAmountPrefix) {
+        const amtStr = String(d.amountNumber);
+        const amtFixed = d.amountNumber.toFixed(2);
+        inAmount = amtStr.startsWith(normalized) || amtFixed.startsWith(normalized);
+      }
       return inText || inAmount;
     });
 
@@ -260,7 +281,7 @@ function DocumentsPage() {
                     <SelectContent>
                       <SelectItem value="all">Alle kategorier</SelectItem>
                       {CATEGORIES.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                        <SelectItem key={c} value={c}>{labelForCategory(c)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -330,7 +351,7 @@ function DocumentsPage() {
               </Badge>
             )}
             {category !== "all" && (
-              <Badge variant="secondary" className="rounded-full">{category}</Badge>
+              <Badge variant="secondary" className="rounded-full">{labelForCategory(category)}</Badge>
             )}
             {dateFrom && (
               <Badge variant="secondary" className="rounded-full">Fra {dateFrom}</Badge>

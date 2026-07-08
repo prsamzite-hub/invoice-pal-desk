@@ -227,8 +227,7 @@ export const listMyReceipts = createServerFn({ method: "GET" })
       .from("receipts")
       .select("*")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return data ?? [];
   });
