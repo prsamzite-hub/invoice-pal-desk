@@ -166,7 +166,7 @@ function AuthPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-hero">
       <Link to="/" className="absolute left-6 top-6 inline-flex items-center gap-2" aria-label="Kvitregn — forside">
-        <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-8 w-auto" />
+        <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-10 w-auto" />
       </Link>
 
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
