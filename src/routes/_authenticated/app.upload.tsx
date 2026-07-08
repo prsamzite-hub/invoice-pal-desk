@@ -7,15 +7,18 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/atoms/empty-state";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { PdfViewerDialog } from "@/components/pdf-viewer-dialog";
+import { ReceiptReviewDialog } from "@/components/receipt-review-dialog";
 import { useLang } from "@/lib/i18n";
 import {
-  uploadReceipt,
+  extractReceipt,
   listMyReceipts,
   getReceiptPdfUrl,
+  type ExtractResult,
 } from "@/lib/receipts.functions";
 
 export const Route = createFileRoute("/_authenticated/app/upload")({
@@ -28,10 +31,27 @@ export const Route = createFileRoute("/_authenticated/app/upload")({
   component: UploadPage,
 });
 
+const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
+const ACCEPTED_MIME = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/heic",
+  "image/heif",
+]);
+const ACCEPTED_EXT = /\.(pdf|jpe?g|png|heic|heif)$/i;
+
+function isAcceptedFile(f: File): boolean {
+  if (f.type && ACCEPTED_MIME.has(f.type.toLowerCase())) return true;
+  // Some browsers give empty type for HEIC — fall back to extension.
+  return ACCEPTED_EXT.test(f.name);
+}
+
 function UploadPage() {
   const { lang } = useLang();
   const qc = useQueryClient();
-  const uploadFn = useServerFn(uploadReceipt);
+  const extractFn = useServerFn(extractReceipt);
   const listFn = useServerFn(listMyReceipts);
   const pdfUrlFn = useServerFn(getReceiptPdfUrl);
 
@@ -41,26 +61,56 @@ function UploadPage() {
     url: null,
     title: "",
   });
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewData, setReviewData] = useState<ExtractResult | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState<string>("");
 
   const receipts = useQuery({
     queryKey: ["receipts"],
     queryFn: () => listFn(),
   });
 
-  const upload = useMutation({
+  const extract = useMutation({
     mutationFn: async (file: File) => {
+      setProgress(10);
+      setProgressLabel("Uploader fil…");
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("lang", lang);
-      return await uploadFn({ data: fd });
+      // Simulate visible progress while the server function runs.
+      const timer = setInterval(() => {
+        setProgress((p) => {
+          if (p < 40) {
+            setProgressLabel("Uploader fil…");
+            return p + 5;
+          }
+          if (p < 85) {
+            setProgressLabel("AI aflæser dokumentet…");
+            return p + 3;
+          }
+          return p;
+        });
+      }, 300);
+      try {
+        const res = await extractFn({ data: fd });
+        setProgress(100);
+        setProgressLabel("Klar til gennemgang");
+        return res;
+      } finally {
+        clearInterval(timer);
+      }
     },
-    onSuccess: (row) => {
-      toast.success(`Tilføjet ${row.company}`, {
-        description: "Vi aflæste detaljerne og genererede en PDF.",
-      });
-      qc.invalidateQueries({ queryKey: ["receipts"] });
+    onSuccess: (res) => {
+      setReviewData(res);
+      setReviewOpen(true);
+      setTimeout(() => {
+        setProgress(0);
+        setProgressLabel("");
+      }, 400);
     },
     onError: (e: unknown) => {
+      setProgress(0);
+      setProgressLabel("");
       toast.error("Upload mislykkedes", {
         description: e instanceof Error ? e.message : "Prøv igen.",
       });
@@ -68,8 +118,21 @@ function UploadPage() {
   });
 
   const handleFiles = (files: FileList | null) => {
-    if (!files) return;
-    Array.from(files).forEach((f) => upload.mutate(f));
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!isAcceptedFile(file)) {
+      toast.error("Filtype ikke understøttet", {
+        description: "Vi accepterer kun PDF, JPG, PNG eller HEIC.",
+      });
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      toast.error("Filen er for stor", {
+        description: `Maksimal størrelse er ${Math.round(MAX_BYTES / (1024 * 1024))} MB.`,
+      });
+      return;
+    }
+    extract.mutate(file);
   };
 
   const openPdf = async (id: string, title: string) => {
@@ -85,7 +148,7 @@ function UploadPage() {
     }
   };
 
-  const isBusy = upload.isPending;
+  const isBusy = extract.isPending;
 
   return (
     <div className="flex flex-col gap-8">
@@ -109,17 +172,23 @@ function UploadPage() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground">
-                {isBusy ? "Læser dit dokument…" : "Slip dine kvitteringer her"}
+                {isBusy ? progressLabel || "Arbejder…" : "Slip dine kvitteringer her"}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                PDF'er, billeder, screenshots — alt virker. Vi laver hver enkelt til en pæn PDF.
+                PDF, JPG, PNG eller HEIC — op til 15 MB. Vi laver hver enkelt til en pæn PDF.
               </p>
             </div>
+
+            {isBusy && (
+              <div className="w-full max-w-xs">
+                <Progress value={progress} />
+              </div>
+            )}
+
             <input
               ref={inputRef}
               type="file"
-              multiple
-              accept="image/*,application/pdf"
+              accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.pdf,.jpg,.jpeg,.png,.heic,.heif"
               className="hidden"
               onChange={(e) => {
                 handleFiles(e.target.files);
@@ -128,7 +197,7 @@ function UploadPage() {
             />
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button className="rounded-full" onClick={() => inputRef.current?.click()} disabled={isBusy}>
-                Vælg filer
+                Vælg fil
               </Button>
               <Button
                 variant="outline"
@@ -149,8 +218,8 @@ function UploadPage() {
           <div>
             <h3 className="text-base font-bold text-foreground">AI klarer skrivearbejdet</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Kvitregn læser hvert dokument, udfylder firma, beløb, dato og kategori — og genererer
-              en pæn PDF, du kan dele.
+              Kvitregn læser hvert dokument og foreslår firma, beløb, dato og kategori. Du gennemgår og retter
+              før vi gemmer.
             </p>
           </div>
           <ul className="flex flex-col gap-2 text-sm text-foreground">
@@ -161,7 +230,7 @@ function UploadPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Skelner kvittering fra faktura
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Laver en printbar PDF
+              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Advarer om dubletter
             </li>
           </ul>
         </aside>
@@ -236,6 +305,14 @@ function UploadPage() {
         onOpenChange={(o) => setPdfState((s) => ({ ...s, open: o }))}
         url={pdfState.url}
         title={pdfState.title}
+      />
+
+      <ReceiptReviewDialog
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        initial={reviewData}
+        lang={lang}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["receipts"] })}
       />
     </div>
   );
