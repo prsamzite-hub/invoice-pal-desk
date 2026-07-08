@@ -12,12 +12,12 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: 'Bekræft din email hos Kvitregn',
+  invite: 'Du er inviteret til Kvitregn',
+  magiclink: 'Dit login-link til Kvitregn',
+  recovery: 'Nulstil din adgangskode hos Kvitregn',
+  email_change: 'Bekræft din nye email hos Kvitregn',
+  reauthentication: 'Din bekræftelseskode til Kvitregn',
 }
 
 // Template mapping
@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "invoice-pal-desk"
+const SITE_NAME = "Kvitregn"
 const SENDER_DOMAIN = "notify.kvitregn.dk"
 const ROOT_DOMAIN = "kvitregn.dk"
 const FROM_DOMAIN = "kvitregn.dk"
