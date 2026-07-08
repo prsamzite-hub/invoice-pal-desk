@@ -1,13 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, Wallet, PiggyBank, Pencil } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { StatCard } from "@/components/atoms/stat-card";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { BudgetProgressBar } from "@/components/atoms/budget-progress-bar";
+import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLang } from "@/lib/i18n";
@@ -16,27 +37,31 @@ export const Route = createFileRoute("/_authenticated/app/analytics")({
   head: () => ({
     meta: [
       { title: "Analyse & budgetter — Kvitregn" },
-      { name: "description", content: "Se hvor dine kroner går hen og hold styr på dine månedlige budgetter." },
+      {
+        name: "description",
+        content:
+          "Se hvor dine kroner går hen og hold styr på dine månedlige budgetter.",
+      },
     ],
   }),
   component: AnalyticsPage,
 });
 
-const CATEGORIES: Array<{ label: string; value: number; tone: "mint" | "peach" | "lavender" | "butter" | "sky" }> = [
-  { label: "Dagligvarer", value: 1850, tone: "mint" },
-  { label: "Forsyning", value: 892, tone: "sky" },
-  { label: "Abonnementer", value: 620, tone: "lavender" },
-  { label: "Mad ude", value: 410, tone: "peach" },
-  { label: "Shopping", value: 515, tone: "butter" },
-];
+const CATEGORY_COLORS: Record<string, string> = {
+  Dagligvarer: "hsl(var(--mint))",
+  Forsyning: "hsl(var(--sky))",
+  Abonnementer: "hsl(var(--lavender))",
+  "Mad ude": "hsl(var(--peach))",
+  Shopping: "hsl(var(--butter))",
+};
 
-const TONE_BG = {
-  mint: "bg-mint",
-  peach: "bg-peach",
-  lavender: "bg-lavender",
-  butter: "bg-butter",
-  sky: "bg-sky",
-} as const;
+const CATEGORIES: Array<{ label: string; value: number }> = [
+  { label: "Dagligvarer", value: 1850 },
+  { label: "Forsyning", value: 892 },
+  { label: "Abonnementer", value: 620 },
+  { label: "Mad ude", value: 410 },
+  { label: "Shopping", value: 515 },
+];
 
 const DEFAULT_BUDGETS: Record<string, number> = {
   "I alt": 6000,
@@ -48,6 +73,41 @@ const DEFAULT_BUDGETS: Record<string, number> = {
 };
 
 const STORAGE_KEY = "kvitregn.budgets";
+const PREFS_KEY = "kvitregn.analytics.prefs";
+
+const MONTH_SERIES = [
+  { label: "Jan", value: 3200 },
+  { label: "Feb", value: 4100 },
+  { label: "Mar", value: 3650 },
+  { label: "Apr", value: 4480 },
+  { label: "Maj", value: 3920 },
+];
+
+const WEEK_SERIES = [
+  { label: "U18", value: 820 },
+  { label: "U19", value: 1180 },
+  { label: "U20", value: 940 },
+  { label: "U21", value: 1360 },
+  { label: "U22", value: 1010 },
+  { label: "U23", value: 970 },
+  { label: "U24", value: 890 },
+];
+
+type TrendChart = "bar" | "line";
+type CategoryChart = "list" | "donut";
+type Grouping = "month" | "week";
+
+interface Prefs {
+  trend: TrendChart;
+  category: CategoryChart;
+  grouping: Grouping;
+}
+
+const DEFAULT_PREFS: Prefs = {
+  trend: "bar",
+  category: "list",
+  grouping: "month",
+};
 
 function loadBudgets(): Record<string, number> {
   if (typeof window === "undefined") return DEFAULT_BUDGETS;
@@ -60,20 +120,55 @@ function loadBudgets(): Record<string, number> {
   }
 }
 
+function loadPrefs(): Prefs {
+  if (typeof window === "undefined") return DEFAULT_PREFS;
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    if (!raw) return DEFAULT_PREFS;
+    return { ...DEFAULT_PREFS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
+const dkk = new Intl.NumberFormat("da-DK", {
+  style: "currency",
+  currency: "DKK",
+  maximumFractionDigits: 0,
+});
+
 function AnalyticsPage() {
   const { t } = useLang();
   const total = CATEGORIES.reduce((s, c) => s + c.value, 0);
   const [budgets, setBudgets] = useState<Record<string, number>>(DEFAULT_BUDGETS);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
 
   useEffect(() => {
     setBudgets(loadBudgets());
+    setPrefs(loadPrefs());
   }, []);
+
+  const updatePref = <K extends keyof Prefs>(key: K, value: Prefs[K]) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [key]: value };
+      try {
+        window.localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const openEdit = () => {
     const b = loadBudgets();
-    setDraft(Object.fromEntries(Object.keys(DEFAULT_BUDGETS).map((k) => [k, String(b[k] ?? DEFAULT_BUDGETS[k])])));
+    setDraft(
+      Object.fromEntries(
+        Object.keys(DEFAULT_BUDGETS).map((k) => [k, String(b[k] ?? DEFAULT_BUDGETS[k])]),
+      ),
+    );
     setEditing(true);
   };
 
@@ -88,7 +183,19 @@ function AnalyticsPage() {
     setEditing(false);
   };
 
-  const spentByLabel: Record<string, number> = Object.fromEntries(CATEGORIES.map((c) => [c.label, c.value]));
+  const spentByLabel: Record<string, number> = Object.fromEntries(
+    CATEGORIES.map((c) => [c.label, c.value]),
+  );
+
+  const trendData = useMemo(() => {
+    const series =
+      prefs.grouping === "week"
+        ? WEEK_SERIES
+        : [...MONTH_SERIES, { label: "Jun", value: total }];
+    return series.map((p) => ({ name: p.label, value: p.value }));
+  }, [prefs.grouping, total]);
+
+  const pieData = CATEGORIES.map((c) => ({ name: c.label, value: c.value }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -104,67 +211,181 @@ function AnalyticsPage() {
       />
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Brugt i denne måned" value={<MoneyAmount value={total} size="lg" />} hint="+12% vs. maj" icon={Wallet} tone="lavender" />
-        <StatCard label="Gennemsnit pr. måned" value={<MoneyAmount value={3920} size="lg" />} hint="Sidste 6 måneder" icon={TrendingUp} tone="sky" />
-        <StatCard label="Sparet i forhold til budget" value={<MoneyAmount value={Math.max(0, budgets["I alt"] - total)} size="lg" />} hint={`${Math.max(0, Math.round(((budgets["I alt"] - total) / budgets["I alt"]) * 100))}% under målet`} icon={PiggyBank} tone="mint" />
+        <StatCard
+          label="Brugt i denne måned"
+          value={<MoneyAmount value={total} size="lg" />}
+          hint="+12% vs. maj"
+          icon={Wallet}
+          tone="lavender"
+        />
+        <StatCard
+          label="Gennemsnit pr. måned"
+          value={<MoneyAmount value={3920} size="lg" />}
+          hint="Sidste 6 måneder"
+          icon={TrendingUp}
+          tone="sky"
+        />
+        <StatCard
+          label="Sparet i forhold til budget"
+          value={<MoneyAmount value={Math.max(0, budgets["I alt"] - total)} size="lg" />}
+          hint={`${Math.max(0, Math.round(((budgets["I alt"] - total) / budgets["I alt"]) * 100))}% under målet`}
+          icon={PiggyBank}
+          tone="mint"
+        />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="shadow-soft lg:col-span-3 flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
-          <div className="flex items-baseline justify-between">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-lg font-bold text-foreground">Forbrug pr. kategori</h2>
-            <MoneyAmount value={total} size="md" className="text-muted-foreground" />
+            <div className="flex items-center gap-3">
+              <MoneyAmount value={total} size="md" className="text-muted-foreground" />
+              <SegmentedControl<CategoryChart>
+                ariaLabel="Visning af kategorier"
+                value={prefs.category}
+                onChange={(v) => updatePref("category", v)}
+                options={[
+                  { value: "list", label: "Liste" },
+                  { value: "donut", label: "Donut" },
+                ]}
+              />
+            </div>
           </div>
-          <div className="flex h-3 w-full overflow-hidden rounded-full">
-            {CATEGORIES.map((c) => (
-              <div key={c.label} className={TONE_BG[c.tone]} style={{ width: `${(c.value / total) * 100}%` }} aria-label={c.label} />
-            ))}
-          </div>
-          <ul className="flex flex-col divide-y divide-border">
-            {CATEGORIES.map((c) => (
-              <li key={c.label} className="flex items-center justify-between py-2.5">
-                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <span className={`h-2.5 w-2.5 rounded-full ${TONE_BG[c.tone]}`} />
-                  {c.label}
-                </span>
-                <span className="flex items-baseline gap-3 text-xs text-muted-foreground">
-                  <span>{Math.round((c.value / total) * 100)}%</span>
-                  <MoneyAmount value={c.value} size="sm" className="text-foreground" />
-                </span>
-              </li>
-            ))}
-          </ul>
+
+          {prefs.category === "list" ? (
+            <>
+              <div className="flex h-3 w-full overflow-hidden rounded-full">
+                {CATEGORIES.map((c) => (
+                  <div
+                    key={c.label}
+                    style={{
+                      width: `${(c.value / total) * 100}%`,
+                      background: CATEGORY_COLORS[c.label],
+                    }}
+                    aria-label={c.label}
+                  />
+                ))}
+              </div>
+              <ul className="flex flex-col divide-y divide-border">
+                {CATEGORIES.map((c) => (
+                  <li key={c.label} className="flex items-center justify-between py-2.5">
+                    <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ background: CATEGORY_COLORS[c.label] }}
+                      />
+                      {c.label}
+                    </span>
+                    <span className="flex items-baseline gap-3 text-xs text-muted-foreground">
+                      <span>{Math.round((c.value / total) * 100)}%</span>
+                      <MoneyAmount value={c.value} size="sm" className="text-foreground" />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                  >
+                    {pieData.map((entry) => (
+                      <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => dkk.format(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
         <div className="shadow-soft lg:col-span-2 flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
           <h2 className="text-lg font-bold text-foreground">Budgetter</h2>
           <BudgetProgressBar label="I alt" spent={total} budget={budgets["I alt"]} />
           <div className="h-px bg-border" />
-          {Object.keys(DEFAULT_BUDGETS).filter((k) => k !== "I alt").map((label) => (
-            <BudgetProgressBar
-              key={label}
-              label={label}
-              spent={spentByLabel[label] ?? 0}
-              budget={budgets[label] ?? DEFAULT_BUDGETS[label]}
-            />
-          ))}
+          {Object.keys(DEFAULT_BUDGETS)
+            .filter((k) => k !== "I alt")
+            .map((label) => (
+              <BudgetProgressBar
+                key={label}
+                label={label}
+                spent={spentByLabel[label] ?? 0}
+                budget={budgets[label] ?? DEFAULT_BUDGETS[label]}
+              />
+            ))}
         </div>
       </section>
 
       <section className="shadow-soft rounded-2xl border border-border bg-card p-6">
-        <h2 className="mb-4 text-lg font-bold text-foreground">Månedlig udvikling</h2>
-        <div className="flex h-40 items-end gap-3">
-          {[3200, 4100, 3650, 4480, 3920, total].map((v, i) => {
-            const max = Math.max(3200, 4100, 3650, 4480, 3920, total);
-            const h = Math.round((v / max) * 100);
-            const months = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun"];
-            return (
-              <div key={i} className="flex flex-1 flex-col items-center gap-2">
-                <div className={`w-full rounded-t-xl ${i === 5 ? "bg-primary" : "bg-lavender"}`} style={{ height: `${h}%` }} />
-                <span className="text-xs font-medium text-muted-foreground">{months[i]}</span>
-              </div>
-            );
-          })}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-foreground">Forbrug over tid</h2>
+          <div className="flex items-center gap-2">
+            <SegmentedControl<Grouping>
+              ariaLabel="Gruppering"
+              value={prefs.grouping}
+              onChange={(v) => updatePref("grouping", v)}
+              options={[
+                { value: "month", label: "Måned" },
+                { value: "week", label: "Uge" },
+              ]}
+            />
+            <SegmentedControl<TrendChart>
+              ariaLabel="Diagramtype"
+              value={prefs.trend}
+              onChange={(v) => updatePref("trend", v)}
+              options={[
+                { value: "bar", label: "Søjler" },
+                { value: "line", label: "Linje" },
+              ]}
+            />
+          </div>
+        </div>
+        <div className="h-56 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            {prefs.trend === "bar" ? (
+              <BarChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  tickFormatter={(v) => dkk.format(v)}
+                  width={80}
+                />
+                <Tooltip formatter={(v: number) => dkk.format(v)} />
+                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            ) : (
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  tickFormatter={(v) => dkk.format(v)}
+                  width={80}
+                />
+                <Tooltip formatter={(v: number) => dkk.format(v)} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2.5}
+                  dot={{ r: 4 }}
+                />
+              </LineChart>
+            )}
+          </ResponsiveContainer>
         </div>
       </section>
 
@@ -176,7 +397,9 @@ function AnalyticsPage() {
           <div className="flex flex-col gap-3 py-2">
             {Object.keys(DEFAULT_BUDGETS).map((k) => (
               <div key={k} className="flex items-center justify-between gap-3">
-                <Label htmlFor={`budget-${k}`} className="text-sm">{k}</Label>
+                <Label htmlFor={`budget-${k}`} className="text-sm">
+                  {k}
+                </Label>
                 <Input
                   id={`budget-${k}`}
                   type="number"
@@ -189,7 +412,9 @@ function AnalyticsPage() {
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(false)}>{t("analytics.cancel")}</Button>
+            <Button variant="outline" onClick={() => setEditing(false)}>
+              {t("analytics.cancel")}
+            </Button>
             <Button onClick={save}>{t("analytics.saveBudgets")}</Button>
           </DialogFooter>
         </DialogContent>
