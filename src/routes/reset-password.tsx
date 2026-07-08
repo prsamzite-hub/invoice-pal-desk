@@ -15,7 +15,12 @@ export const Route = createFileRoute("/reset-password")({
     meta: [
       { title: "Nulstil adgangskode — Kvitregn" },
       { name: "description", content: "Vælg en ny adgangskode til din Kvitregn-konto." },
+      { property: "og:title", content: "Nulstil adgangskode — Kvitregn" },
+      { property: "og:description", content: "Vælg en ny adgangskode til din Kvitregn-konto." },
+      { property: "og:url", content: "https://kvitregn.dk/reset-password" },
+      { name: "robots", content: "noindex" },
     ],
+    links: [{ rel: "canonical", href: "https://kvitregn.dk/reset-password" }],
   }),
   component: ResetPasswordPage,
 });
