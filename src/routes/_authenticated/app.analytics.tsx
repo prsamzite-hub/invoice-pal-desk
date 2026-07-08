@@ -48,11 +48,11 @@ export const Route = createFileRoute("/_authenticated/app/analytics")({
 });
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Dagligvarer: "hsl(var(--mint))",
-  Forsyning: "hsl(var(--sky))",
-  Abonnementer: "hsl(var(--lavender))",
-  "Mad ude": "hsl(var(--peach))",
-  Shopping: "hsl(var(--butter))",
+  Dagligvarer: "var(--mint)",
+  Forsyning: "var(--sky)",
+  Abonnementer: "var(--lavender)",
+  "Mad ude": "var(--peach)",
+  Shopping: "var(--butter)",
 };
 
 const CATEGORIES: Array<{ label: string; value: number }> = [
