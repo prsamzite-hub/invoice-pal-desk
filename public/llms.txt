@@ -1,0 +1,13 @@
+# Kvitregn
+
+> Kvitregn er en venlig digital mappe til kvitteringer og fakturaer — bygget til Danmark. Upload dine bilag, få dem aflæst automatisk og find dem igen når du skal bruge dem.
+
+## Pages
+
+- [Forsiden](/): Hvad Kvitregn er og hvordan tjenesten fungerer.
+- [Log ind eller opret bruger](/auth): Kom i gang med Kvitregn.
+
+## Optional
+
+- [Privatlivspolitik](/privacy): Sådan behandler vi personoplysninger.
+- [Vilkår](/terms): Vilkår for brug af tjenesten.

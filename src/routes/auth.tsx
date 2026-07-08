@@ -17,7 +17,11 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Log ind eller opret bruger — Kvitregn" },
       { name: "description", content: "Log ind på Kvitregn og hold styr på dine kvitteringer og fakturaer." },
+      { property: "og:title", content: "Log ind eller opret bruger — Kvitregn" },
+      { property: "og:description", content: "Log ind på Kvitregn og hold styr på dine kvitteringer og fakturaer." },
+      { property: "og:url", content: "https://kvitregn.dk/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://kvitregn.dk/auth" }],
   }),
   component: AuthPage,
 });
@@ -166,8 +170,8 @@ function AuthPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-hero">
       <Link to="/" className="absolute left-6 top-6 inline-flex items-center gap-2" aria-label="Kvitregn — forside">
-        <img src="/brand/lockup-on-light.png" alt="Kvitregn" className="h-10 w-auto dark:hidden" />
-        <img src="/brand/lockup-on-dark.png" alt="Kvitregn" className="hidden h-10 w-auto dark:block" />
+        <img src="/brand/lockup-on-light.png" alt="Kvitregn logo" className="h-10 w-auto dark:hidden" />
+        <img src="/brand/lockup-on-dark.png" alt="Kvitregn logo" className="hidden h-10 w-auto dark:block" />
       </Link>
 
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
