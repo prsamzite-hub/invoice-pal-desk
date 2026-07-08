@@ -8,6 +8,7 @@ export const Route = createFileRoute("/terms")({
       { name: "description", content: "Vilkår for brug af Kvitregn — din digitale mappe til kvitteringer og fakturaer." },
       { property: "og:title", content: "Vilkår — Kvitregn" },
       { property: "og:description", content: "Vilkår for brug af Kvitregn." },
+      { property: "og:url", content: "https://kvitregn.dk/terms" },
     ],
     links: [{ rel: "canonical", href: "https://kvitregn.dk/terms" }],
   }),
