@@ -1,58 +1,40 @@
 import * as React from 'react'
-
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Text } from '@react-email/components'
+import { KvitregnEmailLayout } from './_layout'
 
 interface ReauthenticationEmailProps {
   token: string
 }
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head />
-    <Preview>Your verification code</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
-        <Text style={codeStyle}>{token}</Text>
-        <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+  <KvitregnEmailLayout
+    preview="Din bekræftelseskode til Kvitregn"
+    heading="Bekræft din identitet"
+    intro={
+      <>
+        Brug koden nedenfor for at bekræfte din identitet hos Kvitregn. Koden
+        udløber om kort tid.
+      </>
+    }
+    buttonLabel=""
+    buttonUrl=""
+    outro="Har du ikke bedt om denne kode? Så kan du roligt ignorere mailen."
+  >
+    <Text style={codeStyle}>{token}</Text>
+  </KvitregnEmailLayout>
 )
 
 export default ReauthenticationEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
 const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 30px',
+  fontFamily: "'JetBrains Mono', Menlo, Courier, monospace",
+  fontSize: '28px',
+  fontWeight: 700 as const,
+  color: '#23241f',
+  letterSpacing: '0.24em',
+  textAlign: 'center' as const,
+  background: '#f5f2ea',
+  borderRadius: '12px',
+  padding: '18px 12px',
+  margin: '20px 0 8px',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
