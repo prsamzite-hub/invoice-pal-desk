@@ -14,7 +14,7 @@ import {
 } from '@react-email/components'
 
 export const KVITREGN_LOGO_URL =
-  'https://invoice-pal-desk.lovable.app/brand/lockup-on-light.png'
+  'https://invoice-pal-desk.lovable.app/__l5e/assets-v1/d1d8a8b6-b4c0-41b2-97f3-097454d919b0/kvitregn-lockup.png'
 
 interface LayoutProps {
   preview: string
