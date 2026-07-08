@@ -17,7 +17,11 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Log ind eller opret bruger — Kvitregn" },
       { name: "description", content: "Log ind på Kvitregn og hold styr på dine kvitteringer og fakturaer." },
+      { property: "og:title", content: "Log ind eller opret bruger — Kvitregn" },
+      { property: "og:description", content: "Log ind på Kvitregn og hold styr på dine kvitteringer og fakturaer." },
+      { property: "og:url", content: "https://kvitregn.dk/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://kvitregn.dk/auth" }],
   }),
   component: AuthPage,
 });
