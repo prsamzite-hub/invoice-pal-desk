@@ -119,7 +119,7 @@ function DocumentsPage() {
         status,
         type: (r.document_type as "receipt" | "invoice") ?? "receipt",
         category: r.category
-          ? { label: r.category, tone: toneFor(r.category) }
+          ? { label: labelForCategory(r.category), tone: toneFor(r.category) }
           : undefined,
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
