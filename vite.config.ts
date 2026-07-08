@@ -12,4 +12,22 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Force tslib to resolve to its ESM build in every bundle (client, SSR, Worker).
+    // Prevents the "Cannot destructure property '__extends' of '__toESM(...).default'"
+    // CJS/ESM interop crash triggered by pdf-lib in the production Worker build.
+    resolve: {
+      alias: {
+        tslib: "tslib/tslib.es6.js",
+      },
+    },
+    optimizeDeps: {
+      include: ["tslib"],
+    },
+    build: {
+      commonjsOptions: {
+        transformMixedEsModules: true,
+      },
+    },
+  },
 });

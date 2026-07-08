@@ -56,8 +56,19 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
       onOpenChange(false);
     },
     onError: (e: unknown) => {
-      toast.error("Kunne ikke gemme", {
-        description: e instanceof Error ? e.message : "Prøv igen.",
+      const raw = e instanceof Error ? e.message : "";
+      // Known validation messages (thrown from the server inputValidator) are safe
+      // Danish strings and can be shown as-is. Anything else is a technical
+      // error (network / bundler / storage) — show a friendly Danish fallback.
+      const isFriendly =
+        !!raw &&
+        raw.length < 120 &&
+        !/[_${}]|toESM|undefined|Cannot|Error:|TypeError|extends/i.test(raw);
+      if (!isFriendly) {
+        console.error("[saveReceipt] failed", e);
+      }
+      toast.error("Kunne ikke gemme dokumentet", {
+        description: isFriendly ? raw : "Noget gik galt. Prøv igen om et øjeblik.",
       });
     },
   });
