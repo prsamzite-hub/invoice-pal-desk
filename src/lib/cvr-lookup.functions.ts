@@ -54,6 +54,7 @@ function s(v: unknown): string | null {
 }
 
 export const lookupCvr = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: { cvr: string }) => {
     const cvr = (data?.cvr ?? "").replace(/\D/g, "");
     if (!/^[0-9]{8}$/.test(cvr)) throw new Error("CVR skal være 8 cifre");
