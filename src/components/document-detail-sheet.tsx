@@ -213,6 +213,46 @@ export function DocumentDetailSheet({
                 ) : null}
               </div>
 
+              {items.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Varer
+                  </span>
+                  <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+                    {items.map((it, i) => (
+                      <li key={i} className="flex items-start justify-between gap-3 px-3 py-2 text-sm">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-foreground">{it.description || "—"}</p>
+                          {it.quantity != null || it.unit_price != null ? (
+                            <p className="text-xs text-muted-foreground">
+                              {it.quantity != null ? `${it.quantity} × ` : ""}
+                              {it.unit_price != null
+                                ? new Intl.NumberFormat("da-DK", {
+                                    style: "currency",
+                                    currency: doc.currency ?? "DKK",
+                                  }).format(it.unit_price)
+                                : ""}
+                            </p>
+                          ) : null}
+                        </div>
+                        <span
+                          className={`tabular-nums font-medium ${
+                            it.total < 0 ? "text-emerald-600" : "text-foreground"
+                          }`}
+                        >
+                          {new Intl.NumberFormat("da-DK", {
+                            style: "currency",
+                            currency: doc.currency ?? "DKK",
+                          }).format(it.total)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+
+
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Vedhæftning
