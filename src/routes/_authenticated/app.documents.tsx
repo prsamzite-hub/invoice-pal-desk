@@ -103,6 +103,7 @@ function DocumentsPage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const receipts = useQuery({ queryKey: ["receipts"], queryFn: () => listFn() });
+  const { map: vendorLogoMap } = useVendorLogoByIdMap();
 
   const docs: EnrichedDoc[] = useMemo(() => {
     const rows = receipts.data ?? [];
@@ -124,9 +125,10 @@ function DocumentsPage() {
           : undefined,
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
+        vendorLogoUrl: r.vendor_id ? vendorLogoMap.get(r.vendor_id) ?? null : null,
       };
     });
-  }, [receipts.data]);
+  }, [receipts.data, vendorLogoMap]);
 
   const filtered = useMemo(() => {
     const term = q.trim();
