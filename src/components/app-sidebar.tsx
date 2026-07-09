@@ -24,7 +24,7 @@ const ITEMS = [
   { title: "Oversigt", url: "/app", icon: LayoutDashboard },
   { title: "Dokumenter", url: "/app/documents", icon: Receipt },
   { title: "Upload", url: "/app/upload", icon: Upload },
-  { title: "Leverandører", url: "/app/vendors", icon: Store },
+  { title: "Firmaer", url: "/app/vendors", icon: Store },
   { title: "Analyse", url: "/app/analytics", icon: PieChart },
   { title: "Indstillinger", url: "/app/settings", icon: Settings },
 ] as const;
