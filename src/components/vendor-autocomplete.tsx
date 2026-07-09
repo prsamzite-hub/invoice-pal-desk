@@ -55,7 +55,7 @@ export function VendorAutocomplete({ value, onChange, placeholder }: Props) {
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Søg eller opret leverandør…"
+            placeholder="Søg eller opret firma…"
             value={query}
             onValueChange={setQuery}
           />
