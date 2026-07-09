@@ -219,6 +219,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          vendor_id: string | null
         }
         Insert: {
           amount?: number
@@ -236,6 +237,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          vendor_id?: string | null
         }
         Update: {
           amount?: number
@@ -253,8 +255,17 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          vendor_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "receipts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {
@@ -277,6 +288,42 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          created_at: string
+          domain: string | null
+          id: string
+          logo_path: string | null
+          logo_url: string | null
+          name: string
+          normalized_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          logo_path?: string | null
+          logo_url?: string | null
+          name: string
+          normalized_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          logo_path?: string | null
+          logo_url?: string | null
+          name?: string
+          normalized_name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
