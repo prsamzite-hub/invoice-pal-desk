@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { VendorAvatar } from "@/components/atoms/vendor-avatar";
+import { VendorAutocomplete } from "@/components/vendor-autocomplete";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { CategoryChip } from "@/components/atoms/category-chip";
 import { MoneyAmount } from "@/components/atoms/money-amount";
@@ -436,7 +437,7 @@ function EditReceiptDialog({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="e-company">Firma</Label>
-            <VendorAutocomplete value={fields.company} onChange={(v) => set("company", v)} />
+            <VendorAutocomplete value={fields.company} onChange={(v: string) => set("company", v)} />
           </div>
           <div>
             <Label htmlFor="e-amount">Beløb</Label>
