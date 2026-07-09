@@ -47,7 +47,7 @@ export function VendorAutocomplete({ value, onChange, placeholder }: Props) {
           className="w-full justify-between font-normal"
         >
           <span className={cn("truncate", !value && "text-muted-foreground")}>
-            {value || placeholder || "Vælg leverandør"}
+            {value || placeholder || "Søg eller opret firma…"}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -55,7 +55,7 @@ export function VendorAutocomplete({ value, onChange, placeholder }: Props) {
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Søg eller opret leverandør…"
+            placeholder="Søg eller opret firma…"
             value={query}
             onValueChange={setQuery}
           />
@@ -94,7 +94,7 @@ export function VendorAutocomplete({ value, onChange, placeholder }: Props) {
                   }}
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Opret “{query.trim()}”
+                  Opret “{query.trim()}” som nyt firma
                 </CommandItem>
               </CommandGroup>
             )}
