@@ -122,7 +122,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="company">Firma</Label>
-            <Input id="company" value={fields.company} onChange={(e) => set("company", e.target.value)} />
+            <VendorAutocomplete value={fields.company} onChange={(v) => set("company", v)} placeholder="Vælg eller opret leverandør" />
           </div>
 
           <div>
