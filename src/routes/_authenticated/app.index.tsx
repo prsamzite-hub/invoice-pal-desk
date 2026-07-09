@@ -106,6 +106,7 @@ function DashboardPage() {
     };
   }, [receipts.data]);
 
+  const { map: vendorLogoMap } = useVendorLogoByIdMap();
   const toCard = (r: NonNullable<typeof receipts.data>[number]): DocumentCardData => ({
     id: r.id,
     company: r.company,
@@ -118,6 +119,7 @@ function DashboardPage() {
     category: r.category
       ? { label: r.category, tone: CATEGORY_TONE[r.category] ?? "lavender" }
       : undefined,
+    vendorLogoUrl: r.vendor_id ? vendorLogoMap.get(r.vendor_id) ?? null : null,
   });
 
   const selectedRow = (receipts.data ?? []).find((r) => r.id === selectedId);
