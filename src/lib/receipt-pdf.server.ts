@@ -103,6 +103,74 @@ const CREAM = rgb(0xf5 / 255, 0xf2 / 255, 0xea / 255); // #f5f2ea
 const MUTED = rgb(0.42, 0.45, 0.5);
 const LINE = rgb(0.85, 0.83, 0.78);
 
+// Monogram background palette (darker brand tones so cream text stays legible)
+const MONOGRAM_PALETTE = [
+  rgb(0x6b / 255, 0x93 / 255, 0xa8 / 255), // dusty blue
+  rgb(0xa8 / 255, 0x6b / 255, 0x6b / 255), // dusty rose
+  rgb(0x86 / 255, 0x90 / 255, 0x62 / 255), // moss
+  rgb(0xb2 / 255, 0x88 / 255, 0x4a / 255), // caramel
+  rgb(0x7d / 255, 0x6a / 255, 0x9c / 255), // dusty violet
+];
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+async function drawVendorMark(
+  doc: import("pdf-lib").PDFDocument,
+  page: import("pdf-lib").PDFPage,
+  name: string,
+  logo: Uint8Array | null,
+  x: number,
+  y: number,
+  size: number,
+  boldFont: import("pdf-lib").PDFFont,
+): Promise<void> {
+  const cx = x + size / 2;
+  const cy = y + size / 2;
+  const r = size / 2;
+
+  if (logo && logo.byteLength > 0) {
+    try {
+      let img: import("pdf-lib").PDFImage;
+      // Try PNG then JPG
+      try {
+        img = await doc.embedPng(logo);
+      } catch {
+        img = await doc.embedJpg(logo);
+      }
+      // Background circle (cream) so transparent/off-color logos look tidy
+      page.drawCircle({ x: cx, y: cy, size: r, color: CREAM, borderColor: LINE, borderWidth: 0.5 });
+      const pad = 4;
+      const inner = size - pad * 2;
+      const dims = img.scale(1);
+      const scale = Math.min(inner / dims.width, inner / dims.height);
+      const w = dims.width * scale;
+      const h = dims.height * scale;
+      page.drawImage(img, { x: cx - w / 2, y: cy - h / 2, width: w, height: h });
+      return;
+    } catch {
+      // fall through to monogram
+    }
+  }
+
+  // Monogram
+  const initial = (name.trim().charAt(0) || "•").toUpperCase();
+  const bg = MONOGRAM_PALETTE[hashString(name) % MONOGRAM_PALETTE.length];
+  page.drawCircle({ x: cx, y: cy, size: r, color: bg });
+  const fontSize = Math.floor(size * 0.5);
+  const textW = boldFont.widthOfTextAtSize(initial, fontSize);
+  page.drawText(initial, {
+    x: cx - textW / 2,
+    y: cy - fontSize / 2 - 1,
+    size: fontSize,
+    font: boldFont,
+    color: CREAM,
+  });
+}
+
 export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Array> {
   const lang: PdfLang = data.lang === "en" ? "en" : "da";
   const t = L[lang];
