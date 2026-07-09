@@ -263,6 +263,26 @@ function FeatureCard({
   );
 }
 
+function BizFeature({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Receipt;
+  title: string;
+  body: string;
+}) {
+  return (
+    <li className="rounded-2xl border border-border bg-background/60 p-4">
+      <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky text-sky-foreground">
+        <Icon className="h-4 w-4" />
+      </div>
+      <p className="text-sm font-bold text-foreground">{title}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{body}</p>
+    </li>
+  );
+}
+
 function HeroPreview() {
   return (
     <div className="relative">
