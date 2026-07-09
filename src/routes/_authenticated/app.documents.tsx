@@ -32,7 +32,7 @@ import {
   getReceiptPdfUrl,
   listMyReceipts,
 } from "@/lib/receipts.functions";
-import { useVendorLogoByIdMap } from "@/hooks/use-vendors";
+import { useVendorLogoByName } from "@/hooks/use-vendor-logos";
 
 const CATEGORY_LABELS_DA: Record<string, string> = {
   Groceries: "Dagligvarer",
@@ -103,7 +103,7 @@ function DocumentsPage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const receipts = useQuery({ queryKey: ["receipts"], queryFn: () => listFn() });
-  const { map: vendorLogoMap } = useVendorLogoByIdMap();
+  const { lookup: logoFor } = useVendorLogoByName();
 
   const docs: EnrichedDoc[] = useMemo(() => {
     const rows = receipts.data ?? [];
@@ -125,10 +125,11 @@ function DocumentsPage() {
           : undefined,
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
-        vendorLogoUrl: r.vendor_id ? vendorLogoMap.get(r.vendor_id) ?? null : null,
+        vendorLogoUrl: logoFor(r.company),
       };
     });
-  }, [receipts.data, vendorLogoMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [receipts.data, logoFor]);
 
   const filtered = useMemo(() => {
     const term = q.trim();
