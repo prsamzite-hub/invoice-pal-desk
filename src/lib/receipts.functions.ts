@@ -247,6 +247,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
     }
 
     try {
+      const vendorLogo = await loadVendorLogoBytes(supabase, vendorId);
       const pdfBytes = await generateReceiptPdf({
         company: row.company,
         amount: Number(row.amount),
@@ -258,6 +259,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         notes: row.notes,
         items: f.items,
         receipt_id: row.id,
+        vendor_logo: vendorLogo,
         lang: data.lang,
       });
       const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
