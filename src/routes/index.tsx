@@ -7,6 +7,9 @@ import {
   Search,
   FileText,
   ArrowRight,
+  Building2,
+  CalendarClock,
+  BarChart3,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -155,6 +158,43 @@ function LandingPage() {
           </div>
         </section>
 
+        {/* Til virksomheder */}
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+          <div className="shadow-soft rounded-3xl border border-border bg-card p-8 sm:p-12">
+            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
+              <div className="lg:col-span-1">
+                <span className="inline-flex items-center gap-2 rounded-full bg-lavender px-3 py-1 text-xs font-semibold text-lavender-foreground">
+                  <Building2 className="h-3.5 w-3.5" /> Til virksomheder
+                </span>
+                <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+                  Klar til CVR, forfald og regnskab.
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Samme login som privat — slå bare virksomhedsprofilen til, og bilagene får det, bogholderen leder efter.
+                </p>
+              </div>
+
+              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-2">
+                <BizFeature
+                  icon={FileText}
+                  title="CVR på PDF"
+                  body="Firmanavn, CVR og adresse ryger automatisk på hvert bilag."
+                />
+                <BizFeature
+                  icon={CalendarClock}
+                  title="Forfaldsdato"
+                  body="Se hvad der forfalder, og hold fakturaerne betalt til tiden."
+                />
+                <BizFeature
+                  icon={BarChart3}
+                  title="Erhvervsfilter i analyse"
+                  body="Adskil private og erhvervsudgifter i én visning."
+                />
+              </ul>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
           <div className="shadow-pop relative overflow-hidden rounded-3xl bg-gradient-hero p-10 text-center sm:p-16">
@@ -220,6 +260,26 @@ function FeatureCard({
       <h3 className="text-lg font-bold text-foreground">{title}</h3>
       <p className="text-sm text-muted-foreground">{body}</p>
     </div>
+  );
+}
+
+function BizFeature({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Receipt;
+  title: string;
+  body: string;
+}) {
+  return (
+    <li className="rounded-2xl border border-border bg-background/60 p-4">
+      <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky text-sky-foreground">
+        <Icon className="h-4 w-4" />
+      </div>
+      <p className="text-sm font-bold text-foreground">{title}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{body}</p>
+    </li>
   );
 }
 
