@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InboundEmailCard } from "@/components/inbound-email-card";
+import { BusinessProfileCard } from "@/components/business-profile-card";
 import { getMyProfile, updateMyProfile, deleteMyAccount } from "@/lib/profile.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -168,6 +169,8 @@ function SettingsPage() {
       </section>
 
       <InboundEmailCard token={profile?.email_inbox_token ?? null} />
+
+      <BusinessProfileCard />
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">

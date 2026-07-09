@@ -41,6 +41,48 @@ export type Database = {
         }
         Relationships: []
       }
+      business_profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_name: string
+          created_at: string
+          cvr: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          postal_code: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_name: string
+          created_at?: string
+          cvr?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_name?: string
+          created_at?: string
+          cvr?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       document_items: {
         Row: {
           created_at: string
