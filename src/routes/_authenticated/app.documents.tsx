@@ -32,6 +32,7 @@ import {
   getReceiptPdfUrl,
   listMyReceipts,
 } from "@/lib/receipts.functions";
+import { useVendorLogoByIdMap } from "@/hooks/use-vendors";
 
 const CATEGORY_LABELS_DA: Record<string, string> = {
   Groceries: "Dagligvarer",
