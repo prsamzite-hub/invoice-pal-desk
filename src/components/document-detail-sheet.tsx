@@ -332,7 +332,14 @@ function EditReceiptDialog({
   onSaved: () => void;
   updateFn: ReturnType<typeof useServerFn<typeof updateReceipt>>;
 }) {
-  const [fields, setFields] = useState<ExtractedFields>(() => ({
+  const itemsFn = useServerFn(getReceiptItems);
+  const itemsQuery = useQuery({
+    enabled: open,
+    queryKey: ["receipt-items", doc.id],
+    queryFn: () => itemsFn({ data: { id: doc.id } }),
+  });
+
+  const seed = (): ExtractedFields => ({
     company: doc.company,
     amount: doc.amount,
     currency: doc.currency ?? "DKK",
@@ -341,22 +348,16 @@ function EditReceiptDialog({
     document_type: doc.type,
     category: doc.category?.label ?? null,
     notes: doc.notes ?? null,
-  }));
+    items: itemsQuery.data ?? [],
+  });
+
+  const [fields, setFields] = useState<ExtractedFields>(seed);
 
   useEffect(() => {
-    if (open) {
-      setFields({
-        company: doc.company,
-        amount: doc.amount,
-        currency: doc.currency ?? "DKK",
-        issued_date: doc.issuedDate ? doc.issuedDate.slice(0, 10) : null,
-        due_date: doc.dueDate ? doc.dueDate.slice(0, 10) : null,
-        document_type: doc.type,
-        category: doc.category?.label ?? null,
-        notes: doc.notes ?? null,
-      });
-    }
-  }, [open, doc]);
+    if (open) setFields(seed());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, doc, itemsQuery.data]);
+
 
   const save = useMutation({
     mutationFn: () => updateFn({ data: { id: doc.id, fields } }),
