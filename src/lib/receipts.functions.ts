@@ -1,6 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
+import type { ReceiptPdfSender } from "./receipt-pdf.server";
+
+async function loadSender(supabase: any, userId: string): Promise<ReceiptPdfSender | null> {
+  const { data, error } = await supabase
+    .from("business_profiles")
+    .select("company_name, cvr, address, postal_code, city, phone, email")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  if (!data.company_name || !String(data.company_name).trim()) return null;
+  return {
+    company_name: String(data.company_name).trim(),
+    cvr: data.cvr ?? null,
+    address: data.address ?? null,
+    postal_code: data.postal_code ?? null,
+    city: data.city ?? null,
+    phone: data.phone ?? null,
+    email: data.email ?? null,
+  };
+}
 
 export const CATEGORIES = [
   "Groceries",
@@ -252,6 +272,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
 
     try {
       const vendorLogo = await loadLogoBytesByName(supabase, userId, f.company);
+      const sender = await loadSender(supabase, userId);
       const pdfBytes = await generateReceiptPdf({
         company: row.company,
         amount: Number(row.amount),
@@ -264,6 +285,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         items: f.items,
         receipt_id: row.id,
         vendor_logo: vendorLogo,
+        sender,
         lang: data.lang,
       });
       const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
@@ -348,6 +370,7 @@ async function regenerateAndStorePdf(
     .eq("document_id", id)
     .order("position", { ascending: true });
   const vendorLogo = await loadLogoBytesByName(supabase, userId, row.company);
+  const sender = await loadSender(supabase, userId);
   const pdfBytes = await generateReceiptPdf({
     company: row.company,
     amount: Number(row.amount),
@@ -365,6 +388,7 @@ async function regenerateAndStorePdf(
     })),
     receipt_id: row.id,
     vendor_logo: vendorLogo,
+    sender,
     lang,
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;

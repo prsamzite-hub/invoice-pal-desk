@@ -10,6 +10,16 @@ export interface ReceiptPdfLineItem {
 
 export type PdfLang = "da" | "en";
 
+export interface ReceiptPdfSender {
+  company_name: string;
+  cvr?: string | null;
+  address?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  email?: string | null;
+}
+
 export interface ReceiptPdfData {
   company: string;
   amount: number;
@@ -23,6 +33,8 @@ export interface ReceiptPdfData {
   receipt_id: string;
   /** Raw PNG/JPEG bytes for the vendor logo. If omitted, a monogram is rendered. */
   vendor_logo?: Uint8Array | null;
+  /** Optional sender block (business profile). If omitted, the PDF renders without a sender header. */
+  sender?: ReceiptPdfSender | null;
   lang?: PdfLang;
 }
 
@@ -32,8 +44,13 @@ const L = {
     receipt: "KVITTERING",
     invoice: "FAKTURA",
     billedBy: "Udstedt af",
+    sender: "Afsender",
+    cvr: "CVR-nr.",
+    phone: "Tlf.",
+    email: "Email",
     dateIssued: "Udstedelsesdato",
     dueDate: "Betalingsfrist",
+    dueDateShort: "Forfaldsdato",
     category: "Kategori",
     uncategorized: "Ukategoriseret",
     documentId: "Dokument-ID",
@@ -55,8 +72,13 @@ const L = {
     receipt: "RECEIPT",
     invoice: "INVOICE",
     billedBy: "Billed by",
+    sender: "From",
+    cvr: "CVR",
+    phone: "Phone",
+    email: "Email",
     dateIssued: "Date issued",
     dueDate: "Due date",
+    dueDateShort: "Due date",
     category: "Category",
     uncategorized: "Uncategorized",
     documentId: "Document ID",
@@ -94,6 +116,14 @@ function fmtMoney(amount: number, currency: string, lang: PdfLang) {
   } catch {
     return `${amount.toFixed(2)} ${currency}`;
   }
+}
+
+function fmtDate(iso: string | null | undefined, lang: PdfLang): string {
+  if (!iso) return "-";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const [, y, mo, d] = m;
+  return lang === "da" ? `${d}.${mo}.${y}` : `${d}/${mo}/${y}`;
 }
 
 // Brand palette
@@ -184,8 +214,10 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const draw = (text: string, opts: Parameters<typeof page.drawText>[1]) =>
     page.drawText(sanitize(text), opts);
 
-  // Header band (cream)
-  page.drawRectangle({ x: 0, y: height - 120, width, height: 120, color: CREAM });
+  // Header band (cream) — taller when a sender block is present
+  const sender = data.sender ?? null;
+  const HEADER_H = sender ? 190 : 120;
+  page.drawRectangle({ x: 0, y: height - HEADER_H, width, height: HEADER_H, color: CREAM });
 
   // Brand wordmark - typographic "Kvitregn"
   draw("Kvitregn", { x: 48, y: height - 60, size: 26, font: bold, color: INK });
@@ -200,15 +232,47 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const idWidth = font.widthOfTextAtSize(idText, 10);
   draw(idText, { x: width - 48 - idWidth, y: height - 78, size: 10, font, color: MUTED });
 
+  // Sender block (Afsender) — right column of the header when business profile exists
+  if (sender) {
+    // Left column: "Afsender" label + company name in ink; details right-aligned on right column
+    const senderLabelY = height - 118;
+    draw(t.sender, { x: 48, y: senderLabelY, size: 9, font, color: MUTED });
+    draw(sender.company_name, { x: 48, y: senderLabelY - 16, size: 13, font: bold, color: INK });
+
+    const senderLines: string[] = [];
+    const addr = sender.address ? sender.address.trim() : "";
+    if (addr) senderLines.push(addr);
+    const cityLine = [sender.postal_code?.trim(), sender.city?.trim()].filter(Boolean).join(" ");
+    if (cityLine) senderLines.push(cityLine);
+    let sy = senderLabelY - 34;
+    for (const line of senderLines) {
+      draw(line, { x: 48, y: sy, size: 10, font, color: INK });
+      sy -= 13;
+    }
+
+    // Right column of sender: CVR, phone, email
+    const rightLines: Array<[string, string]> = [];
+    if (sender.cvr) rightLines.push([t.cvr, sender.cvr]);
+    if (sender.phone) rightLines.push([t.phone, sender.phone]);
+    if (sender.email) rightLines.push([t.email, sender.email]);
+    let ry = senderLabelY - 16;
+    for (const [k, v] of rightLines) {
+      const line = `${k} ${v}`;
+      const w = font.widthOfTextAtSize(sanitize(line), 10);
+      draw(line, { x: width - 48 - w, y: ry, size: 10, font, color: INK });
+      ry -= 13;
+    }
+  }
+
   // Divider under header
   page.drawLine({
-    start: { x: 0, y: height - 120 },
-    end: { x: width, y: height - 120 },
+    start: { x: 0, y: height - HEADER_H },
+    end: { x: width, y: height - HEADER_H },
     thickness: 1,
     color: DUSTY,
   });
 
-  let y = height - 160;
+  let y = height - HEADER_H - 40;
   draw(t.billedBy, { x: 48, y, size: 9, font, color: MUTED });
   y -= 18;
 
@@ -221,8 +285,8 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
 
   y -= 44;
   const rows: Array<[string, string]> = [
-    [t.dateIssued, data.date || "-"],
-    ...(data.due_date ? ([[t.dueDate, data.due_date]] as Array<[string, string]>) : []),
+    [t.dateIssued, fmtDate(data.date, lang)],
+    ...(data.due_date ? ([[t.dueDate, fmtDate(data.due_date, lang)]] as Array<[string, string]>) : []),
     [t.category, data.category || t.uncategorized],
     [t.documentId, data.receipt_id],
   ];
@@ -317,6 +381,18 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   draw(t.totalAmount, { x: 68, y: y + 2, size: 10, font, color: MUTED });
   const totalStr = fmtMoney(data.amount || 0, currency, lang);
   draw(totalStr, { x: 68, y: y - 32, size: 26, font: bold, color: INK });
+
+  // Forfaldsdato (due date) callout on the right side of the total card
+  if (data.due_date) {
+    const dueLabel = t.dueDateShort;
+    const dueValue = fmtDate(data.due_date, lang);
+    const dueLW = font.widthOfTextAtSize(sanitize(dueLabel), 9);
+    const dueVW = bold.widthOfTextAtSize(sanitize(dueValue), 14);
+    const rightX = width - 68;
+    draw(dueLabel, { x: rightX - dueLW, y: y + 2, size: 9, font, color: MUTED });
+    draw(dueValue, { x: rightX - dueVW, y: y - 26, size: 14, font: bold, color: DUSTY });
+  }
+
 
   y -= 90;
 
