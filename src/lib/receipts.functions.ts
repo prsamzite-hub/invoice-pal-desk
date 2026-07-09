@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveVendorForCurrentUser } from "./vendors.functions";
 
 export const CATEGORIES = [
   "Groceries",
