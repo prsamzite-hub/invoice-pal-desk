@@ -170,6 +170,8 @@ function SettingsPage() {
 
       <InboundEmailCard token={profile?.email_inbox_token ?? null} />
 
+      <BusinessProfileCard />
+
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
           <div>
