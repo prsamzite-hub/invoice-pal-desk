@@ -10,6 +10,16 @@ export interface ReceiptPdfLineItem {
 
 export type PdfLang = "da" | "en";
 
+export interface ReceiptPdfSender {
+  company_name: string;
+  cvr?: string | null;
+  address?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  email?: string | null;
+}
+
 export interface ReceiptPdfData {
   company: string;
   amount: number;
@@ -23,6 +33,8 @@ export interface ReceiptPdfData {
   receipt_id: string;
   /** Raw PNG/JPEG bytes for the vendor logo. If omitted, a monogram is rendered. */
   vendor_logo?: Uint8Array | null;
+  /** Optional sender block (business profile). If omitted, the PDF renders without a sender header. */
+  sender?: ReceiptPdfSender | null;
   lang?: PdfLang;
 }
 
