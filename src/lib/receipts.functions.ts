@@ -438,10 +438,12 @@ export const updateReceipt = createServerFn({ method: "POST" })
     if (exErr) throw exErr;
     if (!existing) throw new Error("Ikke fundet");
     const nextStatus = existing.status === "paid" ? "paid" : f.due_date ? "unpaid" : "paid";
+    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
     const { data: row, error } = await supabase
       .from("receipts")
       .update({
         company: f.company,
+        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
