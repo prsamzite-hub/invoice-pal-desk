@@ -88,7 +88,9 @@ function AuthPage() {
           return;
         }
         toast.success("Velkommen til Kvitregn! 🎉");
-
+        await router.invalidate();
+        navigate({ to: "/onboarding" });
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
