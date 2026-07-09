@@ -281,6 +281,10 @@ function AuthPage() {
                 {" "}og{" "}
                 <Link to="/privacy" className="underline hover:text-foreground">privatlivspolitik</Link>.
               </p>
+              <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
+                Bruger du Kvitregn som virksomhed? Samme login — tilføj dit CVR bagefter under{" "}
+                <span className="font-medium text-foreground">Indstillinger → Virksomhed</span>.
+              </p>
             </>
           )}
         </div>
