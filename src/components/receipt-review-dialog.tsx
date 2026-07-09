@@ -199,8 +199,9 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
         <ItemsEditor
           items={fields.items}
           currency={fields.currency}
-          onChange={(items) => set("items", items)}
+          onChange={(items: LineItem[]) => set("items", items)}
         />
+
 
 
 
