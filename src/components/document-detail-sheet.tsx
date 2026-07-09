@@ -105,8 +105,20 @@ export function DocumentDetailSheet({
   const deleteFn = useServerFn(deleteReceipt);
   const markPaidFn = useServerFn(markReceiptPaid);
   const originalUrlFn = useServerFn(getReceiptOriginalUrl);
+  const itemsFn = useServerFn(getReceiptItems);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["receipts"] });
+  const itemsQuery = useQuery({
+    enabled: !!doc && open,
+    queryKey: ["receipt-items", doc?.id],
+    queryFn: () => itemsFn({ data: { id: doc!.id } }),
+  });
+  const items = itemsQuery.data ?? [];
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["receipts"] });
+    if (doc) qc.invalidateQueries({ queryKey: ["receipt-items", doc.id] });
+  };
+
 
   const markPaid = useMutation({
     mutationFn: (id: string) => markPaidFn({ data: { id, paid: true } }),
