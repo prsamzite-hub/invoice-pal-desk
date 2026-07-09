@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptStatus } from "@/components/atoms/status-badge";
 import { listMyReceipts, getReceiptPdfUrl } from "@/lib/receipts.functions";
 import { useLang } from "@/lib/i18n";
+import { useVendorLogoByIdMap } from "@/hooks/use-vendors";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
