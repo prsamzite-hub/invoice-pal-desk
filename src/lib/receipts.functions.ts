@@ -1,6 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
+import type { ReceiptPdfSender } from "./receipt-pdf.server";
+
+async function loadSender(supabase: any, userId: string): Promise<ReceiptPdfSender | null> {
+  const { data, error } = await supabase
+    .from("business_profiles")
+    .select("company_name, cvr, address, postal_code, city, phone, email")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  if (!data.company_name || !String(data.company_name).trim()) return null;
+  return {
+    company_name: String(data.company_name).trim(),
+    cvr: data.cvr ?? null,
+    address: data.address ?? null,
+    postal_code: data.postal_code ?? null,
+    city: data.city ?? null,
+    phone: data.phone ?? null,
+    email: data.email ?? null,
+  };
+}
 
 export const CATEGORIES = [
   "Groceries",
