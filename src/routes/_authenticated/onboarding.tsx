@@ -144,8 +144,8 @@ function OnboardingPage() {
                 <CvrLookupField
                   id="ob_cvr"
                   value={form.cvr}
-                  onChange={(v) => set("cvr", v)}
-                  onAutofill={(fields) =>
+                  onChange={(v: string) => set("cvr", v)}
+                  onAutofill={(fields: CvrAutofill) =>
                     setForm((s) => ({
                       ...s,
                       company_name: fields.company_name ?? s.company_name,
