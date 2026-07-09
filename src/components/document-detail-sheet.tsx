@@ -51,7 +51,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CompanyAvatar } from "@/components/atoms/company-avatar";
+import { VendorAvatar } from "@/components/atoms/vendor-avatar";
+import { VendorAutocomplete } from "@/components/vendor-autocomplete";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { CategoryChip } from "@/components/atoms/category-chip";
 import { MoneyAmount } from "@/components/atoms/money-amount";
@@ -162,7 +163,7 @@ export function DocumentDetailSheet({
             <div className="flex flex-col gap-6">
               <SheetHeader>
                 <div className="flex items-center gap-3">
-                  <CompanyAvatar name={doc.company} />
+                  <VendorAvatar name={doc.company} logoUrl={doc.vendorLogoUrl} />
                   <div className="min-w-0 flex-1">
                     <SheetTitle className="truncate text-lg">{doc.company}</SheetTitle>
                     <SheetDescription className="text-xs">
@@ -436,11 +437,7 @@ function EditReceiptDialog({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="e-company">Firma</Label>
-            <Input
-              id="e-company"
-              value={fields.company}
-              onChange={(e) => set("company", e.target.value)}
-            />
+            <VendorAutocomplete value={fields.company} onChange={(v: string) => set("company", v)} />
           </div>
           <div>
             <Label htmlFor="e-amount">Beløb</Label>

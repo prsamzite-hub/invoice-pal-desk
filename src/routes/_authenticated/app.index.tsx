@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptStatus } from "@/components/atoms/status-badge";
 import { listMyReceipts, getReceiptPdfUrl } from "@/lib/receipts.functions";
 import { useLang } from "@/lib/i18n";
+import { useVendorLogoByIdMap } from "@/hooks/use-vendors";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -106,6 +107,7 @@ function DashboardPage() {
     };
   }, [receipts.data]);
 
+  const { map: vendorLogoMap } = useVendorLogoByIdMap();
   const toCard = (r: NonNullable<typeof receipts.data>[number]): DocumentCardData => ({
     id: r.id,
     company: r.company,
@@ -118,6 +120,7 @@ function DashboardPage() {
     category: r.category
       ? { label: r.category, tone: CATEGORY_TONE[r.category] ?? "lavender" }
       : undefined,
+    vendorLogoUrl: r.vendor_id ? vendorLogoMap.get(r.vendor_id) ?? null : null,
   });
 
   const selectedRow = (receipts.data ?? []).find((r) => r.id === selectedId);

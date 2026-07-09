@@ -1,5 +1,5 @@
 import { Receipt, FileText } from "lucide-react";
-import { CompanyAvatar } from "./company-avatar";
+import { VendorAvatar } from "./vendor-avatar";
 import { StatusBadge } from "./status-badge";
 import { MoneyAmount } from "./money-amount";
 import { CategoryChip } from "./category-chip";
@@ -15,6 +15,7 @@ export interface DocumentCardData {
   status: "paid" | "unpaid" | "overdue";
   type: "receipt" | "invoice";
   category?: { label: string; tone?: "mint" | "peach" | "lavender" | "butter" | "sky" };
+  vendorLogoUrl?: string | null;
 }
 
 function formatDate(iso: string) {
@@ -44,7 +45,7 @@ export function DocumentCard({
         className,
       )}
     >
-      <CompanyAvatar name={doc.company} />
+      <VendorAvatar name={doc.company} logoUrl={doc.vendorLogoUrl} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-semibold text-foreground">{doc.company}</p>

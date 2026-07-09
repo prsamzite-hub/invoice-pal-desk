@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as ApiPublicInboundEmailRouteImport } from './routes/api/public/inbound-email'
+import { Route as AuthenticatedAppVendorsRouteImport } from './routes/_authenticated/app.vendors'
 import { Route as AuthenticatedAppUploadRouteImport } from './routes/_authenticated/app.upload'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppDocumentsRouteImport } from './routes/_authenticated/app.documents'
@@ -76,6 +77,11 @@ const ApiPublicInboundEmailRoute = ApiPublicInboundEmailRouteImport.update({
   path: '/api/public/inbound-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppVendorsRoute = AuthenticatedAppVendorsRouteImport.update({
+  id: '/vendors',
+  path: '/vendors',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppUploadRoute = AuthenticatedAppUploadRouteImport.update({
   id: '/upload',
   path: '/upload',
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/upload': typeof AuthenticatedAppUploadRoute
+  '/app/vendors': typeof AuthenticatedAppVendorsRoute
   '/api/public/inbound-email': typeof ApiPublicInboundEmailRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/upload': typeof AuthenticatedAppUploadRoute
+  '/app/vendors': typeof AuthenticatedAppVendorsRoute
   '/api/public/inbound-email': typeof ApiPublicInboundEmailRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/upload': typeof AuthenticatedAppUploadRoute
+  '/_authenticated/app/vendors': typeof AuthenticatedAppVendorsRoute
   '/api/public/inbound-email': typeof ApiPublicInboundEmailRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/app/documents'
     | '/app/settings'
     | '/app/upload'
+    | '/app/vendors'
     | '/api/public/inbound-email'
     | '/app/'
     | '/lovable/email/auth/preview'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/app/documents'
     | '/app/settings'
     | '/app/upload'
+    | '/app/vendors'
     | '/api/public/inbound-email'
     | '/app'
     | '/lovable/email/auth/preview'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/documents'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/upload'
+    | '/_authenticated/app/vendors'
     | '/api/public/inbound-email'
     | '/_authenticated/app/'
     | '/lovable/email/auth/preview'
@@ -314,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicInboundEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/vendors': {
+      id: '/_authenticated/app/vendors'
+      path: '/vendors'
+      fullPath: '/app/vendors'
+      preLoaderRoute: typeof AuthenticatedAppVendorsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/upload': {
       id: '/_authenticated/app/upload'
       path: '/upload'
@@ -371,6 +390,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppDocumentsRoute: typeof AuthenticatedAppDocumentsRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppUploadRoute: typeof AuthenticatedAppUploadRoute
+  AuthenticatedAppVendorsRoute: typeof AuthenticatedAppVendorsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -379,6 +399,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppDocumentsRoute: AuthenticatedAppDocumentsRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppUploadRoute: AuthenticatedAppUploadRoute,
+  AuthenticatedAppVendorsRoute: AuthenticatedAppVendorsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
@@ -412,13 +433,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

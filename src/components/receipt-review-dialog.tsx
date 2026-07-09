@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { VendorAutocomplete } from "@/components/vendor-autocomplete";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ItemsEditor } from "@/components/items-editor";
 import { CATEGORIES, findDuplicates, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
@@ -121,7 +122,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="company">Firma</Label>
-            <Input id="company" value={fields.company} onChange={(e) => set("company", e.target.value)} />
+            <VendorAutocomplete value={fields.company} onChange={(v) => set("company", v)} placeholder="Vælg eller opret leverandør" />
           </div>
 
           <div>

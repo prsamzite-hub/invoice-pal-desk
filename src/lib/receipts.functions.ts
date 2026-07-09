@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveVendorForCurrentUser } from "./vendors.functions";
 
 export const CATEGORIES = [
   "Groceries",
@@ -216,11 +217,14 @@ export const saveReceipt = createServerFn({ method: "POST" })
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
     const f = data.fields;
 
+    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
+
     const insert = await supabase
       .from("receipts")
       .insert({
         user_id: userId,
         company: f.company,
+        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
@@ -243,6 +247,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
     }
 
     try {
+      const vendorLogo = await loadVendorLogoBytes(supabase, vendorId);
       const pdfBytes = await generateReceiptPdf({
         company: row.company,
         amount: Number(row.amount),
@@ -254,6 +259,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         notes: row.notes,
         items: f.items,
         receipt_id: row.id,
+        vendor_logo: vendorLogo,
         lang: data.lang,
       });
       const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
@@ -315,6 +321,22 @@ export const getReceiptItems = createServerFn({ method: "POST" })
     })) as LineItem[];
   });
 
+async function loadVendorLogoBytes(
+  supabase: any,
+  vendorId: string | null,
+): Promise<Uint8Array | null> {
+  if (!vendorId) return null;
+  const { data: v } = await supabase
+    .from("vendors")
+    .select("logo_path")
+    .eq("id", vendorId)
+    .maybeSingle();
+  if (!v?.logo_path) return null;
+  const dl = await supabase.storage.from("vendor-logos").download(v.logo_path);
+  if (dl.error || !dl.data) return null;
+  return new Uint8Array(await dl.data.arrayBuffer());
+}
+
 async function regenerateAndStorePdf(
   supabase: any,
   userId: string,
@@ -335,6 +357,7 @@ async function regenerateAndStorePdf(
     .select("description, quantity, unit_price, total, position")
     .eq("document_id", id)
     .order("position", { ascending: true });
+  const vendorLogo = await loadVendorLogoBytes(supabase, row.vendor_id ?? null);
   const pdfBytes = await generateReceiptPdf({
     company: row.company,
     amount: Number(row.amount),
@@ -351,6 +374,7 @@ async function regenerateAndStorePdf(
       total: Number(it.total ?? 0),
     })),
     receipt_id: row.id,
+    vendor_logo: vendorLogo,
     lang,
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;
@@ -414,10 +438,12 @@ export const updateReceipt = createServerFn({ method: "POST" })
     if (exErr) throw exErr;
     if (!existing) throw new Error("Ikke fundet");
     const nextStatus = existing.status === "paid" ? "paid" : f.due_date ? "unpaid" : "paid";
+    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
     const { data: row, error } = await supabase
       .from("receipts")
       .update({
         company: f.company,
+        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
