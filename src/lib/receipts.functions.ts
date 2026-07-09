@@ -178,11 +178,7 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
   };
 }
 
-async function replaceItems(
-  supabase: ReturnType<typeof requireSupabaseAuth extends never ? never : (...args: never[]) => never> | any,
-  documentId: string,
-  items: LineItem[],
-) {
+async function replaceItems(supabase: any, documentId: string, items: LineItem[]) {
   await supabase.from("document_items").delete().eq("document_id", documentId);
   if (items.length === 0) return;
   const rows = items.map((it, i) => ({
@@ -196,6 +192,7 @@ async function replaceItems(
   const ins = await supabase.from("document_items").insert(rows);
   if (ins.error) throw ins.error;
 }
+
 
 export const saveReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
