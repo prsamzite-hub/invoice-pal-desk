@@ -47,7 +47,7 @@ export function VendorAutocomplete({ value, onChange, placeholder }: Props) {
           className="w-full justify-between font-normal"
         >
           <span className={cn("truncate", !value && "text-muted-foreground")}>
-            {value || placeholder || "Vælg leverandør"}
+            {value || placeholder || "Søg eller opret firma…"}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
