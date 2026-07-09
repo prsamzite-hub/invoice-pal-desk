@@ -41,6 +41,47 @@ export type Database = {
         }
         Relationships: []
       }
+      document_items: {
+        Row: {
+          created_at: string
+          description: string
+          document_id: string
+          id: string
+          position: number
+          quantity: number | null
+          total: number
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          document_id: string
+          id?: string
+          position?: number
+          quantity?: number | null
+          total?: number
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          document_id?: string
+          id?: string
+          position?: number
+          quantity?: number | null
+          total?: number
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
