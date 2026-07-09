@@ -118,6 +118,14 @@ function fmtMoney(amount: number, currency: string, lang: PdfLang) {
   }
 }
 
+function fmtDate(iso: string | null | undefined, lang: PdfLang): string {
+  if (!iso) return "-";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const [, y, mo, d] = m;
+  return lang === "da" ? `${d}.${mo}.${y}` : `${d}/${mo}/${y}`;
+}
+
 // Brand palette
 const INK = rgb(0x23 / 255, 0x24 / 255, 0x1f / 255); // #23241f
 const DUSTY = rgb(0x6b / 255, 0x93 / 255, 0xa8 / 255); // #6b93a8
