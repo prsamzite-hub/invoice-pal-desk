@@ -192,6 +192,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           <div className="sm:col-span-2">
             <Label htmlFor="notes">Noter</Label>
             <Textarea id="notes" rows={2} value={fields.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
+          </div>
         </div>
 
         <ItemsEditor
@@ -199,6 +200,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           currency={fields.currency}
           onChange={(items) => set("items", items)}
         />
+
 
 
 
