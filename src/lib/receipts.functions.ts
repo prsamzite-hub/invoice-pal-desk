@@ -325,21 +325,7 @@ export const getReceiptItems = createServerFn({ method: "POST" })
     })) as LineItem[];
   });
 
-async function loadVendorLogoBytes(
-  supabase: any,
-  vendorId: string | null,
-): Promise<Uint8Array | null> {
-  if (!vendorId) return null;
-  const { data: v } = await supabase
-    .from("vendors")
-    .select("logo_path")
-    .eq("id", vendorId)
-    .maybeSingle();
-  if (!v?.logo_path) return null;
-  const dl = await supabase.storage.from("vendor-logos").download(v.logo_path);
-  if (dl.error || !dl.data) return null;
-  return new Uint8Array(await dl.data.arrayBuffer());
-}
+// (vendor logos are looked up by company name; see vendor-logos.functions.ts)
 
 async function regenerateAndStorePdf(
   supabase: any,
