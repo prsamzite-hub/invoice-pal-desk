@@ -479,6 +479,14 @@ function EditReceiptDialog({
             />
           </div>
         </div>
+        <div className="mt-2">
+          <ItemsEditor
+            items={fields.items}
+            currency={fields.currency}
+            onChange={(items: LineItem[]) => set("items", items)}
+          />
+        </div>
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={save.isPending}>
             Annuller
