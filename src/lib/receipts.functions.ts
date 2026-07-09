@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { resolveVendorForCurrentUser } from "./vendors.functions";
+import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
 
 export const CATEGORIES = [
   "Groceries",
@@ -217,14 +217,11 @@ export const saveReceipt = createServerFn({ method: "POST" })
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
     const f = data.fields;
 
-    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
-
     const insert = await supabase
       .from("receipts")
       .insert({
         user_id: userId,
         company: f.company,
-        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
@@ -246,8 +243,15 @@ export const saveReceipt = createServerFn({ method: "POST" })
       console.error("[saveReceipt] items insert failed", e);
     }
 
+    // Best-effort cache the vendor logo for this company name.
     try {
-      const vendorLogo = await loadVendorLogoBytes(supabase, vendorId);
+      await ensureLogoForCompany(supabase, userId, f.company);
+    } catch (e) {
+      console.warn("[saveReceipt] logo cache failed", e);
+    }
+
+    try {
+      const vendorLogo = await loadLogoBytesByName(supabase, userId, f.company);
       const pdfBytes = await generateReceiptPdf({
         company: row.company,
         amount: Number(row.amount),
@@ -321,21 +325,7 @@ export const getReceiptItems = createServerFn({ method: "POST" })
     })) as LineItem[];
   });
 
-async function loadVendorLogoBytes(
-  supabase: any,
-  vendorId: string | null,
-): Promise<Uint8Array | null> {
-  if (!vendorId) return null;
-  const { data: v } = await supabase
-    .from("vendors")
-    .select("logo_path")
-    .eq("id", vendorId)
-    .maybeSingle();
-  if (!v?.logo_path) return null;
-  const dl = await supabase.storage.from("vendor-logos").download(v.logo_path);
-  if (dl.error || !dl.data) return null;
-  return new Uint8Array(await dl.data.arrayBuffer());
-}
+// (vendor logos are looked up by company name; see vendor-logos.functions.ts)
 
 async function regenerateAndStorePdf(
   supabase: any,
@@ -357,7 +347,7 @@ async function regenerateAndStorePdf(
     .select("description, quantity, unit_price, total, position")
     .eq("document_id", id)
     .order("position", { ascending: true });
-  const vendorLogo = await loadVendorLogoBytes(supabase, row.vendor_id ?? null);
+  const vendorLogo = await loadLogoBytesByName(supabase, userId, row.company);
   const pdfBytes = await generateReceiptPdf({
     company: row.company,
     amount: Number(row.amount),
@@ -438,12 +428,10 @@ export const updateReceipt = createServerFn({ method: "POST" })
     if (exErr) throw exErr;
     if (!existing) throw new Error("Ikke fundet");
     const nextStatus = existing.status === "paid" ? "paid" : f.due_date ? "unpaid" : "paid";
-    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
     const { data: row, error } = await supabase
       .from("receipts")
       .update({
         company: f.company,
-        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
@@ -458,6 +446,13 @@ export const updateReceipt = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw error;
+
+    // Best-effort refresh the logo cache for the (possibly renamed) company.
+    try {
+      await ensureLogoForCompany(supabase, userId, f.company);
+    } catch (e) {
+      console.warn("[updateReceipt] logo cache failed", e);
+    }
 
     try {
       await replaceItems(supabase, data.id, f.items);

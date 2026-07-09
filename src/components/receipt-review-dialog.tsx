@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
@@ -10,10 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { VendorAutocomplete } from "@/components/vendor-autocomplete";
+import { CompanyCombobox } from "@/components/company-combobox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ItemsEditor } from "@/components/items-editor";
-import { CATEGORIES, findDuplicates, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
+import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
 interface Props {
   open: boolean;
@@ -29,6 +29,12 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   const [fields, setFields] = useState<ExtractedFields | null>(null);
   const findDupFn = useServerFn(findDuplicates);
   const saveFn = useServerFn(saveReceipt);
+  const listFn = useServerFn(listMyReceipts);
+  const listQ = useQuery({ queryKey: ["receipts"], queryFn: () => listFn(), staleTime: 60_000 });
+  const companySuggestions = useMemo(
+    () => (listQ.data ?? []).map((r) => r.company).filter(Boolean),
+    [listQ.data],
+  );
 
   useEffect(() => {
     if (initial) setFields(initial.extracted);
@@ -122,7 +128,13 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="company">Firma</Label>
-            <VendorAutocomplete value={fields.company} onChange={(v) => set("company", v)} placeholder="Vælg eller opret leverandør" />
+            <CompanyCombobox
+              id="company"
+              value={fields.company}
+              onChange={(v) => set("company", v)}
+              placeholder="Skriv eller vælg firma"
+              suggestions={companySuggestions}
+            />
           </div>
 
           <div>

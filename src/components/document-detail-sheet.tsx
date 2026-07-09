@@ -52,7 +52,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { VendorAvatar } from "@/components/atoms/vendor-avatar";
-import { VendorAutocomplete } from "@/components/vendor-autocomplete";
+import { CompanyCombobox } from "@/components/company-combobox";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { CategoryChip } from "@/components/atoms/category-chip";
 import { MoneyAmount } from "@/components/atoms/money-amount";
@@ -63,6 +63,7 @@ import {
   deleteReceipt,
   getReceiptItems,
   getReceiptOriginalUrl,
+  listMyReceipts,
   markReceiptPaid,
   updateReceipt,
   type ExtractedFields,
@@ -391,6 +392,9 @@ function EditReceiptDialog({
     queryKey: ["receipt-items", doc.id],
     queryFn: () => itemsFn({ data: { id: doc.id } }),
   });
+  const listFn = useServerFn(listMyReceipts);
+  const listQ = useQuery({ queryKey: ["receipts"], queryFn: () => listFn(), staleTime: 60_000 });
+  const companySuggestions = (listQ.data ?? []).map((r) => r.company).filter(Boolean);
 
   const seed = (): ExtractedFields => ({
     company: doc.company,
@@ -437,7 +441,12 @@ function EditReceiptDialog({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="e-company">Firma</Label>
-            <VendorAutocomplete value={fields.company} onChange={(v: string) => set("company", v)} />
+            <CompanyCombobox
+              id="e-company"
+              value={fields.company}
+              onChange={(v: string) => set("company", v)}
+              suggestions={companySuggestions}
+            />
           </div>
           <div>
             <Label htmlFor="e-amount">Beløb</Label>
