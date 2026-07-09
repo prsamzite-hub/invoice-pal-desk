@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { ItemsEditor } from "@/components/items-editor";
 import {
   CalendarClock,
   CalendarDays,
@@ -59,10 +60,12 @@ import type { DocumentCardData } from "@/components/atoms/document-card";
 import {
   CATEGORIES,
   deleteReceipt,
+  getReceiptItems,
   getReceiptOriginalUrl,
   markReceiptPaid,
   updateReceipt,
   type ExtractedFields,
+  type LineItem,
 } from "@/lib/receipts.functions";
 
 function formatDate(iso: string | null | undefined) {
@@ -102,8 +105,20 @@ export function DocumentDetailSheet({
   const deleteFn = useServerFn(deleteReceipt);
   const markPaidFn = useServerFn(markReceiptPaid);
   const originalUrlFn = useServerFn(getReceiptOriginalUrl);
+  const itemsFn = useServerFn(getReceiptItems);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["receipts"] });
+  const itemsQuery = useQuery({
+    enabled: !!doc && open,
+    queryKey: ["receipt-items", doc?.id],
+    queryFn: () => itemsFn({ data: { id: doc!.id } }),
+  });
+  const items = itemsQuery.data ?? [];
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["receipts"] });
+    if (doc) qc.invalidateQueries({ queryKey: ["receipt-items", doc.id] });
+  };
+
 
   const markPaid = useMutation({
     mutationFn: (id: string) => markPaidFn({ data: { id, paid: true } }),
@@ -197,6 +212,46 @@ export function DocumentDetailSheet({
                   </div>
                 ) : null}
               </div>
+
+              {items.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Varer
+                  </span>
+                  <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+                    {items.map((it, i) => (
+                      <li key={i} className="flex items-start justify-between gap-3 px-3 py-2 text-sm">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-foreground">{it.description || "—"}</p>
+                          {it.quantity != null || it.unit_price != null ? (
+                            <p className="text-xs text-muted-foreground">
+                              {it.quantity != null ? `${it.quantity} × ` : ""}
+                              {it.unit_price != null
+                                ? new Intl.NumberFormat("da-DK", {
+                                    style: "currency",
+                                    currency: doc.currency ?? "DKK",
+                                  }).format(it.unit_price)
+                                : ""}
+                            </p>
+                          ) : null}
+                        </div>
+                        <span
+                          className={`tabular-nums font-medium ${
+                            it.total < 0 ? "text-emerald-600" : "text-foreground"
+                          }`}
+                        >
+                          {new Intl.NumberFormat("da-DK", {
+                            style: "currency",
+                            currency: doc.currency ?? "DKK",
+                          }).format(it.total)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+
 
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -329,7 +384,14 @@ function EditReceiptDialog({
   onSaved: () => void;
   updateFn: ReturnType<typeof useServerFn<typeof updateReceipt>>;
 }) {
-  const [fields, setFields] = useState<ExtractedFields>(() => ({
+  const itemsFn = useServerFn(getReceiptItems);
+  const itemsQuery = useQuery({
+    enabled: open,
+    queryKey: ["receipt-items", doc.id],
+    queryFn: () => itemsFn({ data: { id: doc.id } }),
+  });
+
+  const seed = (): ExtractedFields => ({
     company: doc.company,
     amount: doc.amount,
     currency: doc.currency ?? "DKK",
@@ -338,22 +400,16 @@ function EditReceiptDialog({
     document_type: doc.type,
     category: doc.category?.label ?? null,
     notes: doc.notes ?? null,
-  }));
+    items: itemsQuery.data ?? [],
+  });
+
+  const [fields, setFields] = useState<ExtractedFields>(seed);
 
   useEffect(() => {
-    if (open) {
-      setFields({
-        company: doc.company,
-        amount: doc.amount,
-        currency: doc.currency ?? "DKK",
-        issued_date: doc.issuedDate ? doc.issuedDate.slice(0, 10) : null,
-        due_date: doc.dueDate ? doc.dueDate.slice(0, 10) : null,
-        document_type: doc.type,
-        category: doc.category?.label ?? null,
-        notes: doc.notes ?? null,
-      });
-    }
-  }, [open, doc]);
+    if (open) setFields(seed());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, doc, itemsQuery.data]);
+
 
   const save = useMutation({
     mutationFn: () => updateFn({ data: { id: doc.id, fields } }),
@@ -475,6 +531,14 @@ function EditReceiptDialog({
             />
           </div>
         </div>
+        <div className="mt-2">
+          <ItemsEditor
+            items={fields.items}
+            currency={fields.currency}
+            onChange={(items: LineItem[]) => set("items", items)}
+          />
+        </div>
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={save.isPending}>
             Annuller
