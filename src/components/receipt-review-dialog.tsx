@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
@@ -10,10 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { VendorAutocomplete } from "@/components/vendor-autocomplete";
+import { CompanyCombobox } from "@/components/company-combobox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ItemsEditor } from "@/components/items-editor";
-import { CATEGORIES, findDuplicates, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
+import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
 interface Props {
   open: boolean;
