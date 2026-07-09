@@ -159,8 +159,23 @@ export function BusinessProfileCard() {
       ) : enabled ? (
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field id="bp_company" label="Firmanavn" value={form.company_name} onChange={(v) => set("company_name", v)} required />
-            <Field id="bp_cvr" label="CVR (8 cifre)" value={form.cvr} onChange={(v) => set("cvr", v.replace(/\D/g, "").slice(0, 8))} inputMode="numeric" placeholder="12345678" />
+            <div className="sm:col-span-2">
+              <CvrLookupField
+                id="bp_cvr"
+                value={form.cvr}
+                onChange={(v) => set("cvr", v)}
+                onAutofill={(f: CvrAutofill) =>
+                  setForm((s) => ({
+                    ...s,
+                    company_name: f.company_name ?? s.company_name,
+                    address: f.address ?? s.address,
+                    postal_code: f.postal_code ?? s.postal_code,
+                    city: f.city ?? s.city,
+                  }))
+                }
+              />
+            </div>
+            <Field id="bp_company" label="Firmanavn" value={form.company_name} onChange={(v) => set("company_name", v)} required className="sm:col-span-2" />
             <Field id="bp_address" label="Adresse" value={form.address} onChange={(v) => set("address", v)} className="sm:col-span-2" />
             <Field id="bp_postal" label="Postnr." value={form.postal_code} onChange={(v) => set("postal_code", v)} />
             <Field id="bp_city" label="By" value={form.city} onChange={(v) => set("city", v)} />
