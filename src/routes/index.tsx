@@ -7,6 +7,9 @@ import {
   Search,
   FileText,
   ArrowRight,
+  Building2,
+  CalendarClock,
+  BarChart3,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
