@@ -29,6 +29,12 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   const [fields, setFields] = useState<ExtractedFields | null>(null);
   const findDupFn = useServerFn(findDuplicates);
   const saveFn = useServerFn(saveReceipt);
+  const listFn = useServerFn(listMyReceipts);
+  const listQ = useQuery({ queryKey: ["receipts"], queryFn: () => listFn(), staleTime: 60_000 });
+  const companySuggestions = useMemo(
+    () => (listQ.data ?? []).map((r) => r.company).filter(Boolean),
+    [listQ.data],
+  );
 
   useEffect(() => {
     if (initial) setFields(initial.extracted);
@@ -122,7 +128,13 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="company">Firma</Label>
-            <VendorAutocomplete value={fields.company} onChange={(v) => set("company", v)} placeholder="Vælg eller opret leverandør" />
+            <CompanyCombobox
+              id="company"
+              value={fields.company}
+              onChange={(v) => set("company", v)}
+              placeholder="Skriv eller vælg firma"
+              suggestions={companySuggestions}
+            />
           </div>
 
           <div>
