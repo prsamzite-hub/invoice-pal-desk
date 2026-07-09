@@ -370,6 +370,7 @@ async function regenerateAndStorePdf(
     .eq("document_id", id)
     .order("position", { ascending: true });
   const vendorLogo = await loadLogoBytesByName(supabase, userId, row.company);
+  const sender = await loadSender(supabase, userId);
   const pdfBytes = await generateReceiptPdf({
     company: row.company,
     amount: Number(row.amount),
@@ -387,6 +388,7 @@ async function regenerateAndStorePdf(
     })),
     receipt_id: row.id,
     vendor_logo: vendorLogo,
+    sender,
     lang,
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;
