@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CATEGORIES, findDuplicates, saveReceipt, type ExtractResult, type ExtractedFields } from "@/lib/receipts.functions";
+import { ItemsEditor } from "@/components/items-editor";
+import { CATEGORIES, findDuplicates, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
 interface Props {
   open: boolean;
