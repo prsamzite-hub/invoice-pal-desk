@@ -52,7 +52,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { VendorAvatar } from "@/components/atoms/vendor-avatar";
-import { VendorAutocomplete } from "@/components/vendor-autocomplete";
+import { CompanyCombobox } from "@/components/company-combobox";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { CategoryChip } from "@/components/atoms/category-chip";
 import { MoneyAmount } from "@/components/atoms/money-amount";
