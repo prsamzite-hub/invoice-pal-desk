@@ -217,14 +217,11 @@ export const saveReceipt = createServerFn({ method: "POST" })
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
     const f = data.fields;
 
-    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
-
     const insert = await supabase
       .from("receipts")
       .insert({
         user_id: userId,
         company: f.company,
-        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
@@ -246,8 +243,15 @@ export const saveReceipt = createServerFn({ method: "POST" })
       console.error("[saveReceipt] items insert failed", e);
     }
 
+    // Best-effort cache the vendor logo for this company name.
     try {
-      const vendorLogo = await loadVendorLogoBytes(supabase, vendorId);
+      await ensureLogoForCompany(supabase, userId, f.company);
+    } catch (e) {
+      console.warn("[saveReceipt] logo cache failed", e);
+    }
+
+    try {
+      const vendorLogo = await loadLogoBytesByName(supabase, userId, f.company);
       const pdfBytes = await generateReceiptPdf({
         company: row.company,
         amount: Number(row.amount),
