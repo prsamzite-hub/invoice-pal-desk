@@ -94,7 +94,7 @@ export function VendorAutocomplete({ value, onChange, placeholder }: Props) {
                   }}
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Opret “{query.trim()}”
+                  Opret “{query.trim()}” som nyt firma
                 </CommandItem>
               </CommandGroup>
             )}
