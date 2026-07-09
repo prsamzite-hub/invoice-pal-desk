@@ -139,8 +139,23 @@ function OnboardingPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <CvrLookupField
+                  id="ob_cvr"
+                  value={form.cvr}
+                  onChange={(v) => set("cvr", v)}
+                  onAutofill={(fields) =>
+                    setForm((s) => ({
+                      ...s,
+                      company_name: fields.company_name ?? s.company_name,
+                      address: fields.address ?? s.address,
+                      postal_code: fields.postal_code ?? s.postal_code,
+                      city: fields.city ?? s.city,
+                    }))
+                  }
+                />
+              </div>
               <F id="ob_company" label="Firmanavn *" value={form.company_name} onChange={(v) => set("company_name", v)} className="sm:col-span-2" />
-              <F id="ob_cvr" label="CVR (8 cifre)" value={form.cvr} onChange={(v) => set("cvr", v.replace(/\D/g, "").slice(0, 8))} inputMode="numeric" placeholder="12345678" />
               <F id="ob_phone" label="Telefon" value={form.phone} onChange={(v) => set("phone", v)} inputMode="tel" />
               <F id="ob_address" label="Adresse" value={form.address} onChange={(v) => set("address", v)} className="sm:col-span-2" />
               <F id="ob_postal" label="Postnr." value={form.postal_code} onChange={(v) => set("postal_code", v)} />
