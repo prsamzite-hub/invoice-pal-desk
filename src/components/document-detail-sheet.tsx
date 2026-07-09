@@ -51,7 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CompanyAvatar } from "@/components/atoms/company-avatar";
+import { VendorAvatar } from "@/components/atoms/vendor-avatar";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { CategoryChip } from "@/components/atoms/category-chip";
 import { MoneyAmount } from "@/components/atoms/money-amount";
@@ -162,7 +162,7 @@ export function DocumentDetailSheet({
             <div className="flex flex-col gap-6">
               <SheetHeader>
                 <div className="flex items-center gap-3">
-                  <CompanyAvatar name={doc.company} />
+                  <VendorAvatar name={doc.company} logoUrl={doc.vendorLogoUrl} />
                   <div className="min-w-0 flex-1">
                     <SheetTitle className="truncate text-lg">{doc.company}</SheetTitle>
                     <SheetDescription className="text-xs">
