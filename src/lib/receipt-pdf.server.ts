@@ -143,7 +143,13 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   let y = height - 160;
   draw(t.billedBy, { x: 48, y, size: 9, font, color: MUTED });
   y -= 18;
-  draw(data.company || "-", { x: 48, y, size: 20, font: bold, color: INK });
+
+  // Vendor row: logo (or monogram) + name
+  const AVATAR_SIZE = 36;
+  const avatarX = 48;
+  const avatarY = y - AVATAR_SIZE + 20; // baseline align roughly with 20pt text
+  await drawVendorMark(doc, page, data.company, data.vendor_logo ?? null, avatarX, avatarY, AVATAR_SIZE, bold);
+  draw(data.company || "-", { x: avatarX + AVATAR_SIZE + 12, y, size: 20, font: bold, color: INK });
 
   y -= 44;
   const rows: Array<[string, string]> = [
