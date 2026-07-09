@@ -347,7 +347,7 @@ async function regenerateAndStorePdf(
     .select("description, quantity, unit_price, total, position")
     .eq("document_id", id)
     .order("position", { ascending: true });
-  const vendorLogo = await loadVendorLogoBytes(supabase, row.vendor_id ?? null);
+  const vendorLogo = await loadLogoBytesByName(supabase, userId, row.company);
   const pdfBytes = await generateReceiptPdf({
     company: row.company,
     amount: Number(row.amount),
@@ -428,12 +428,10 @@ export const updateReceipt = createServerFn({ method: "POST" })
     if (exErr) throw exErr;
     if (!existing) throw new Error("Ikke fundet");
     const nextStatus = existing.status === "paid" ? "paid" : f.due_date ? "unpaid" : "paid";
-    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
     const { data: row, error } = await supabase
       .from("receipts")
       .update({
         company: f.company,
-        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
@@ -448,6 +446,13 @@ export const updateReceipt = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw error;
+
+    // Best-effort refresh the logo cache for the (possibly renamed) company.
+    try {
+      await ensureLogoForCompany(supabase, userId, f.company);
+    } catch (e) {
+      console.warn("[updateReceipt] logo cache failed", e);
+    }
 
     try {
       await replaceItems(supabase, data.id, f.items);
