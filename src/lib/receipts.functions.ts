@@ -217,11 +217,14 @@ export const saveReceipt = createServerFn({ method: "POST" })
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
     const f = data.fields;
 
+    const vendorId = await resolveVendorForCurrentUser(supabase, userId, f.company);
+
     const insert = await supabase
       .from("receipts")
       .insert({
         user_id: userId,
         company: f.company,
+        vendor_id: vendorId,
         amount: f.amount,
         currency: f.currency,
         issued_date: f.issued_date,
