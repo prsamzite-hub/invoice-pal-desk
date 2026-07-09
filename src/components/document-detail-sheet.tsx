@@ -60,10 +60,12 @@ import type { DocumentCardData } from "@/components/atoms/document-card";
 import {
   CATEGORIES,
   deleteReceipt,
+  getReceiptItems,
   getReceiptOriginalUrl,
   markReceiptPaid,
   updateReceipt,
   type ExtractedFields,
+  type LineItem,
 } from "@/lib/receipts.functions";
 
 function formatDate(iso: string | null | undefined) {
