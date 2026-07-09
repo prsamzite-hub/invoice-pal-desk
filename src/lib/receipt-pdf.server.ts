@@ -20,6 +20,8 @@ export interface ReceiptPdfData {
   notes?: string | null;
   items?: ReceiptPdfLineItem[];
   receipt_id: string;
+  /** Raw PNG/JPEG bytes for the vendor logo. If omitted, a monogram is rendered. */
+  vendor_logo?: Uint8Array | null;
   lang?: PdfLang;
 }
 
