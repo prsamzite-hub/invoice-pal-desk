@@ -382,6 +382,18 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const totalStr = fmtMoney(data.amount || 0, currency, lang);
   draw(totalStr, { x: 68, y: y - 32, size: 26, font: bold, color: INK });
 
+  // Forfaldsdato (due date) callout on the right side of the total card
+  if (data.due_date) {
+    const dueLabel = t.dueDateShort;
+    const dueValue = fmtDate(data.due_date, lang);
+    const dueLW = font.widthOfTextAtSize(sanitize(dueLabel), 9);
+    const dueVW = bold.widthOfTextAtSize(sanitize(dueValue), 14);
+    const rightX = width - 68;
+    draw(dueLabel, { x: rightX - dueLW, y: y + 2, size: 9, font, color: MUTED });
+    draw(dueValue, { x: rightX - dueVW, y: y - 26, size: 14, font: bold, color: DUSTY });
+  }
+
+
   y -= 90;
 
   if (data.notes) {
