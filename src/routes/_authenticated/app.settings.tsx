@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InboundEmailCard } from "@/components/inbound-email-card";
+import { BusinessProfileCard } from "@/components/business-profile-card";
 import { getMyProfile, updateMyProfile, deleteMyAccount } from "@/lib/profile.functions";
 import { supabase } from "@/integrations/supabase/client";
 
