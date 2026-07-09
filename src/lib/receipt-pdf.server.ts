@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
+
 export interface ReceiptPdfLineItem {
   description: string;
   quantity?: number | null;
