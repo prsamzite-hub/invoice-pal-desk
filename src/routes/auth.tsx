@@ -135,16 +135,20 @@ function AuthPage() {
           return;
         }
         toast.success("Velkommen til Kvitregn! 🎉");
+        setLastAuthMode(mode);
         await router.invalidate();
-        navigate({ to: "/onboarding" });
+        navigate({
+          to: "/onboarding",
+          search: mode === "erhverv" ? { mode: "business" } : {},
+        });
         return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Du er logget ind");
       }
-      await router.invalidate();
-      navigate({ to: "/app" });
+      await routeAfterAuth(mode);
+
     } catch (err) {
       const msg = danishAuthError(err);
       if (msg === EMAIL_EXISTS_MESSAGE) showEmailExistsToast();
