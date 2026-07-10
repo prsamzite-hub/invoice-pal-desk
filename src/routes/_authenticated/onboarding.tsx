@@ -1,17 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Building2, User, Loader2, ArrowRight, Save } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CvrLookupField, type CvrAutofill } from "@/components/cvr-lookup-field";
 import { upsertMyBusinessProfile } from "@/lib/business-profile.functions";
+import { setStoredAppMode } from "@/lib/app-mode";
+
+const searchSchema = z.object({
+  mode: z.enum(["business"]).optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
+  validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Kom i gang — Kvitregn" },
@@ -20,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   }),
   component: OnboardingPage,
 });
+
 
 type Mode = "choose" | "business";
 
