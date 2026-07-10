@@ -194,11 +194,12 @@ function OnboardingPage() {
                   type="button"
                   variant="outline"
                   className="rounded-full"
-                  onClick={() => navigate({ to: "/app", replace: true })}
+                  onClick={continueAsPrivat}
                   disabled={saving}
                 >
-                  Spring over
+                  Fortsæt som privat
                 </Button>
+
                 <Button type="submit" className="rounded-full" disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Gem og fortsæt
