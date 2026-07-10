@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, ArrowLeft, User, Building2 } from "lucide-react";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { toast } from "sonner";
 import { danishAuthError, EMAIL_EXISTS_MESSAGE } from "@/lib/auth-errors";
+import {
+  getLastAuthMode,
+  setLastAuthMode,
+  setStoredAppMode,
+  type AppMode,
+} from "@/lib/app-mode";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
