@@ -34,7 +34,11 @@ export function danishAuthError(err: unknown): string {
   if (code === "signup_disabled") {
     return "Det er ikke muligt at oprette en konto i øjeblikket. Prøv igen senere eller kontakt os.";
   }
-  if (raw.includes("invalid login") || raw.includes("invalid credentials") || raw.includes("invalid email or password")) {
+  if (
+    raw.includes("invalid login") ||
+    raw.includes("invalid credentials") ||
+    raw.includes("invalid email or password")
+  ) {
     return "Forkert email eller adgangskode.";
   }
   if (raw.includes("email not confirmed") || raw.includes("not confirmed")) {
