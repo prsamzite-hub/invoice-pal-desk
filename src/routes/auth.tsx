@@ -204,8 +204,8 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      await router.invalidate();
-      navigate({ to: "/app" });
+      await routeAfterAuth(mode);
+
     } catch (err) {
       toast.error(danishAuthError(err));
       setOauthBusy(null);
