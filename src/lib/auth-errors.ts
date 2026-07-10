@@ -3,16 +3,16 @@ export const EMAIL_EXISTS_MESSAGE =
   "Der findes allerede en konto med denne email — log ind i stedet.";
 
 export function danishAuthError(err: unknown): string {
-  const raw = (err instanceof Error ? err.message : String(err ?? "")).toLowerCase();
-  if (!raw) return "Noget gik galt. Prøv igen.";
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  const code =
+    typeof err === "object" && err !== null && "code" in err
+      ? String((err as Record<string, unknown>).code ?? "")
+      : "";
+  const raw = message.toLowerCase();
+  if (!raw && !code) return "Noget gik galt. Prøv igen.";
 
-  if (raw.includes("invalid login") || raw.includes("invalid credentials") || raw.includes("invalid email or password")) {
-    return "Forkert email eller adgangskode.";
-  }
-  if (raw.includes("email not confirmed") || raw.includes("not confirmed")) {
-    return "Din email er ikke bekræftet endnu. Tjek din indbakke for et bekræftelseslink.";
-  }
   if (
+    code === "user_already_exists" ||
     raw.includes("user already registered") ||
     raw.includes("already registered") ||
     raw.includes("already exists") ||
@@ -22,8 +22,27 @@ export function danishAuthError(err: unknown): string {
   ) {
     return EMAIL_EXISTS_MESSAGE;
   }
-  if (raw.includes("password should be") || raw.includes("weak password") || raw.includes("password is too short") || raw.includes("at least")) {
+  if (
+    code === "weak_password" ||
+    raw.includes("password should be") ||
+    raw.includes("weak password") ||
+    raw.includes("password is too short") ||
+    raw.includes("at least")
+  ) {
     return "Adgangskoden er for svag. Brug mindst 8 tegn med både bogstaver og tal.";
+  }
+  if (code === "signup_disabled") {
+    return "Det er ikke muligt at oprette en konto i øjeblikket. Prøv igen senere eller kontakt os.";
+  }
+  if (
+    raw.includes("invalid login") ||
+    raw.includes("invalid credentials") ||
+    raw.includes("invalid email or password")
+  ) {
+    return "Forkert email eller adgangskode.";
+  }
+  if (raw.includes("email not confirmed") || raw.includes("not confirmed")) {
+    return "Din email er ikke bekræftet endnu. Tjek din indbakke for et bekræftelseslink.";
   }
   if (raw.includes("rate limit") || raw.includes("too many")) {
     return "For mange forsøg. Vent et øjeblik og prøv igen.";
