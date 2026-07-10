@@ -35,8 +35,9 @@ function OnboardingPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const saveFn = useServerFn(upsertMyBusinessProfile);
+  const search = Route.useSearch();
 
-  const [mode, setMode] = useState<Mode>("choose");
+  const [mode, setMode] = useState<Mode>(search.mode === "business" ? "business" : "choose");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     company_name: "",
@@ -46,6 +47,16 @@ function OnboardingPage() {
     city: "",
     phone: "",
   });
+
+  useEffect(() => {
+    if (search.mode === "business") setMode("business");
+  }, [search.mode]);
+
+  function continueAsPrivat() {
+    setStoredAppMode("privat");
+    navigate({ to: "/app", replace: true });
+  }
+
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
