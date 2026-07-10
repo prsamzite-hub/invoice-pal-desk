@@ -46,11 +46,50 @@ function AuthPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [view, setView] = useState<View>("signin");
+  const [mode, setMode] = useState<AppMode>("privat");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | null>(null);
   const [resetSent, setResetSent] = useState(false);
+
+  useEffect(() => {
+    setMode(getLastAuthMode());
+  }, []);
+
+  function updateMode(next: AppMode) {
+    setMode(next);
+    setLastAuthMode(next);
+  }
+
+  async function routeAfterAuth(chosen: AppMode) {
+    setLastAuthMode(chosen);
+    if (chosen === "privat") {
+      setStoredAppMode("privat");
+      await router.invalidate();
+      navigate({ to: "/app", replace: true });
+      return;
+    }
+    // Erhverv: check for business profile
+    try {
+      const { data } = await supabase
+        .from("business_profiles")
+        .select("id")
+        .maybeSingle();
+      if (data?.id) {
+        setStoredAppMode("erhverv");
+        await router.invalidate();
+        navigate({ to: "/app", replace: true });
+      } else {
+        await router.invalidate();
+        navigate({ to: "/onboarding", search: { mode: "business" }, replace: true });
+      }
+    } catch {
+      await router.invalidate();
+      navigate({ to: "/onboarding", search: { mode: "business" }, replace: true });
+    }
+  }
+
 
   // If already signed in, bounce to /app
   useEffect(() => {
