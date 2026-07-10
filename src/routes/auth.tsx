@@ -285,6 +285,26 @@ function AuthPage() {
                   <TabsTrigger value="signup" className="rounded-full">Opret bruger</TabsTrigger>
                 </TabsList>
 
+                <div className="mt-5 flex flex-col items-center gap-2">
+                  <SegmentedControl<AppMode>
+                    value={mode}
+                    onChange={updateMode}
+                    ariaLabel="Vælg kontotype"
+                    options={[
+                      { value: "privat", label: "Privat" },
+                      { value: "erhverv", label: "Erhverv" },
+                    ]}
+                  />
+                  <p className="text-center text-xs text-muted-foreground">
+                    {mode === "erhverv"
+                      ? view === "signin"
+                        ? "Log ind og gå direkte til din erhvervsvisning."
+                        : "Vi beder om CVR og adresse efter oprettelsen."
+                      : "Kvitteringer og fakturaer i din egen mappe."}
+                  </p>
+                </div>
+
+
                 <TabsContent value="signin" className="mt-6">
                   <EmailForm
                     email={email} setEmail={setEmail}
