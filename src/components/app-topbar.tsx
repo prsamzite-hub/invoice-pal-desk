@@ -24,7 +24,7 @@ export function AppTopbar() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-3 backdrop-blur sm:px-5">
       <SidebarTrigger className="rounded-full" />
-      {business?.company_name ? (
+      {showCompany ? (
         <div
           className="hidden max-w-[220px] items-center gap-1.5 truncate rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground md:inline-flex"
           title={business.company_name}
