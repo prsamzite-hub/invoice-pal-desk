@@ -119,7 +119,8 @@ function OnboardingPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => navigate({ to: "/app", replace: true })}
+                onClick={continueAsPrivat}
+
                 className="shadow-soft hover:shadow-card group flex flex-col items-start gap-3 rounded-2xl border border-border bg-background p-5 text-left transition hover:-translate-y-0.5"
               >
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-mint text-mint-foreground">
