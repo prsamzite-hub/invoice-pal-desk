@@ -1,17 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Building2, User, Loader2, ArrowRight, Save } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CvrLookupField, type CvrAutofill } from "@/components/cvr-lookup-field";
 import { upsertMyBusinessProfile } from "@/lib/business-profile.functions";
+import { setStoredAppMode } from "@/lib/app-mode";
+
+const searchSchema = z.object({
+  mode: z.enum(["business"]).optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
+  validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Kom i gang — Kvitregn" },
@@ -21,14 +28,16 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
 });
 
+
 type Mode = "choose" | "business";
 
 function OnboardingPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const saveFn = useServerFn(upsertMyBusinessProfile);
+  const search = Route.useSearch();
 
-  const [mode, setMode] = useState<Mode>("choose");
+  const [mode, setMode] = useState<Mode>(search.mode === "business" ? "business" : "choose");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     company_name: "",
@@ -38,6 +47,16 @@ function OnboardingPage() {
     city: "",
     phone: "",
   });
+
+  useEffect(() => {
+    if (search.mode === "business") setMode("business");
+  }, [search.mode]);
+
+  function continueAsPrivat() {
+    setStoredAppMode("privat");
+    navigate({ to: "/app", replace: true });
+  }
+
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -67,8 +86,10 @@ function OnboardingPage() {
         },
       });
       await qc.invalidateQueries({ queryKey: ["my-business-profile"] });
+      setStoredAppMode("erhverv");
       toast.success("Virksomhedsprofil oprettet");
       navigate({ to: "/app", replace: true });
+
     } catch (err) {
       toast.error("Kunne ikke gemme", {
         description: err instanceof Error ? err.message : "",
@@ -98,7 +119,8 @@ function OnboardingPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => navigate({ to: "/app", replace: true })}
+                onClick={continueAsPrivat}
+
                 className="shadow-soft hover:shadow-card group flex flex-col items-start gap-3 rounded-2xl border border-border bg-background p-5 text-left transition hover:-translate-y-0.5"
               >
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-mint text-mint-foreground">
@@ -172,11 +194,12 @@ function OnboardingPage() {
                   type="button"
                   variant="outline"
                   className="rounded-full"
-                  onClick={() => navigate({ to: "/app", replace: true })}
+                  onClick={continueAsPrivat}
                   disabled={saving}
                 >
-                  Spring over
+                  Fortsæt som privat
                 </Button>
+
                 <Button type="submit" className="rounded-full" disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Gem og fortsæt

@@ -9,8 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { toast } from "sonner";
 import { danishAuthError, EMAIL_EXISTS_MESSAGE } from "@/lib/auth-errors";
+import {
+  getLastAuthMode,
+  setLastAuthMode,
+  setStoredAppMode,
+  type AppMode,
+} from "@/lib/app-mode";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -38,11 +46,50 @@ function AuthPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [view, setView] = useState<View>("signin");
+  const [mode, setMode] = useState<AppMode>("privat");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | null>(null);
   const [resetSent, setResetSent] = useState(false);
+
+  useEffect(() => {
+    setMode(getLastAuthMode());
+  }, []);
+
+  function updateMode(next: AppMode) {
+    setMode(next);
+    setLastAuthMode(next);
+  }
+
+  async function routeAfterAuth(chosen: AppMode) {
+    setLastAuthMode(chosen);
+    if (chosen === "privat") {
+      setStoredAppMode("privat");
+      await router.invalidate();
+      navigate({ to: "/app", replace: true });
+      return;
+    }
+    // Erhverv: check for business profile
+    try {
+      const { data } = await supabase
+        .from("business_profiles")
+        .select("id")
+        .maybeSingle();
+      if (data?.id) {
+        setStoredAppMode("erhverv");
+        await router.invalidate();
+        navigate({ to: "/app", replace: true });
+      } else {
+        await router.invalidate();
+        navigate({ to: "/onboarding", search: { mode: "business" }, replace: true });
+      }
+    } catch {
+      await router.invalidate();
+      navigate({ to: "/onboarding", search: { mode: "business" }, replace: true });
+    }
+  }
+
 
   // If already signed in, bounce to /app
   useEffect(() => {
@@ -88,16 +135,20 @@ function AuthPage() {
           return;
         }
         toast.success("Velkommen til Kvitregn! 🎉");
+        setLastAuthMode(mode);
         await router.invalidate();
-        navigate({ to: "/onboarding" });
+        navigate({
+          to: "/onboarding",
+          search: mode === "erhverv" ? { mode: "business" } : {},
+        });
         return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Du er logget ind");
       }
-      await router.invalidate();
-      navigate({ to: "/app" });
+      await routeAfterAuth(mode);
+
     } catch (err) {
       const msg = danishAuthError(err);
       if (msg === EMAIL_EXISTS_MESSAGE) showEmailExistsToast();
@@ -153,8 +204,8 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      await router.invalidate();
-      navigate({ to: "/app" });
+      await routeAfterAuth(mode);
+
     } catch (err) {
       toast.error(danishAuthError(err));
       setOauthBusy(null);
@@ -233,6 +284,26 @@ function AuthPage() {
                   <TabsTrigger value="signin" className="rounded-full">Log ind</TabsTrigger>
                   <TabsTrigger value="signup" className="rounded-full">Opret bruger</TabsTrigger>
                 </TabsList>
+
+                <div className="mt-5 flex flex-col items-center gap-2">
+                  <SegmentedControl<AppMode>
+                    value={mode}
+                    onChange={updateMode}
+                    ariaLabel="Vælg kontotype"
+                    options={[
+                      { value: "privat", label: "Privat" },
+                      { value: "erhverv", label: "Erhverv" },
+                    ]}
+                  />
+                  <p className="text-center text-xs text-muted-foreground">
+                    {mode === "erhverv"
+                      ? view === "signin"
+                        ? "Log ind og gå direkte til din erhvervsvisning."
+                        : "Vi beder om CVR og adresse efter oprettelsen."
+                      : "Kvitteringer og fakturaer i din egen mappe."}
+                  </p>
+                </div>
+
 
                 <TabsContent value="signin" className="mt-6">
                   <EmailForm

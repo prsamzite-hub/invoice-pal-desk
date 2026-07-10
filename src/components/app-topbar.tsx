@@ -9,18 +9,22 @@ import { SearchBar } from "@/components/atoms/search-bar";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/user-menu";
 import { getMyBusinessProfile } from "@/lib/business-profile.functions";
+import { useAppMode } from "@/lib/app-mode";
 
 export function AppTopbar() {
   const fetchBusiness = useServerFn(getMyBusinessProfile);
+  const [mode] = useAppMode();
   const { data: business } = useQuery({
     queryKey: ["my-business-profile"],
     queryFn: () => fetchBusiness(),
   });
+  const showCompany = mode === "erhverv" && !!business?.company_name;
+
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-3 backdrop-blur sm:px-5">
       <SidebarTrigger className="rounded-full" />
-      {business?.company_name ? (
+      {showCompany ? (
         <div
           className="hidden max-w-[220px] items-center gap-1.5 truncate rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground md:inline-flex"
           title={business.company_name}
