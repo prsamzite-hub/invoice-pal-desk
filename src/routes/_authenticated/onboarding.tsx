@@ -86,8 +86,10 @@ function OnboardingPage() {
         },
       });
       await qc.invalidateQueries({ queryKey: ["my-business-profile"] });
+      setStoredAppMode("erhverv");
       toast.success("Virksomhedsprofil oprettet");
       navigate({ to: "/app", replace: true });
+
     } catch (err) {
       toast.error("Kunne ikke gemme", {
         description: err instanceof Error ? err.message : "",
