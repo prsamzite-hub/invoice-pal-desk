@@ -143,6 +143,8 @@ function DocumentsPage() {
     const list = docs.filter((d) => {
       if (typeFilter !== "all" && d.type !== typeFilter) return false;
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
+      if (businessFilter === "business" && !d.isBusiness) return false;
+      if (businessFilter === "private" && d.isBusiness) return false;
       if (category !== "all" && d.categoryRaw !== category) return false;
       if (dateFrom && d.dateIso < dateFrom) return false;
       if (dateTo && d.dateIso > dateTo) return false;
