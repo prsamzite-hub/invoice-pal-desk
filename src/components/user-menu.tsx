@@ -40,6 +40,12 @@ export function UserMenu() {
     queryFn: () => fetchBusiness(),
   });
 
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: () => fetchIsAdmin(),
+    staleTime: 5 * 60_000,
+  });
+
   const source = profile?.display_name?.trim() || email || "";
   const initial = source.charAt(0).toUpperCase() || "•";
   const hasBusiness = !!business?.id;
