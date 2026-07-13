@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { CompanyCombobox } from "@/components/company-combobox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ItemsEditor } from "@/components/items-editor";
+import { useAppMode } from "@/lib/app-mode";
 import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
 interface Props {
