@@ -96,6 +96,7 @@ function DocumentsPage() {
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [businessFilter, setBusinessFilter] = useState<BusinessFilter>("all");
   const [category, setCategory] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
