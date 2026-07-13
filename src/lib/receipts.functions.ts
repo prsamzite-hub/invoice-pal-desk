@@ -51,6 +51,7 @@ export interface ExtractedFields {
   category: string | null;
   notes: string | null;
   items: LineItem[];
+  is_business: boolean;
 }
 
 export interface ExtractResult {
