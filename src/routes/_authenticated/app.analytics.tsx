@@ -223,7 +223,7 @@ function AnalyticsPage() {
   };
 
   const spentByLabel: Record<string, number> = Object.fromEntries(
-    CATEGORIES.map((c) => [c.label, c.value]),
+    scaledCategories.map((c) => [c.label, c.value]),
   );
 
   const trendData = useMemo(() => {
@@ -231,10 +231,10 @@ function AnalyticsPage() {
       prefs.grouping === "week"
         ? WEEK_SERIES
         : [...MONTH_SERIES, { label: "Jun", value: total }];
-    return series.map((p) => ({ name: p.label, value: p.value }));
-  }, [prefs.grouping, total]);
+    return series.map((p) => ({ name: p.label, value: Math.round(p.value * ratio) }));
+  }, [prefs.grouping, total, ratio]);
 
-  const pieData = [...CATEGORIES]
+  const pieData = [...scaledCategories]
     .sort((a, b) => b.value - a.value)
     .map((c) => ({ name: c.label, value: c.value }));
 
