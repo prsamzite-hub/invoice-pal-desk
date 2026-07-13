@@ -25,6 +25,7 @@ import { Route as AuthenticatedAppUploadRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppDocumentsRouteImport } from './routes/_authenticated/app.documents'
 import { Route as AuthenticatedAppAnalyticsRouteImport } from './routes/_authenticated/app.analytics'
+import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -111,6 +112,11 @@ const AuthenticatedAppAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/analytics': typeof AuthenticatedAppAnalyticsRoute
   '/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/analytics': typeof AuthenticatedAppAnalyticsRoute
   '/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/analytics': typeof AuthenticatedAppAnalyticsRoute
   '/_authenticated/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/app'
     | '/onboarding'
+    | '/app/admin'
     | '/app/analytics'
     | '/app/documents'
     | '/app/settings'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/onboarding'
+    | '/app/admin'
     | '/app/analytics'
     | '/app/documents'
     | '/app/settings'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
+    | '/_authenticated/app/admin'
     | '/_authenticated/app/analytics'
     | '/_authenticated/app/documents'
     | '/_authenticated/app/settings'
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAnalyticsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -405,6 +424,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppAnalyticsRoute: typeof AuthenticatedAppAnalyticsRoute
   AuthenticatedAppDocumentsRoute: typeof AuthenticatedAppDocumentsRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -414,6 +434,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppAnalyticsRoute: AuthenticatedAppAnalyticsRoute,
   AuthenticatedAppDocumentsRoute: AuthenticatedAppDocumentsRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
