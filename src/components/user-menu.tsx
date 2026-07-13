@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile } from "@/lib/profile.functions";
 import { getMyBusinessProfile } from "@/lib/business-profile.functions";
+import { isCurrentUserAdmin } from "@/lib/admin.functions";
 import { useAppMode } from "@/lib/app-mode";
 
 export function UserMenu() {
