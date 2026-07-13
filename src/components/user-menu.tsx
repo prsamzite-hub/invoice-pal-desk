@@ -22,6 +22,7 @@ export function UserMenu() {
   const navigate = useNavigate();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchBusiness = useServerFn(getMyBusinessProfile);
+  const fetchIsAdmin = useServerFn(isCurrentUserAdmin);
   const [email, setEmail] = useState<string | null>(null);
   const [mode, setMode] = useAppMode();
 
