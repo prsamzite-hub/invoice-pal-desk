@@ -308,7 +308,7 @@ function AnalyticsPage() {
                 ))}
               </div>
               <ul className="flex flex-col divide-y divide-border">
-                {CATEGORIES.map((c) => (
+                {scaledCategories.map((c) => (
                   <li key={c.label} className="flex items-center justify-between py-2.5">
                     <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <span
