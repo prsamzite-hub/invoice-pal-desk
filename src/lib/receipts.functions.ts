@@ -118,6 +118,7 @@ export const extractReceipt = createServerFn({ method: "POST" })
       category: "Other",
       notes: null,
       items: [],
+      is_business: false,
     };
 
     if (!isImage) {
