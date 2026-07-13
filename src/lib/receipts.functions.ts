@@ -151,6 +151,7 @@ export const extractReceipt = createServerFn({ method: "POST" })
           category: ex.category || "Other",
           notes: ex.notes ?? null,
           items: sanitizeItems(ex.items),
+          is_business: false,
         },
         extractionOk: true,
       };
