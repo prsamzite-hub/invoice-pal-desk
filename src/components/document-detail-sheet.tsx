@@ -83,6 +83,7 @@ const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export interface DetailRow extends DocumentCardData {
   notes?: string | null;
+  isBusiness?: boolean;
 }
 
 export function DocumentDetailSheet({
