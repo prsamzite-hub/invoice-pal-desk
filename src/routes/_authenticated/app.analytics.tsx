@@ -244,10 +244,22 @@ function AnalyticsPage() {
         title={t("analytics.title")}
         description="Juni 2026 · alle beløb i DKK"
         actions={
-          <Button variant="outline" className="rounded-full" onClick={openEdit}>
-            <Pencil className="mr-2 h-4 w-4" />
-            {t("analytics.editBudgets")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedControl<Audience>
+              ariaLabel="Filtrér mellem privat og erhverv"
+              value={prefs.audience}
+              onChange={(v) => updatePref("audience", v)}
+              options={[
+                { value: "all", label: "Alle" },
+                { value: "private", label: "Privat" },
+                { value: "business", label: "Erhverv" },
+              ]}
+            />
+            <Button variant="outline" className="rounded-full" onClick={openEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t("analytics.editBudgets")}
+            </Button>
+          </div>
         }
       />
 
