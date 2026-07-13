@@ -253,6 +253,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        is_business: f.is_business,
         original_path: data.originalPath,
         status: f.due_date ? "unpaid" : "paid",
       })
