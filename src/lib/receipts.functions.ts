@@ -51,6 +51,7 @@ export interface ExtractedFields {
   category: string | null;
   notes: string | null;
   items: LineItem[];
+  is_business: boolean;
 }
 
 export interface ExtractResult {
@@ -117,6 +118,7 @@ export const extractReceipt = createServerFn({ method: "POST" })
       category: "Other",
       notes: null,
       items: [],
+      is_business: false,
     };
 
     if (!isImage) {
@@ -149,6 +151,7 @@ export const extractReceipt = createServerFn({ method: "POST" })
           category: ex.category || "Other",
           notes: ex.notes ?? null,
           items: sanitizeItems(ex.items),
+          is_business: false,
         },
         extractionOk: true,
       };
@@ -196,6 +199,7 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
     category: f.category || null,
     notes: f.notes || null,
     items: sanitizeItems(f.items),
+    is_business: !!f.is_business,
   };
 }
 
@@ -249,6 +253,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        is_business: f.is_business,
         original_path: data.originalPath,
         status: f.due_date ? "unpaid" : "paid",
       })
@@ -463,6 +468,7 @@ export const updateReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        is_business: f.is_business,
         status: nextStatus,
       })
       .eq("id", data.id)

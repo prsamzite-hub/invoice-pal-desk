@@ -25,9 +25,11 @@ import { Route as AuthenticatedAppUploadRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppDocumentsRouteImport } from './routes/_authenticated/app.documents'
 import { Route as AuthenticatedAppAnalyticsRouteImport } from './routes/_authenticated/app.analytics'
+import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as AuthenticatedAppAdminUserIdRouteImport } from './routes/_authenticated/app.admin.$userId'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -111,6 +113,11 @@ const AuthenticatedAppAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -127,6 +134,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppAdminUserIdRoute =
+  AuthenticatedAppAdminUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/analytics': typeof AuthenticatedAppAnalyticsRoute
   '/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -144,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/app/vendors': typeof AuthenticatedAppVendorsRoute
   '/api/public/inbound-email': typeof ApiPublicInboundEmailRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/admin/$userId': typeof AuthenticatedAppAdminUserIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -156,6 +171,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/analytics': typeof AuthenticatedAppAnalyticsRoute
   '/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -163,6 +179,7 @@ export interface FileRoutesByTo {
   '/app/vendors': typeof AuthenticatedAppVendorsRoute
   '/api/public/inbound-email': typeof ApiPublicInboundEmailRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/admin/$userId': typeof AuthenticatedAppAdminUserIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -178,6 +195,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/analytics': typeof AuthenticatedAppAnalyticsRoute
   '/_authenticated/app/documents': typeof AuthenticatedAppDocumentsRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -185,6 +203,7 @@ export interface FileRoutesById {
   '/_authenticated/app/vendors': typeof AuthenticatedAppVendorsRoute
   '/api/public/inbound-email': typeof ApiPublicInboundEmailRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/admin/$userId': typeof AuthenticatedAppAdminUserIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -200,6 +219,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/app'
     | '/onboarding'
+    | '/app/admin'
     | '/app/analytics'
     | '/app/documents'
     | '/app/settings'
@@ -207,6 +227,7 @@ export interface FileRouteTypes {
     | '/app/vendors'
     | '/api/public/inbound-email'
     | '/app/'
+    | '/app/admin/$userId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -219,6 +240,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/onboarding'
+    | '/app/admin'
     | '/app/analytics'
     | '/app/documents'
     | '/app/settings'
@@ -226,6 +248,7 @@ export interface FileRouteTypes {
     | '/app/vendors'
     | '/api/public/inbound-email'
     | '/app'
+    | '/app/admin/$userId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -240,6 +263,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
+    | '/_authenticated/app/admin'
     | '/_authenticated/app/analytics'
     | '/_authenticated/app/documents'
     | '/_authenticated/app/settings'
@@ -247,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/vendors'
     | '/api/public/inbound-email'
     | '/_authenticated/app/'
+    | '/_authenticated/app/admin/$userId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -380,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAnalyticsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -401,10 +433,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/admin/$userId': {
+      id: '/_authenticated/app/admin/$userId'
+      path: '/$userId'
+      fullPath: '/app/admin/$userId'
+      preLoaderRoute: typeof AuthenticatedAppAdminUserIdRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminUserIdRoute: typeof AuthenticatedAppAdminUserIdRoute
+}
+
+const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminUserIdRoute: AuthenticatedAppAdminUserIdRoute,
+}
+
+const AuthenticatedAppAdminRouteWithChildren =
+  AuthenticatedAppAdminRoute._addFileChildren(
+    AuthenticatedAppAdminRouteChildren,
+  )
+
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppAnalyticsRoute: typeof AuthenticatedAppAnalyticsRoute
   AuthenticatedAppDocumentsRoute: typeof AuthenticatedAppDocumentsRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -414,6 +467,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppAnalyticsRoute: AuthenticatedAppAnalyticsRoute,
   AuthenticatedAppDocumentsRoute: AuthenticatedAppDocumentsRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
@@ -454,13 +508,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

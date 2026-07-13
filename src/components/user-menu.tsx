@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Settings, LogOut, Building2, User } from "lucide-react";
+import { Settings, LogOut, Building2, User, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -15,12 +15,14 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile } from "@/lib/profile.functions";
 import { getMyBusinessProfile } from "@/lib/business-profile.functions";
+import { isCurrentUserAdmin } from "@/lib/admin.functions";
 import { useAppMode } from "@/lib/app-mode";
 
 export function UserMenu() {
   const navigate = useNavigate();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchBusiness = useServerFn(getMyBusinessProfile);
+  const fetchIsAdmin = useServerFn(isCurrentUserAdmin);
   const [email, setEmail] = useState<string | null>(null);
   const [mode, setMode] = useAppMode();
 
@@ -36,6 +38,12 @@ export function UserMenu() {
   const { data: business } = useQuery({
     queryKey: ["my-business-profile"],
     queryFn: () => fetchBusiness(),
+  });
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: () => fetchIsAdmin(),
+    staleTime: 5 * 60_000,
   });
 
   const source = profile?.display_name?.trim() || email || "";
@@ -86,6 +94,12 @@ export function UserMenu() {
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
+        {isAdmin ? (
+          <DropdownMenuItem onSelect={() => navigate({ to: "/app/admin" })}>
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            Admin
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onSelect={() => navigate({ to: "/app/settings" })}>
           <Settings className="mr-2 h-4 w-4" />
           Indstillinger

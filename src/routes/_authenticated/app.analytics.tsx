@@ -100,17 +100,26 @@ const WEEK_SERIES = [
 type TrendChart = "bar" | "line";
 type CategoryChart = "list" | "donut";
 type Grouping = "month" | "week";
+type Audience = "all" | "private" | "business";
 
 interface Prefs {
   trend: TrendChart;
   category: CategoryChart;
   grouping: Grouping;
+  audience: Audience;
 }
 
 const DEFAULT_PREFS: Prefs = {
   trend: "bar",
   category: "list",
   grouping: "month",
+  audience: "all",
+};
+
+const AUDIENCE_RATIO: Record<Audience, number> = {
+  all: 1,
+  private: 0.6,
+  business: 0.4,
 };
 
 function loadBudgets(): Record<string, number> {
@@ -164,11 +173,16 @@ function BrandTooltip({ active, payload, label }: any) {
 
 function AnalyticsPage() {
   const { t } = useLang();
-  const total = CATEGORIES.reduce((s, c) => s + c.value, 0);
   const [budgets, setBudgets] = useState<Record<string, number>>(DEFAULT_BUDGETS);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const ratio = AUDIENCE_RATIO[prefs.audience] ?? 1;
+  const scaledCategories = useMemo(
+    () => CATEGORIES.map((c) => ({ ...c, value: Math.round(c.value * ratio) })),
+    [ratio],
+  );
+  const total = scaledCategories.reduce((s, c) => s + c.value, 0);
 
   useEffect(() => {
     setBudgets(loadBudgets());
@@ -209,7 +223,7 @@ function AnalyticsPage() {
   };
 
   const spentByLabel: Record<string, number> = Object.fromEntries(
-    CATEGORIES.map((c) => [c.label, c.value]),
+    scaledCategories.map((c) => [c.label, c.value]),
   );
 
   const trendData = useMemo(() => {
@@ -217,10 +231,10 @@ function AnalyticsPage() {
       prefs.grouping === "week"
         ? WEEK_SERIES
         : [...MONTH_SERIES, { label: "Jun", value: total }];
-    return series.map((p) => ({ name: p.label, value: p.value }));
-  }, [prefs.grouping, total]);
+    return series.map((p) => ({ name: p.label, value: Math.round(p.value * ratio) }));
+  }, [prefs.grouping, total, ratio]);
 
-  const pieData = [...CATEGORIES]
+  const pieData = [...scaledCategories]
     .sort((a, b) => b.value - a.value)
     .map((c) => ({ name: c.label, value: c.value }));
 
@@ -230,10 +244,22 @@ function AnalyticsPage() {
         title={t("analytics.title")}
         description="Juni 2026 · alle beløb i DKK"
         actions={
-          <Button variant="outline" className="rounded-full" onClick={openEdit}>
-            <Pencil className="mr-2 h-4 w-4" />
-            {t("analytics.editBudgets")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedControl<Audience>
+              ariaLabel="Filtrér mellem privat og erhverv"
+              value={prefs.audience}
+              onChange={(v) => updatePref("audience", v)}
+              options={[
+                { value: "all", label: "Alle" },
+                { value: "private", label: "Privat" },
+                { value: "business", label: "Erhverv" },
+              ]}
+            />
+            <Button variant="outline" className="rounded-full" onClick={openEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t("analytics.editBudgets")}
+            </Button>
+          </div>
         }
       />
 
@@ -282,7 +308,7 @@ function AnalyticsPage() {
           {prefs.category === "list" ? (
             <>
               <div className="flex h-3 w-full overflow-hidden rounded-full">
-                {CATEGORIES.map((c) => (
+                {scaledCategories.map((c) => (
                   <div
                     key={c.label}
                     style={{
@@ -294,7 +320,7 @@ function AnalyticsPage() {
                 ))}
               </div>
               <ul className="flex flex-col divide-y divide-border">
-                {CATEGORIES.map((c) => (
+                {scaledCategories.map((c) => (
                   <li key={c.label} className="flex items-center justify-between py-2.5">
                     <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <span

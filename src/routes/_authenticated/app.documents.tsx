@@ -62,6 +62,7 @@ export const Route = createFileRoute("/_authenticated/app/documents")({
 
 type TypeFilter = "all" | "receipt" | "invoice";
 type StatusFilter = "all" | "paid" | "unpaid" | "overdue";
+type BusinessFilter = "all" | "business" | "private";
 type SortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "company_asc";
 
 const CATEGORY_TONE: Record<string, "mint" | "peach" | "lavender" | "butter" | "sky"> = {
@@ -85,6 +86,7 @@ interface EnrichedDoc extends DocumentCardData {
   categoryRaw: string | null;
   amountNumber: number;
   dateIso: string;
+  isBusiness: boolean;
 }
 
 function DocumentsPage() {
@@ -94,6 +96,7 @@ function DocumentsPage() {
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [businessFilter, setBusinessFilter] = useState<BusinessFilter>("all");
   const [category, setCategory] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
@@ -126,6 +129,7 @@ function DocumentsPage() {
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
         vendorLogoUrl: logoFor(r.company),
+        isBusiness: !!(r as any).is_business,
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,6 +143,8 @@ function DocumentsPage() {
     const list = docs.filter((d) => {
       if (typeFilter !== "all" && d.type !== typeFilter) return false;
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
+      if (businessFilter === "business" && !d.isBusiness) return false;
+      if (businessFilter === "private" && d.isBusiness) return false;
       if (category !== "all" && d.categoryRaw !== category) return false;
       if (dateFrom && d.dateIso < dateFrom) return false;
       if (dateTo && d.dateIso > dateTo) return false;
@@ -174,12 +180,12 @@ function DocumentsPage() {
       }
     });
     return list;
-  }, [docs, q, typeFilter, statusFilter, category, dateFrom, dateTo, sort]);
+  }, [docs, q, typeFilter, statusFilter, businessFilter, category, dateFrom, dateTo, sort]);
 
   const selected: DetailRow | null = useMemo(() => {
     const found = docs.find((d) => d.id === selectedId);
     if (!found) return null;
-    return { ...found, notes: found.notes };
+    return { ...found, notes: found.notes, isBusiness: found.isBusiness };
   }, [docs, selectedId]);
 
   const openDoc = async (id: string) => {
@@ -196,6 +202,7 @@ function DocumentsPage() {
   const activeFilterCount =
     (typeFilter !== "all" ? 1 : 0) +
     (statusFilter !== "all" ? 1 : 0) +
+    (businessFilter !== "all" ? 1 : 0) +
     (category !== "all" ? 1 : 0) +
     (dateFrom ? 1 : 0) +
     (dateTo ? 1 : 0);
@@ -203,6 +210,7 @@ function DocumentsPage() {
   const clearFilters = () => {
     setTypeFilter("all");
     setStatusFilter("all");
+    setBusinessFilter("all");
     setCategory("all");
     setDateFrom("");
     setDateTo("");
@@ -290,6 +298,20 @@ function DocumentsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Erhverv</Label>
+                  <Select
+                    value={businessFilter}
+                    onValueChange={(v) => setBusinessFilter(v as BusinessFilter)}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle</SelectItem>
+                      <SelectItem value="business">Kun erhverv</SelectItem>
+                      <SelectItem value="private">Kun privat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="from">Fra dato</Label>
@@ -356,6 +378,11 @@ function DocumentsPage() {
             )}
             {category !== "all" && (
               <Badge variant="secondary" className="rounded-full">{labelForCategory(category)}</Badge>
+            )}
+            {businessFilter !== "all" && (
+              <Badge variant="secondary" className="rounded-full">
+                {businessFilter === "business" ? "Kun erhverv" : "Kun privat"}
+              </Badge>
             )}
             {dateFrom && (
               <Badge variant="secondary" className="rounded-full">Fra {dateFrom}</Badge>

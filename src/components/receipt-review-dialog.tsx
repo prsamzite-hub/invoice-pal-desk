@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { CompanyCombobox } from "@/components/company-combobox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ItemsEditor } from "@/components/items-editor";
+import { useAppMode } from "@/lib/app-mode";
 import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
 interface Props {
@@ -27,6 +29,7 @@ const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved }: Props) {
   const [fields, setFields] = useState<ExtractedFields | null>(null);
+  const [mode] = useAppMode();
   const findDupFn = useServerFn(findDuplicates);
   const saveFn = useServerFn(saveReceipt);
   const listFn = useServerFn(listMyReceipts);
@@ -37,7 +40,9 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   );
 
   useEffect(() => {
-    if (initial) setFields(initial.extracted);
+    if (initial)
+      setFields({ ...initial.extracted, is_business: mode === "erhverv" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
   const dupQuery = useQuery({
@@ -206,6 +211,18 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           <div className="sm:col-span-2">
             <Label htmlFor="notes">Noter</Label>
             <Textarea id="notes" rows={2} value={fields.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
+          </div>
+
+          <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 sm:col-span-2">
+            <Checkbox
+              id="is_business"
+              checked={fields.is_business}
+              onCheckedChange={(v) => set("is_business", v === true)}
+            />
+            <div className="grid gap-0.5 leading-none">
+              <Label htmlFor="is_business" className="text-sm font-medium">Erhverv (virksomhedsudgift)</Label>
+              <p className="text-xs text-muted-foreground">Marker som forretningsudgift — vises i erhvervsfiltre og analyse.</p>
+            </div>
           </div>
         </div>
 
