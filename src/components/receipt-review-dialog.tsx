@@ -40,7 +40,9 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   );
 
   useEffect(() => {
-    if (initial) setFields(initial.extracted);
+    if (initial)
+      setFields({ ...initial.extracted, is_business: mode === "erhverv" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
   const dupQuery = useQuery({
