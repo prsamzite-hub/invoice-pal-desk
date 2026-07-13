@@ -296,7 +296,7 @@ function AnalyticsPage() {
           {prefs.category === "list" ? (
             <>
               <div className="flex h-3 w-full overflow-hidden rounded-full">
-                {CATEGORIES.map((c) => (
+                {scaledCategories.map((c) => (
                   <div
                     key={c.label}
                     style={{
