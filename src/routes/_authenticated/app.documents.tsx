@@ -129,6 +129,7 @@ function DocumentsPage() {
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
         vendorLogoUrl: logoFor(r.company),
+        isBusiness: !!(r as any).is_business,
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
