@@ -62,6 +62,7 @@ export const Route = createFileRoute("/_authenticated/app/documents")({
 
 type TypeFilter = "all" | "receipt" | "invoice";
 type StatusFilter = "all" | "paid" | "unpaid" | "overdue";
+type BusinessFilter = "all" | "business" | "private";
 type SortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "company_asc";
 
 const CATEGORY_TONE: Record<string, "mint" | "peach" | "lavender" | "butter" | "sky"> = {
