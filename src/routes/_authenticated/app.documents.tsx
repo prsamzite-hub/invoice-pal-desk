@@ -86,6 +86,7 @@ interface EnrichedDoc extends DocumentCardData {
   categoryRaw: string | null;
   amountNumber: number;
   dateIso: string;
+  isBusiness: boolean;
 }
 
 function DocumentsPage() {
