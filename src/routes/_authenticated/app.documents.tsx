@@ -180,12 +180,12 @@ function DocumentsPage() {
       }
     });
     return list;
-  }, [docs, q, typeFilter, statusFilter, category, dateFrom, dateTo, sort]);
+  }, [docs, q, typeFilter, statusFilter, businessFilter, category, dateFrom, dateTo, sort]);
 
   const selected: DetailRow | null = useMemo(() => {
     const found = docs.find((d) => d.id === selectedId);
     if (!found) return null;
-    return { ...found, notes: found.notes };
+    return { ...found, notes: found.notes, isBusiness: found.isBusiness };
   }, [docs, selectedId]);
 
   const openDoc = async (id: string) => {
@@ -202,6 +202,7 @@ function DocumentsPage() {
   const activeFilterCount =
     (typeFilter !== "all" ? 1 : 0) +
     (statusFilter !== "all" ? 1 : 0) +
+    (businessFilter !== "all" ? 1 : 0) +
     (category !== "all" ? 1 : 0) +
     (dateFrom ? 1 : 0) +
     (dateTo ? 1 : 0);
@@ -209,6 +210,7 @@ function DocumentsPage() {
   const clearFilters = () => {
     setTypeFilter("all");
     setStatusFilter("all");
+    setBusinessFilter("all");
     setCategory("all");
     setDateFrom("");
     setDateTo("");
