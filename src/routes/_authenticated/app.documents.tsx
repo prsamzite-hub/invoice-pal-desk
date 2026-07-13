@@ -298,6 +298,20 @@ function DocumentsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Erhverv</Label>
+                  <Select
+                    value={businessFilter}
+                    onValueChange={(v) => setBusinessFilter(v as BusinessFilter)}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle</SelectItem>
+                      <SelectItem value="business">Kun erhverv</SelectItem>
+                      <SelectItem value="private">Kun privat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="from">Fra dato</Label>
