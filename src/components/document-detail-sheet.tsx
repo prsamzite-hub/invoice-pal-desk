@@ -170,6 +170,7 @@ export function DocumentDetailSheet({
                     <SheetTitle className="truncate text-lg">{doc.company}</SheetTitle>
                     <SheetDescription className="text-xs">
                       {doc.type === "invoice" ? "Faktura" : "Kvittering"}
+                      {doc.isBusiness ? " · Erhverv" : ""}
                     </SheetDescription>
                   </div>
                   <StatusBadge status={doc.status} />
