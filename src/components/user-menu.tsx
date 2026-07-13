@@ -94,6 +94,12 @@ export function UserMenu() {
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
+        {isAdmin ? (
+          <DropdownMenuItem onSelect={() => navigate({ to: "/app/admin" })}>
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            Admin
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onSelect={() => navigate({ to: "/app/settings" })}>
           <Settings className="mr-2 h-4 w-4" />
           Indstillinger
