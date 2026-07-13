@@ -379,6 +379,11 @@ function DocumentsPage() {
             {category !== "all" && (
               <Badge variant="secondary" className="rounded-full">{labelForCategory(category)}</Badge>
             )}
+            {businessFilter !== "all" && (
+              <Badge variant="secondary" className="rounded-full">
+                {businessFilter === "business" ? "Kun erhverv" : "Kun privat"}
+              </Badge>
+            )}
             {dateFrom && (
               <Badge variant="secondary" className="rounded-full">Fra {dateFrom}</Badge>
             )}
