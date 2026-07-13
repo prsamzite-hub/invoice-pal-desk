@@ -100,17 +100,26 @@ const WEEK_SERIES = [
 type TrendChart = "bar" | "line";
 type CategoryChart = "list" | "donut";
 type Grouping = "month" | "week";
+type Audience = "all" | "private" | "business";
 
 interface Prefs {
   trend: TrendChart;
   category: CategoryChart;
   grouping: Grouping;
+  audience: Audience;
 }
 
 const DEFAULT_PREFS: Prefs = {
   trend: "bar",
   category: "list",
   grouping: "month",
+  audience: "all",
+};
+
+const AUDIENCE_RATIO: Record<Audience, number> = {
+  all: 1,
+  private: 0.6,
+  business: 0.4,
 };
 
 function loadBudgets(): Record<string, number> {
