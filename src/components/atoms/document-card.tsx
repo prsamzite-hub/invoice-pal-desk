@@ -16,6 +16,7 @@ export interface DocumentCardData {
   type: "receipt" | "invoice";
   category?: { label: string; tone?: "mint" | "peach" | "lavender" | "butter" | "sky" };
   vendorLogoUrl?: string | null;
+  isBusiness?: boolean;
 }
 
 function formatDate(iso: string) {
