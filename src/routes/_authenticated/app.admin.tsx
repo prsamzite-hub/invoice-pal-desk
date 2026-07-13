@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Search, ShieldCheck, Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { Input } from "@/components/ui/input";
