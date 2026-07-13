@@ -29,6 +29,7 @@ const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved }: Props) {
   const [fields, setFields] = useState<ExtractedFields | null>(null);
+  const [mode] = useAppMode();
   const findDupFn = useServerFn(findDuplicates);
   const saveFn = useServerFn(saveReceipt);
   const listFn = useServerFn(listMyReceipts);
