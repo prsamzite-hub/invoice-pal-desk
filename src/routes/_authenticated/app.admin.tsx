@@ -38,11 +38,7 @@ function AdminPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={
-          <span className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" /> Admin
-          </span>
-        }
+        title="Admin"
         description="Læseadgang til brugere og deres dokumenter. Alle opslag logges."
       />
 
