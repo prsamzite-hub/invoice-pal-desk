@@ -199,6 +199,7 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
     category: f.category || null,
     notes: f.notes || null,
     items: sanitizeItems(f.items),
+    is_business: !!f.is_business,
   };
 }
 
