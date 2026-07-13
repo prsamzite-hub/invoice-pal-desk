@@ -173,14 +173,16 @@ function BrandTooltip({ active, payload, label }: any) {
 
 function AnalyticsPage() {
   const { t } = useLang();
-  const [prefs, setPrefsInit] = useState<Prefs>(DEFAULT_PREFS);
-  const ratio = AUDIENCE_RATIO[prefs.audience] ?? 1;
-  const scaledCategories = CATEGORIES.map((c) => ({ ...c, value: Math.round(c.value * ratio) }));
-  const total = scaledCategories.reduce((s, c) => s + c.value, 0);
   const [budgets, setBudgets] = useState<Record<string, number>>(DEFAULT_BUDGETS);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const ratio = AUDIENCE_RATIO[prefs.audience] ?? 1;
+  const scaledCategories = useMemo(
+    () => CATEGORIES.map((c) => ({ ...c, value: Math.round(c.value * ratio) })),
+    [ratio],
+  );
+  const total = scaledCategories.reduce((s, c) => s + c.value, 0);
 
   useEffect(() => {
     setBudgets(loadBudgets());
