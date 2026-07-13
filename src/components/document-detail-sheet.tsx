@@ -407,6 +407,7 @@ function EditReceiptDialog({
     category: doc.category?.label ?? null,
     notes: doc.notes ?? null,
     items: itemsQuery.data ?? [],
+    is_business: !!doc.isBusiness,
   });
 
   const [fields, setFields] = useState<ExtractedFields>(seed);
