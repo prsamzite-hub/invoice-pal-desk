@@ -468,6 +468,7 @@ export const updateReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        is_business: f.is_business,
         status: nextStatus,
       })
       .eq("id", data.id)
