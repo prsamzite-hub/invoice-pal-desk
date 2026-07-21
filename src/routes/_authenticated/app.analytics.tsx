@@ -100,26 +100,17 @@ const WEEK_SERIES = [
 type TrendChart = "bar" | "line";
 type CategoryChart = "list" | "donut";
 type Grouping = "month" | "week";
-type Audience = "all" | "private" | "business";
 
 interface Prefs {
   trend: TrendChart;
   category: CategoryChart;
   grouping: Grouping;
-  audience: Audience;
 }
 
 const DEFAULT_PREFS: Prefs = {
   trend: "bar",
   category: "list",
   grouping: "month",
-  audience: "all",
-};
-
-const AUDIENCE_RATIO: Record<Audience, number> = {
-  all: 1,
-  private: 0.6,
-  business: 0.4,
 };
 
 function loadBudgets(): Record<string, number> {
@@ -177,11 +168,7 @@ function AnalyticsPage() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
-  const ratio = AUDIENCE_RATIO[prefs.audience] ?? 1;
-  const scaledCategories = useMemo(
-    () => CATEGORIES.map((c) => ({ ...c, value: Math.round(c.value * ratio) })),
-    [ratio],
-  );
+  const scaledCategories = CATEGORIES;
   const total = scaledCategories.reduce((s, c) => s + c.value, 0);
 
   useEffect(() => {
