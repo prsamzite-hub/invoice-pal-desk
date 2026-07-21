@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Building2, Eye, FileText, Mail, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Eye, FileText, Mail, User as UserIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { Button } from "@/components/ui/button";
@@ -94,28 +94,6 @@ function AdminUserPage() {
                 ) : null}
               </div>
             </div>
-
-            <div className="shadow-soft flex flex-col gap-2 rounded-2xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Building2 className="h-4 w-4 text-muted-foreground" /> Virksomhed
-              </div>
-              {q.data.business ? (
-                <div className="text-sm text-muted-foreground">
-                  <div className="font-medium text-foreground">{q.data.business.company_name}</div>
-                  {q.data.business.cvr ? <div>CVR: {q.data.business.cvr}</div> : null}
-                  {q.data.business.address ? <div>{q.data.business.address}</div> : null}
-                  {q.data.business.postal_code || q.data.business.city ? (
-                    <div>
-                      {q.data.business.postal_code ?? ""} {q.data.business.city ?? ""}
-                    </div>
-                  ) : null}
-                  {q.data.business.phone ? <div>Tlf.: {q.data.business.phone}</div> : null}
-                  {q.data.business.email ? <div>{q.data.business.email}</div> : null}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Ingen virksomhedsprofil.</p>
-              )}
-            </div>
           </section>
 
           <section className="flex flex-col gap-3">
@@ -139,9 +117,6 @@ function AdminUserPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="truncate text-sm font-semibold text-foreground">{d.company}</p>
-                        {d.is_business ? (
-                          <Badge variant="secondary" className="rounded-full text-[10px]">Erhverv</Badge>
-                        ) : null}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {fmt(d.issued_date)} · {d.document_type === "invoice" ? "Faktura" : "Kvittering"}

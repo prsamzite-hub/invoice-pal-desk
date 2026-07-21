@@ -71,14 +71,12 @@ export const adminListUsers = createServerFn({ method: "POST" })
     });
 
     const ids = authUsers.map((u) => u.id);
-    const [profilesRes, bizRes, countsRes] = await Promise.all([
+    const [profilesRes, countsRes] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, display_name").in("id", ids),
-      supabaseAdmin.from("business_profiles").select("user_id, company_name, cvr").in("user_id", ids),
       supabaseAdmin.from("receipts").select("user_id").in("user_id", ids),
     ]);
 
     const pMap = new Map((profilesRes.data ?? []).map((p) => [p.id, p]));
-    const bMap = new Map((bizRes.data ?? []).map((b) => [b.user_id, b]));
     const countMap = new Map<string, number>();
     for (const r of countsRes.data ?? []) {
       countMap.set(r.user_id, (countMap.get(r.user_id) ?? 0) + 1);
@@ -91,8 +89,8 @@ export const adminListUsers = createServerFn({ method: "POST" })
       email: u.email ?? "",
       created_at: u.created_at,
       display_name: pMap.get(u.id)?.display_name ?? null,
-      company_name: bMap.get(u.id)?.company_name ?? null,
-      cvr: bMap.get(u.id)?.cvr ?? null,
+      company_name: null as string | null,
+      cvr: null as string | null,
       document_count: countMap.get(u.id) ?? 0,
     }));
   });
@@ -105,13 +103,12 @@ export const adminGetUser = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [authRes, profileRes, bizRes, docsRes] = await Promise.all([
+    const [authRes, profileRes, docsRes] = await Promise.all([
       supabaseAdmin.auth.admin.getUserById(data.userId),
       supabaseAdmin.from("profiles").select("*").eq("id", data.userId).maybeSingle(),
-      supabaseAdmin.from("business_profiles").select("*").eq("user_id", data.userId).maybeSingle(),
       supabaseAdmin
         .from("receipts")
-        .select("id, company, amount, currency, issued_date, due_date, document_type, category, status, is_business, created_at")
+        .select("id, company, amount, currency, issued_date, due_date, document_type, category, status, created_at")
         .eq("user_id", data.userId)
         .order("issued_date", { ascending: false, nullsFirst: false }),
     ]);
@@ -128,7 +125,6 @@ export const adminGetUser = createServerFn({ method: "POST" })
         last_sign_in_at: u?.last_sign_in_at ?? null,
       },
       profile: profileRes.data ?? null,
-      business: bizRes.data ?? null,
       documents: docsRes.data ?? [],
     };
   });
