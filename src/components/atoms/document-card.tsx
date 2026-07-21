@@ -16,7 +16,6 @@ export interface DocumentCardData {
   type: "receipt" | "invoice";
   category?: { label: string; tone?: "mint" | "peach" | "lavender" | "butter" | "sky" };
   vendorLogoUrl?: string | null;
-  isBusiness?: boolean;
 }
 
 function formatDate(iso: string) {
@@ -54,11 +53,6 @@ export function DocumentCard({
             <TypeIcon className="h-3 w-3" />
             {doc.type === "invoice" ? "Faktura" : "Kvittering"}
           </span>
-          {doc.isBusiness ? (
-            <span className="inline-flex items-center rounded-full bg-lavender px-2 py-0.5 text-[10px] font-medium text-lavender-foreground">
-              Erhverv
-            </span>
-          ) : null}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{formatDate(doc.issuedDate)}</span>

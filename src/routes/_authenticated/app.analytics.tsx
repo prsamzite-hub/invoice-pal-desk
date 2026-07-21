@@ -100,26 +100,17 @@ const WEEK_SERIES = [
 type TrendChart = "bar" | "line";
 type CategoryChart = "list" | "donut";
 type Grouping = "month" | "week";
-type Audience = "all" | "private" | "business";
 
 interface Prefs {
   trend: TrendChart;
   category: CategoryChart;
   grouping: Grouping;
-  audience: Audience;
 }
 
 const DEFAULT_PREFS: Prefs = {
   trend: "bar",
   category: "list",
   grouping: "month",
-  audience: "all",
-};
-
-const AUDIENCE_RATIO: Record<Audience, number> = {
-  all: 1,
-  private: 0.6,
-  business: 0.4,
 };
 
 function loadBudgets(): Record<string, number> {
@@ -177,11 +168,7 @@ function AnalyticsPage() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
-  const ratio = AUDIENCE_RATIO[prefs.audience] ?? 1;
-  const scaledCategories = useMemo(
-    () => CATEGORIES.map((c) => ({ ...c, value: Math.round(c.value * ratio) })),
-    [ratio],
-  );
+  const scaledCategories = CATEGORIES;
   const total = scaledCategories.reduce((s, c) => s + c.value, 0);
 
   useEffect(() => {
@@ -231,8 +218,8 @@ function AnalyticsPage() {
       prefs.grouping === "week"
         ? WEEK_SERIES
         : [...MONTH_SERIES, { label: "Jun", value: total }];
-    return series.map((p) => ({ name: p.label, value: Math.round(p.value * ratio) }));
-  }, [prefs.grouping, total, ratio]);
+    return series.map((p) => ({ name: p.label, value: p.value }));
+  }, [prefs.grouping, total]);
 
   const pieData = [...scaledCategories]
     .sort((a, b) => b.value - a.value)
@@ -245,16 +232,6 @@ function AnalyticsPage() {
         description="Juni 2026 · alle beløb i DKK"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <SegmentedControl<Audience>
-              ariaLabel="Filtrér mellem privat og erhverv"
-              value={prefs.audience}
-              onChange={(v) => updatePref("audience", v)}
-              options={[
-                { value: "all", label: "Alle" },
-                { value: "private", label: "Privat" },
-                { value: "business", label: "Erhverv" },
-              ]}
-            />
             <Button variant="outline" className="rounded-full" onClick={openEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               {t("analytics.editBudgets")}
