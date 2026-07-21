@@ -497,6 +497,3 @@ export const deleteReceipt = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export function deriveReceiptStatus() {
-  return null;
-}

@@ -83,7 +83,6 @@ const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export interface DetailRow extends DocumentCardData {
   notes?: string | null;
-  isBusiness?: boolean;
 }
 
 export function DocumentDetailSheet({
@@ -170,7 +169,6 @@ export function DocumentDetailSheet({
                     <SheetTitle className="truncate text-lg">{doc.company}</SheetTitle>
                     <SheetDescription className="text-xs">
                       {doc.type === "invoice" ? "Faktura" : "Kvittering"}
-                      {doc.isBusiness ? " · Erhverv" : ""}
                     </SheetDescription>
                   </div>
                   <StatusBadge status={doc.status} />
@@ -408,7 +406,6 @@ function EditReceiptDialog({
     category: doc.category?.label ?? null,
     notes: doc.notes ?? null,
     items: itemsQuery.data ?? [],
-    is_business: !!doc.isBusiness,
   });
 
   const [fields, setFields] = useState<ExtractedFields>(seed);
@@ -538,19 +535,6 @@ function EditReceiptDialog({
               value={fields.notes ?? ""}
               onChange={(e) => set("notes", e.target.value)}
             />
-          </div>
-          <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 sm:col-span-2">
-            <input
-              id="e-is-business"
-              type="checkbox"
-              className="mt-1 h-4 w-4 accent-primary"
-              checked={fields.is_business}
-              onChange={(e) => set("is_business", e.target.checked)}
-            />
-            <div className="grid gap-0.5 leading-none">
-              <Label htmlFor="e-is-business" className="text-sm font-medium">Erhverv (virksomhedsudgift)</Label>
-              <p className="text-xs text-muted-foreground">Marker som forretningsudgift.</p>
-            </div>
           </div>
         </div>
         <div className="mt-2">
