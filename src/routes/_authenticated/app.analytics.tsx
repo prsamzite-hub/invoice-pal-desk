@@ -218,8 +218,8 @@ function AnalyticsPage() {
       prefs.grouping === "week"
         ? WEEK_SERIES
         : [...MONTH_SERIES, { label: "Jun", value: total }];
-    return series.map((p) => ({ name: p.label, value: Math.round(p.value * ratio) }));
-  }, [prefs.grouping, total, ratio]);
+    return series.map((p) => ({ name: p.label, value: p.value }));
+  }, [prefs.grouping, total]);
 
   const pieData = [...scaledCategories]
     .sort((a, b) => b.value - a.value)
@@ -232,16 +232,6 @@ function AnalyticsPage() {
         description="Juni 2026 · alle beløb i DKK"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <SegmentedControl<Audience>
-              ariaLabel="Filtrér mellem privat og erhverv"
-              value={prefs.audience}
-              onChange={(v) => updatePref("audience", v)}
-              options={[
-                { value: "all", label: "Alle" },
-                { value: "private", label: "Privat" },
-                { value: "business", label: "Erhverv" },
-              ]}
-            />
             <Button variant="outline" className="rounded-full" onClick={openEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               {t("analytics.editBudgets")}
