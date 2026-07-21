@@ -223,10 +223,6 @@ function FeatureCard({
   );
 }
 
-function BizFeature() {
-  return null;
-}
-// legacy placeholder removed
 
 
 function HeroPreview() {
