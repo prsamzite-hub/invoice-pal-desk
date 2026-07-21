@@ -71,48 +71,6 @@ export type Database = {
         }
         Relationships: []
       }
-      business_profiles: {
-        Row: {
-          address: string | null
-          city: string | null
-          company_name: string
-          created_at: string
-          cvr: string | null
-          email: string | null
-          id: string
-          phone: string | null
-          postal_code: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          city?: string | null
-          company_name: string
-          created_at?: string
-          cvr?: string | null
-          email?: string | null
-          id?: string
-          phone?: string | null
-          postal_code?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          city?: string | null
-          company_name?: string
-          created_at?: string
-          cvr?: string | null
-          email?: string | null
-          id?: string
-          phone?: string | null
-          postal_code?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       document_items: {
         Row: {
           created_at: string
@@ -284,7 +242,6 @@ export type Database = {
           document_type: string
           due_date: string | null
           id: string
-          is_business: boolean
           issued_date: string | null
           notes: string | null
           original_path: string | null
@@ -302,7 +259,6 @@ export type Database = {
           document_type?: string
           due_date?: string | null
           id?: string
-          is_business?: boolean
           issued_date?: string | null
           notes?: string | null
           original_path?: string | null
@@ -320,7 +276,6 @@ export type Database = {
           document_type?: string
           due_date?: string | null
           id?: string
-          is_business?: boolean
           issued_date?: string | null
           notes?: string | null
           original_path?: string | null
