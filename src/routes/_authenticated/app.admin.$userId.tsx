@@ -178,10 +178,6 @@ function AdminUserPage() {
                   <div>{docQ.data.row.category ?? "—"}</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Erhverv</div>
-                  <div>{docQ.data.row.is_business ? "Ja" : "Nej"}</div>
-                </div>
-                <div>
                   <div className="text-muted-foreground">Status</div>
                   <div>{docQ.data.row.status}</div>
                 </div>

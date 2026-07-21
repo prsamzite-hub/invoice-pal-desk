@@ -9,15 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { toast } from "sonner";
 import { danishAuthError, EMAIL_EXISTS_MESSAGE } from "@/lib/auth-errors";
-import {
-  getLastAuthMode,
-  setLastAuthMode,
-  setStoredAppMode,
-  type AppMode,
-} from "@/lib/app-mode";
 
 
 export const Route = createFileRoute("/auth")({
@@ -46,48 +39,15 @@ function AuthPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [view, setView] = useState<View>("signin");
-  const [mode, setMode] = useState<AppMode>("privat");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | null>(null);
   const [resetSent, setResetSent] = useState(false);
 
-  useEffect(() => {
-    setMode(getLastAuthMode());
-  }, []);
-
-  function updateMode(next: AppMode) {
-    setMode(next);
-    setLastAuthMode(next);
-  }
-
-  async function routeAfterAuth(chosen: AppMode) {
-    setLastAuthMode(chosen);
-    if (chosen === "privat") {
-      setStoredAppMode("privat");
-      await router.invalidate();
-      navigate({ to: "/app", replace: true });
-      return;
-    }
-    // Erhverv: check for business profile
-    try {
-      const { data } = await supabase
-        .from("business_profiles")
-        .select("id")
-        .maybeSingle();
-      if (data?.id) {
-        setStoredAppMode("erhverv");
-        await router.invalidate();
-        navigate({ to: "/app", replace: true });
-      } else {
-        await router.invalidate();
-        navigate({ to: "/onboarding", search: { mode: "business" }, replace: true });
-      }
-    } catch {
-      await router.invalidate();
-      navigate({ to: "/onboarding", search: { mode: "business" }, replace: true });
-    }
+  async function goToApp() {
+    await router.invalidate();
+    navigate({ to: "/app", replace: true });
   }
 
 
