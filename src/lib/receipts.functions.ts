@@ -1,26 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
-import type { ReceiptPdfSender } from "./receipt-pdf.server";
-
-async function loadSender(supabase: any, userId: string): Promise<ReceiptPdfSender | null> {
-  const { data, error } = await supabase
-    .from("business_profiles")
-    .select("company_name, cvr, address, postal_code, city, phone, email")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error || !data) return null;
-  if (!data.company_name || !String(data.company_name).trim()) return null;
-  return {
-    company_name: String(data.company_name).trim(),
-    cvr: data.cvr ?? null,
-    address: data.address ?? null,
-    postal_code: data.postal_code ?? null,
-    city: data.city ?? null,
-    phone: data.phone ?? null,
-    email: data.email ?? null,
-  };
-}
 
 export const CATEGORIES = [
   "Groceries",
@@ -51,7 +31,6 @@ export interface ExtractedFields {
   category: string | null;
   notes: string | null;
   items: LineItem[];
-  is_business: boolean;
 }
 
 export interface ExtractResult {
@@ -118,7 +97,6 @@ export const extractReceipt = createServerFn({ method: "POST" })
       category: "Other",
       notes: null,
       items: [],
-      is_business: false,
     };
 
     if (!isImage) {
@@ -151,7 +129,6 @@ export const extractReceipt = createServerFn({ method: "POST" })
           category: ex.category || "Other",
           notes: ex.notes ?? null,
           items: sanitizeItems(ex.items),
-          is_business: false,
         },
         extractionOk: true,
       };
@@ -199,7 +176,6 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
     category: f.category || null,
     notes: f.notes || null,
     items: sanitizeItems(f.items),
-    is_business: !!f.is_business,
   };
 }
 
@@ -253,7 +229,6 @@ export const saveReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
-        is_business: f.is_business,
         original_path: data.originalPath,
         status: f.due_date ? "unpaid" : "paid",
       })
@@ -277,7 +252,6 @@ export const saveReceipt = createServerFn({ method: "POST" })
 
     try {
       const vendorLogo = await loadLogoBytesByName(supabase, userId, f.company);
-      const sender = await loadSender(supabase, userId);
       const pdfBytes = await generateReceiptPdf({
         company: row.company,
         amount: Number(row.amount),
@@ -290,7 +264,6 @@ export const saveReceipt = createServerFn({ method: "POST" })
         items: f.items,
         receipt_id: row.id,
         vendor_logo: vendorLogo,
-        sender,
         lang: data.lang,
       });
       const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
@@ -330,7 +303,6 @@ export const getReceiptItems = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Ensure ownership through receipts join (RLS also enforces this)
     const { data: row, error: rErr } = await supabase
       .from("receipts")
       .select("id, user_id")
@@ -351,8 +323,6 @@ export const getReceiptItems = createServerFn({ method: "POST" })
       total: Number(it.total ?? 0),
     })) as LineItem[];
   });
-
-// (vendor logos are looked up by company name; see vendor-logos.functions.ts)
 
 async function regenerateAndStorePdf(
   supabase: any,
@@ -375,7 +345,6 @@ async function regenerateAndStorePdf(
     .eq("document_id", id)
     .order("position", { ascending: true });
   const vendorLogo = await loadLogoBytesByName(supabase, userId, row.company);
-  const sender = await loadSender(supabase, userId);
   const pdfBytes = await generateReceiptPdf({
     company: row.company,
     amount: Number(row.amount),
@@ -393,7 +362,6 @@ async function regenerateAndStorePdf(
     })),
     receipt_id: row.id,
     vendor_logo: vendorLogo,
-    sender,
     lang,
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;
@@ -413,7 +381,6 @@ export const getReceiptPdfUrl = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const lang = data.lang === "en" ? ("en" as const) : ("da" as const);
-    // Always regenerate so existing documents get the new brand template.
     const pdfPath = await regenerateAndStorePdf(supabase, userId, data.id, lang);
     const signed = await supabase.storage.from("receipts").createSignedUrl(pdfPath, 60 * 10);
     if (signed.error) throw signed.error;
@@ -468,7 +435,6 @@ export const updateReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
-        is_business: f.is_business,
         status: nextStatus,
       })
       .eq("id", data.id)
@@ -477,7 +443,6 @@ export const updateReceipt = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
 
-    // Best-effort refresh the logo cache for the (possibly renamed) company.
     try {
       await ensureLogoForCompany(supabase, userId, f.company);
     } catch (e) {
@@ -514,18 +479,24 @@ export const deleteReceipt = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: row, error } = await supabase
+    const { data: row } = await supabase
       .from("receipts")
-      .select("id, user_id, original_path, pdf_path")
+      .select("original_path, pdf_path, user_id")
       .eq("id", data.id)
       .maybeSingle();
-    if (error) throw error;
-    if (!row || row.user_id !== userId) throw new Error("Ikke fundet");
-    const paths = [row.original_path, row.pdf_path].filter(Boolean) as string[];
-    if (paths.length > 0) {
-      await supabase.storage.from("receipts").remove(paths);
+    if (row && row.user_id === userId) {
+      const paths = [row.original_path, row.pdf_path].filter(Boolean) as string[];
+      if (paths.length) await supabase.storage.from("receipts").remove(paths);
     }
-    const del = await supabase.from("receipts").delete().eq("id", data.id).eq("user_id", userId);
-    if (del.error) throw del.error;
+    const { error } = await supabase
+      .from("receipts")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw error;
     return { ok: true };
   });
+
+export function deriveReceiptStatus() {
+  return null;
+}
