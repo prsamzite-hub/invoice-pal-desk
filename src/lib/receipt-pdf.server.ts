@@ -10,16 +10,6 @@ export interface ReceiptPdfLineItem {
 
 export type PdfLang = "da" | "en";
 
-export interface ReceiptPdfSender {
-  company_name: string;
-  cvr?: string | null;
-  address?: string | null;
-  postal_code?: string | null;
-  city?: string | null;
-  phone?: string | null;
-  email?: string | null;
-}
-
 export interface ReceiptPdfData {
   company: string;
   amount: number;
@@ -33,8 +23,6 @@ export interface ReceiptPdfData {
   receipt_id: string;
   /** Raw PNG/JPEG bytes for the vendor logo. If omitted, a monogram is rendered. */
   vendor_logo?: Uint8Array | null;
-  /** Optional sender block (business profile). If omitted, the PDF renders without a sender header. */
-  sender?: ReceiptPdfSender | null;
   lang?: PdfLang;
 }
 
@@ -214,14 +202,12 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const draw = (text: string, opts: Parameters<typeof page.drawText>[1]) =>
     page.drawText(sanitize(text), opts);
 
-  // Header band (cream) — taller when a sender block is present
-  const sender = data.sender ?? null;
-  const HEADER_H = sender ? 190 : 120;
+  // Header band (cream)
+  const HEADER_H = 120;
   page.drawRectangle({ x: 0, y: height - HEADER_H, width, height: HEADER_H, color: CREAM });
 
   // Brand wordmark - typographic "Kvitregn"
   draw("Kvitregn", { x: 48, y: height - 60, size: 26, font: bold, color: INK });
-  // Small accent dot
   page.drawCircle({ x: 48 + bold.widthOfTextAtSize("Kvitregn", 26) + 6, y: height - 55, size: 3, color: DUSTY });
   draw(t.tagline, { x: 48, y: height - 82, size: 10, font: italic, color: DUSTY });
 
@@ -231,38 +217,6 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const idText = `#${data.receipt_id.slice(0, 8).toUpperCase()}`;
   const idWidth = font.widthOfTextAtSize(idText, 10);
   draw(idText, { x: width - 48 - idWidth, y: height - 78, size: 10, font, color: MUTED });
-
-  // Sender block (Afsender) — right column of the header when business profile exists
-  if (sender) {
-    // Left column: "Afsender" label + company name in ink; details right-aligned on right column
-    const senderLabelY = height - 118;
-    draw(t.sender, { x: 48, y: senderLabelY, size: 9, font, color: MUTED });
-    draw(sender.company_name, { x: 48, y: senderLabelY - 16, size: 13, font: bold, color: INK });
-
-    const senderLines: string[] = [];
-    const addr = sender.address ? sender.address.trim() : "";
-    if (addr) senderLines.push(addr);
-    const cityLine = [sender.postal_code?.trim(), sender.city?.trim()].filter(Boolean).join(" ");
-    if (cityLine) senderLines.push(cityLine);
-    let sy = senderLabelY - 34;
-    for (const line of senderLines) {
-      draw(line, { x: 48, y: sy, size: 10, font, color: INK });
-      sy -= 13;
-    }
-
-    // Right column of sender: CVR, phone, email
-    const rightLines: Array<[string, string]> = [];
-    if (sender.cvr) rightLines.push([t.cvr, sender.cvr]);
-    if (sender.phone) rightLines.push([t.phone, sender.phone]);
-    if (sender.email) rightLines.push([t.email, sender.email]);
-    let ry = senderLabelY - 16;
-    for (const [k, v] of rightLines) {
-      const line = `${k} ${v}`;
-      const w = font.widthOfTextAtSize(sanitize(line), 10);
-      draw(line, { x: width - 48 - w, y: ry, size: 10, font, color: INK });
-      ry -= 13;
-    }
-  }
 
   // Divider under header
   page.drawLine({
