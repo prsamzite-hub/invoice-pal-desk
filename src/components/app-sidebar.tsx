@@ -25,8 +25,8 @@ const ITEMS = [
   { title: "Dokumenter", url: "/app/documents", icon: Receipt },
   { title: "Upload", url: "/app/upload", icon: Upload },
   { title: "Analyse", url: "/app/analytics", icon: PieChart },
-
   { title: "Indstillinger", url: "/app/settings", icon: Settings },
+
 ] as const;
 
 export function AppSidebar() {
