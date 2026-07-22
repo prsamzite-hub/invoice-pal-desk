@@ -1,10 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   LayoutDashboard,
   Receipt,
   Upload,
   PieChart,
   Settings,
+  Shield,
+  FileText,
 } from "lucide-react";
 
 
@@ -19,6 +23,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { isCurrentUserAdmin } from "@/lib/admin.functions";
 
 const ITEMS = [
   { title: "Oversigt", url: "/app", icon: LayoutDashboard },
@@ -26,13 +31,28 @@ const ITEMS = [
   { title: "Upload", url: "/app/upload", icon: Upload },
   { title: "Analyse", url: "/app/analytics", icon: PieChart },
   { title: "Indstillinger", url: "/app/settings", icon: Settings },
+] as const;
 
+const ADMIN_ITEMS = [
+  { title: "Brugere", url: "/app/admin", icon: Shield },
+  { title: "Dokumenter", url: "/app/admin/documents", icon: FileText },
 ] as const;
 
 export function AppSidebar() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (url: string) =>
-    url === "/app" ? currentPath === "/app" : currentPath.startsWith(url);
+    url === "/app"
+      ? currentPath === "/app"
+      : url === "/app/admin"
+        ? currentPath === "/app/admin" || currentPath.startsWith("/app/admin/") && !currentPath.startsWith("/app/admin/documents")
+        : currentPath.startsWith(url);
+
+  const adminFn = useServerFn(isCurrentUserAdmin);
+  const adminQ = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: () => adminFn(),
+    staleTime: 5 * 60_000,
+  });
 
   return (
     <Sidebar collapsible="icon">
@@ -78,6 +98,26 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {adminQ.data ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ADMIN_ITEMS.map((item) => (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                      <Link to={item.url} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
     </Sidebar>
   );
