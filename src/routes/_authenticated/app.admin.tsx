@@ -138,11 +138,7 @@ function UserRow({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmRole, setConfirmRole] = useState<null | boolean>(null);
 
-  const rolesFn = useServerFn(
-    // reuse import via dynamic to avoid unused warning
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require("@/lib/admin.functions").adminListUserRoles,
-  );
+  const rolesFn = useServerFn(adminListUserRoles);
   const rolesQ = useQuery({
     queryKey: ["admin-user-roles", user.id],
     queryFn: () => rolesFn({ data: { userId: user.id } }),
