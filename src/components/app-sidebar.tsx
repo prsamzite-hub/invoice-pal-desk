@@ -5,8 +5,8 @@ import {
   Upload,
   PieChart,
   Settings,
-  Store,
 } from "lucide-react";
+
 
 import {
   Sidebar,
