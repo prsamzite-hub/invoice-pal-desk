@@ -168,3 +168,296 @@ export const adminGetDocument = createServerFn({ method: "POST" })
 
     return { row, items: items ?? [], pdfUrl, originalUrl };
   });
+
+// ---------- USER MUTATIONS ----------
+
+export const adminListUserRoles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+    if (error) throw error;
+    return (rows ?? []).map((r) => r.role as string);
+  });
+
+export const adminUpdateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string; email?: string; display_name?: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.email) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+        email: data.email,
+      });
+      if (error) throw error;
+    }
+    if (data.display_name !== undefined) {
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ display_name: data.display_name })
+        .eq("id", data.userId);
+      if (error) throw error;
+      await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+        user_metadata: { full_name: data.display_name },
+      });
+    }
+    await logAction(supabase, userId, "admin.user.update", "user", data.userId, {
+      changed: Object.keys(data).filter((k) => k !== "userId"),
+    });
+    return { ok: true };
+  });
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    if (data.userId === userId) throw new Error("Du kan ikke slette dig selv");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Remove storage objects first
+    const { data: docs } = await supabaseAdmin
+      .from("receipts")
+      .select("pdf_path, original_path")
+      .eq("user_id", data.userId);
+    const paths = (docs ?? [])
+      .flatMap((d) => [d.pdf_path, d.original_path])
+      .filter((p): p is string => !!p);
+    if (paths.length) {
+      await supabaseAdmin.storage.from("receipts").remove(paths);
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw error;
+
+    await logAction(supabase, userId, "admin.user.delete", "user", data.userId);
+    return { ok: true };
+  });
+
+export const adminVerifyEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      email_confirm: true,
+    });
+    if (error) throw error;
+    await logAction(supabase, userId, "admin.user.verify_email", "user", data.userId);
+    return { ok: true };
+  });
+
+export const adminSetUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string; makeAdmin: boolean }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    if (data.userId === userId && !data.makeAdmin) {
+      throw new Error("Du kan ikke fjerne dine egne admin-rettigheder");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.makeAdmin) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+      if (error) throw error;
+    }
+    await logAction(supabase, userId, "admin.user.set_role", "user", data.userId, {
+      makeAdmin: data.makeAdmin,
+    });
+    return { ok: true };
+  });
+
+async function sendAuthEmailViaSupabase(
+  emailType: "recovery" | "magiclink" | "signup",
+  email: string,
+) {
+  // Use publishable-key client so Supabase triggers the send-email hook,
+  // which routes through /lovable/email/auth/webhook and the queue.
+  const { createClient } = await import("@supabase/supabase-js");
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+  const url = process.env.SUPABASE_URL!;
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const h = new Headers(init?.headers);
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
+          h.delete("Authorization");
+        }
+        h.set("apikey", key);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+  const siteUrl = `https://${process.env.LOVABLE_PUBLISHED_HOST ?? "kvitregn.dk"}`;
+  if (emailType === "recovery") {
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteUrl}/reset-password`,
+    });
+    if (error) throw error;
+  } else if (emailType === "magiclink") {
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${siteUrl}/app`, shouldCreateUser: false },
+    });
+    if (error) throw error;
+  } else if (emailType === "signup") {
+    const { error } = await client.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${siteUrl}/app` },
+    });
+    if (error) throw error;
+  }
+}
+
+export const adminSendPasswordReset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    await sendAuthEmailViaSupabase("recovery", data.email);
+    await logAction(supabase, userId, "admin.user.send_recovery", "user", null, { email: data.email });
+    return { ok: true };
+  });
+
+export const adminSendMagicLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    await sendAuthEmailViaSupabase("magiclink", data.email);
+    await logAction(supabase, userId, "admin.user.send_magiclink", "user", null, { email: data.email });
+    return { ok: true };
+  });
+
+export const adminResendConfirmation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    await sendAuthEmailViaSupabase("signup", data.email);
+    await logAction(supabase, userId, "admin.user.resend_confirmation", "user", null, { email: data.email });
+    return { ok: true };
+  });
+
+// ---------- DOCUMENT MUTATIONS ----------
+
+export const adminUpdateDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      id: string;
+      company?: string;
+      amount?: number;
+      currency?: string;
+      issued_date?: string | null;
+      due_date?: string | null;
+      document_type?: string;
+      category?: string | null;
+      status?: string;
+      notes?: string | null;
+    }) => data,
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { id, ...patch } = data;
+    const { error } = await supabaseAdmin.from("receipts").update(patch).eq("id", id);
+    if (error) throw error;
+    await logAction(supabase, userId, "admin.document.update", "document", id, {
+      fields: Object.keys(patch),
+    });
+    return { ok: true };
+  });
+
+export const adminDeleteDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("receipts")
+      .select("pdf_path, original_path, user_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    const paths = [row?.pdf_path, row?.original_path].filter(
+      (p): p is string => !!p,
+    );
+    if (paths.length) {
+      await supabaseAdmin.storage.from("receipts").remove(paths);
+    }
+    const { error } = await supabaseAdmin.from("receipts").delete().eq("id", data.id);
+    if (error) throw error;
+    await logAction(supabase, userId, "admin.document.delete", "document", data.id, {
+      owner: row?.user_id ?? null,
+    });
+    return { ok: true };
+  });
+
+export const adminListDocuments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { q?: string; limit?: number }) => ({
+    q: (data?.q ?? "").trim(),
+    limit: Math.min(Math.max(data?.limit ?? 100, 1), 500),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let query = supabaseAdmin
+      .from("receipts")
+      .select("id, user_id, company, amount, currency, issued_date, document_type, category, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (data.q) {
+      const num = Number(data.q.replace(",", "."));
+      if (!isNaN(num)) {
+        query = query.or(`company.ilike.%${data.q}%,amount.eq.${num}`);
+      } else {
+        query = query.ilike("company", `%${data.q}%`);
+      }
+    }
+    const { data: rows, error } = await query;
+    if (error) throw error;
+
+    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", userIds);
+    const pMap = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+
+    return (rows ?? []).map((r) => ({
+      ...r,
+      owner_name: pMap.get(r.user_id) ?? null,
+    }));
+  });
