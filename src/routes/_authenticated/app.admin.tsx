@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   adminDeleteUser,
+  adminListUserRoles,
   adminListUsers,
   adminResendConfirmation,
   adminSendMagicLink,
