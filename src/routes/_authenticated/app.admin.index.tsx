@@ -39,7 +39,7 @@ import {
   isCurrentUserAdmin,
 } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/_authenticated/app/admin")({
+export const Route = createFileRoute("/_authenticated/app/admin/")({
   beforeLoad: async () => {
     const ok = await isCurrentUserAdmin();
     if (!ok) throw redirect({ to: "/app" });
