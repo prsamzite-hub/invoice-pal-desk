@@ -102,6 +102,7 @@ function AdminUserPage() {
   }, [q.data]);
 
   const [docId, setDocId] = useState<string | null>(null);
+  const [editDocId, setEditDocId] = useState<string | null>(null);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
   const [confirmDeleteUser, setConfirmDeleteUser] = useState(false);
   const [confirmRole, setConfirmRole] = useState<null | boolean>(null);
