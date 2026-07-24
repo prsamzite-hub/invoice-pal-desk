@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Eye, FileText, Mail, MoreHorizontal, Trash2, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Eye, FileText, Mail, MoreHorizontal, Pencil, Trash2, User as UserIcon } from "lucide-react";
+import { AdminDocumentEditDialog } from "@/components/admin-document-edit-dialog";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/atoms/page-header";
