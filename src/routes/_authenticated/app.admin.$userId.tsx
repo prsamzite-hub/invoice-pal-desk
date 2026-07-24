@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Eye, FileText, Mail, MoreHorizontal, Trash2, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Eye, FileText, Mail, MoreHorizontal, Pencil, Trash2, User as UserIcon } from "lucide-react";
+import { AdminDocumentEditDialog } from "@/components/admin-document-edit-dialog";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/atoms/page-header";
@@ -101,6 +102,7 @@ function AdminUserPage() {
   }, [q.data]);
 
   const [docId, setDocId] = useState<string | null>(null);
+  const [editDocId, setEditDocId] = useState<string | null>(null);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
   const [confirmDeleteUser, setConfirmDeleteUser] = useState(false);
   const [confirmRole, setConfirmRole] = useState<null | boolean>(null);
@@ -302,13 +304,16 @@ function AdminUserPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => setEditDocId(d.id)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Rediger
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onSelect={() => setDocToDelete(d.id)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" /> Slet
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -450,6 +455,12 @@ function AdminUserPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdminDocumentEditDialog
+        documentId={editDocId}
+        onOpenChange={(o) => !o && setEditDocId(null)}
+        onSaved={() => q.refetch()}
+      />
     </div>
   );
 }

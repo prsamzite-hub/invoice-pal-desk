@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -26,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AdminDocumentEditDialog } from "@/components/admin-document-edit-dialog";
 import {
   adminDeleteDocument,
   adminListDocuments,
@@ -62,6 +64,7 @@ function AdminDocumentsPage() {
     queryFn: () => listFn({ data: { q: submitted } }),
   });
   const [toDelete, setToDelete] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const del = useMutation({
     mutationFn: useServerFn(adminDeleteDocument),
     onSuccess: () => {
@@ -150,11 +153,15 @@ function AdminDocumentsPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setEditId(d.id)}>
+                      Rediger
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/app/admin/$userId" params={{ userId: d.user_id }}>
                         Vis hos bruger
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onSelect={() => setToDelete(d.id)}
@@ -188,6 +195,12 @@ function AdminDocumentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdminDocumentEditDialog
+        documentId={editId}
+        onOpenChange={(o) => !o && setEditId(null)}
+        onSaved={() => query.refetch()}
+      />
     </div>
   );
 }
