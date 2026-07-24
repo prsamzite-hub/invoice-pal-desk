@@ -455,6 +455,12 @@ function AdminUserPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdminDocumentEditDialog
+        documentId={editDocId}
+        onOpenChange={(o) => !o && setEditDocId(null)}
+        onSaved={() => q.refetch()}
+      />
     </div>
   );
 }
