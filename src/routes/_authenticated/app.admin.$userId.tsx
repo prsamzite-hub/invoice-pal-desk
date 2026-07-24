@@ -304,13 +304,16 @@ function AdminUserPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => setEditDocId(d.id)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Rediger
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onSelect={() => setDocToDelete(d.id)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" /> Slet
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
