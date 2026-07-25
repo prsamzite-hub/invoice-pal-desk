@@ -246,6 +246,7 @@ export type Database = {
           notes: string | null
           original_path: string | null
           pdf_path: string | null
+          scan_path: string | null
           status: string
           updated_at: string
           user_id: string
@@ -263,6 +264,7 @@ export type Database = {
           notes?: string | null
           original_path?: string | null
           pdf_path?: string | null
+          scan_path?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -280,6 +282,7 @@ export type Database = {
           notes?: string | null
           original_path?: string | null
           pdf_path?: string | null
+          scan_path?: string | null
           status?: string
           updated_at?: string
           user_id?: string
