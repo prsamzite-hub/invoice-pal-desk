@@ -35,6 +35,9 @@ export interface ExtractedFields {
 
 export interface ExtractResult {
   originalPath: string;
+  scanPath: string | null;
+  originalUrl: string | null;
+  scanUrl: string | null;
   mime: string;
   extracted: ExtractedFields;
   extractionOk: boolean;
