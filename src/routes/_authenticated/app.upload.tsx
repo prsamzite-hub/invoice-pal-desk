@@ -73,20 +73,53 @@ function UploadPage() {
 
   const extract = useMutation({
     mutationFn: async (file: File) => {
-      setProgress(10);
-      setProgressLabel("Uploader fil…");
+      setProgress(5);
+      setProgressLabel("Forbereder dokument…");
+      const { heicToJpegIfNeeded, scanImageBlob } = await import("@/lib/scan-image");
+
+      // Convert HEIC/HEIF client-side so the scanner (and preview) can read it.
+      let workFile = file;
+      try {
+        workFile = await heicToJpegIfNeeded(file);
+      } catch {
+        // Keep the raw HEIC as original if conversion fails.
+      }
+
+      // Client-side deterministic scan: edge detect + perspective warp +
+      // mild white balance / contrast. Falls back to raw photo on failure.
+      let scanBlob: Blob | null = null;
+      const looksLikeImage =
+        workFile.type.startsWith("image/") || /\.(jpe?g|png)$/i.test(workFile.name);
+      if (looksLikeImage) {
+        try {
+          setProgress(20);
+          setProgressLabel("Scanner dokumentet…");
+          const result = await scanImageBlob(workFile);
+          scanBlob = result.blob;
+        } catch (e) {
+          console.warn("[scanImageBlob] failed", e);
+          scanBlob = null;
+        }
+      }
+
+      setProgress(40);
+      setProgressLabel("Uploader…");
       const fd = new FormData();
-      fd.append("file", file);
-      // Simulate visible progress while the server function runs.
+      // Always keep the untouched original (the raw camera/upload file).
+      fd.append("original", file);
+      if (scanBlob) {
+        fd.append("scan", scanBlob, "scan.jpg");
+      }
+
       const timer = setInterval(() => {
         setProgress((p) => {
-          if (p < 40) {
-            setProgressLabel("Uploader fil…");
-            return p + 5;
-          }
-          if (p < 85) {
-            setProgressLabel("AI aflæser dokumentet…");
+          if (p < 60) {
+            setProgressLabel("Uploader…");
             return p + 3;
+          }
+          if (p < 90) {
+            setProgressLabel("AI aflæser dokumentet…");
+            return p + 2;
           }
           return p;
         });
