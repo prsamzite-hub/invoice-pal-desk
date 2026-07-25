@@ -27,6 +27,7 @@ const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved }: Props) {
   const [fields, setFields] = useState<ExtractedFields | null>(null);
+  const [useScan, setUseScan] = useState(true);
   const findDupFn = useServerFn(findDuplicates);
   const saveFn = useServerFn(saveReceipt);
   const listFn = useServerFn(listMyReceipts);
@@ -37,7 +38,10 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   );
 
   useEffect(() => {
-    if (initial) setFields({ ...initial.extracted });
+    if (initial) {
+      setFields({ ...initial.extracted });
+      setUseScan(!!initial.scanUrl);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
@@ -57,7 +61,15 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   const save = useMutation({
     mutationFn: async () => {
       if (!initial || !fields) throw new Error("Mangler data");
-      return await saveFn({ data: { originalPath: initial.originalPath, fields, lang } });
+      return await saveFn({
+        data: {
+          originalPath: initial.originalPath,
+          scanPath: initial.scanPath,
+          useScan,
+          fields,
+          lang,
+        },
+      });
     },
     onSuccess: (row) => {
       toast.success(`Gemt: ${row.company}`);
@@ -66,9 +78,6 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
     },
     onError: (e: unknown) => {
       const raw = e instanceof Error ? e.message : "";
-      // Known validation messages (thrown from the server inputValidator) are safe
-      // Danish strings and can be shown as-is. Anything else is a technical
-      // error (network / bundler / storage) — show a friendly Danish fallback.
       const isFriendly =
         !!raw &&
         raw.length < 120 &&
