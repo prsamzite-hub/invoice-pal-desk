@@ -27,6 +27,7 @@ const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved }: Props) {
   const [fields, setFields] = useState<ExtractedFields | null>(null);
+  const [useScan, setUseScan] = useState(true);
   const findDupFn = useServerFn(findDuplicates);
   const saveFn = useServerFn(saveReceipt);
   const listFn = useServerFn(listMyReceipts);
@@ -37,7 +38,10 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   );
 
   useEffect(() => {
-    if (initial) setFields({ ...initial.extracted });
+    if (initial) {
+      setFields({ ...initial.extracted });
+      setUseScan(!!initial.scanUrl);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
@@ -57,7 +61,15 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   const save = useMutation({
     mutationFn: async () => {
       if (!initial || !fields) throw new Error("Mangler data");
-      return await saveFn({ data: { originalPath: initial.originalPath, fields, lang } });
+      return await saveFn({
+        data: {
+          originalPath: initial.originalPath,
+          scanPath: initial.scanPath,
+          useScan,
+          fields,
+          lang,
+        },
+      });
     },
     onSuccess: (row) => {
       toast.success(`Gemt: ${row.company}`);
@@ -66,9 +78,6 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
     },
     onError: (e: unknown) => {
       const raw = e instanceof Error ? e.message : "";
-      // Known validation messages (thrown from the server inputValidator) are safe
-      // Danish strings and can be shown as-is. Anything else is a technical
-      // error (network / bundler / storage) — show a friendly Danish fallback.
       const isFriendly =
         !!raw &&
         raw.length < 120 &&
@@ -115,8 +124,60 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           </Alert>
         )}
 
+        {(initial?.scanUrl || initial?.originalUrl) && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Forhåndsvisning
+              </span>
+              {initial?.scanUrl ? (
+                <div className="inline-flex overflow-hidden rounded-full border border-border text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setUseScan(true)}
+                    className={`px-3 py-1 transition ${
+                      useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Behandlet scan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseScan(false)}
+                    className={`px-3 py-1 transition ${
+                      !useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Originalfoto
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground">Kun originalfoto</span>
+              )}
+            </div>
+            <div className="flex justify-center overflow-hidden rounded-2xl border border-border bg-muted">
+              {(() => {
+                const src = useScan && initial?.scanUrl ? initial.scanUrl : initial?.originalUrl;
+                return src ? (
+                  <img
+                    src={src}
+                    alt={useScan ? "Behandlet scan" : "Originalfoto"}
+                    className="max-h-64 w-auto object-contain"
+                  />
+                ) : null;
+              })()}
+            </div>
+            {initial?.scanUrl && !useScan && (
+              <p className="text-xs text-muted-foreground">
+                Vi gemmer originalfotoet uden auto-beskæring.
+              </p>
+            )}
+          </div>
+        )}
+
         {duplicates.length > 0 && (
           <Alert variant="destructive">
+
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Muligt dublet</AlertTitle>
             <AlertDescription>
