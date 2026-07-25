@@ -175,7 +175,9 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           </div>
         )}
 
+        {duplicates.length > 0 && (
           <Alert variant="destructive">
+
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Muligt dublet</AlertTitle>
             <AlertDescription>
