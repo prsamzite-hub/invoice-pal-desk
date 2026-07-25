@@ -124,7 +124,57 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           </Alert>
         )}
 
-        {duplicates.length > 0 && (
+        {(initial?.scanUrl || initial?.originalUrl) && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Forhåndsvisning
+              </span>
+              {initial?.scanUrl ? (
+                <div className="inline-flex overflow-hidden rounded-full border border-border text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setUseScan(true)}
+                    className={`px-3 py-1 transition ${
+                      useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Behandlet scan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseScan(false)}
+                    className={`px-3 py-1 transition ${
+                      !useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Originalfoto
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground">Kun originalfoto</span>
+              )}
+            </div>
+            <div className="flex justify-center overflow-hidden rounded-2xl border border-border bg-muted">
+              {(() => {
+                const src = useScan && initial?.scanUrl ? initial.scanUrl : initial?.originalUrl;
+                return src ? (
+                  <img
+                    src={src}
+                    alt={useScan ? "Behandlet scan" : "Originalfoto"}
+                    className="max-h-64 w-auto object-contain"
+                  />
+                ) : null;
+              })()}
+            </div>
+            {initial?.scanUrl && !useScan && (
+              <p className="text-xs text-muted-foreground">
+                Vi gemmer originalfotoet uden auto-beskæring.
+              </p>
+            )}
+          </div>
+        )}
+
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Muligt dublet</AlertTitle>
