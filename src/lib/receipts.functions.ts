@@ -67,28 +67,56 @@ function sanitizeItems(input: unknown): LineItem[] {
 // Step 1: upload the original and run AI extraction. Returns editable draft.
 export const extractReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+// Step 1: upload original (and optional client-side scanned image) and run AI
+// extraction on the scan when available, otherwise the original. Returns
+// signed URLs so the review dialog can show a before/after toggle.
+export const extractReceipt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
     if (!(data instanceof FormData)) throw new Error("Expected FormData");
-    const file = data.get("file");
-    if (!(file instanceof File)) throw new Error("Missing file");
-    return { file };
+    const original = (data.get("original") ?? data.get("file"));
+    if (!(original instanceof File)) throw new Error("Missing file");
+    const scanEntry = data.get("scan");
+    const scan = scanEntry instanceof File ? scanEntry : null;
+    return { original, scan };
   })
   .handler(async ({ data, context }): Promise<ExtractResult> => {
     const { supabase, userId } = context;
-    const { file } = data;
     const { extractReceiptFromImage } = await import("./ai-gateway.server");
+    const original = data.original;
+    const scan = data.scan;
 
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const mime = file.type || "application/octet-stream";
-    const isImage = mime.startsWith("image/");
+    const originalBytes = new Uint8Array(await original.arrayBuffer());
+    const mime = original.type || "application/octet-stream";
+    const isImage = mime.startsWith("image/") || /\.(jpe?g|png|heic|heif)$/i.test(original.name);
 
     const stamp = Date.now();
-    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_") || "upload";
+    const cleanName = original.name.replace(/[^a-zA-Z0-9._-]/g, "_") || "upload";
+    const baseName = cleanName.replace(/\.[^.]+$/, "");
     const originalPath = `${userId}/originals/${stamp}-${cleanName}`;
     const up1 = await supabase.storage
       .from("receipts")
-      .upload(originalPath, bytes, { contentType: mime, upsert: false });
+      .upload(originalPath, originalBytes, { contentType: mime, upsert: false });
     if (up1.error) throw up1.error;
+
+    let scanPath: string | null = null;
+    let scanBytes: Uint8Array | null = null;
+    if (scan) {
+      scanBytes = new Uint8Array(await scan.arrayBuffer());
+      scanPath = `${userId}/scans/${stamp}-${baseName}.jpg`;
+      const up2 = await supabase.storage
+        .from("receipts")
+        .upload(scanPath, scanBytes, { contentType: "image/jpeg", upsert: false });
+      if (up2.error) throw up2.error;
+    }
+
+    const signOne = async (p: string | null) => {
+      if (!p) return null;
+      const s = await supabase.storage.from("receipts").createSignedUrl(p, 60 * 30);
+      return s.data?.signedUrl ?? null;
+    };
+    const originalUrl = await signOne(originalPath);
+    const scanUrl = await signOne(scanPath);
 
     const fallback: ExtractedFields = {
       company: "",
@@ -105,6 +133,9 @@ export const extractReceipt = createServerFn({ method: "POST" })
     if (!isImage) {
       return {
         originalPath,
+        scanPath,
+        originalUrl,
+        scanUrl,
         mime,
         extracted: fallback,
         extractionOk: false,
@@ -112,15 +143,21 @@ export const extractReceipt = createServerFn({ method: "POST" })
       };
     }
 
+    // Prefer the scanned (deskewed/enhanced) image for AI extraction.
+    const aiBytes = scanBytes ?? originalBytes;
+    const aiMime = scanBytes ? "image/jpeg" : mime;
     try {
       let bin = "";
-      for (let i = 0; i < bytes.length; i += 0x8000) {
-        bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      for (let i = 0; i < aiBytes.length; i += 0x8000) {
+        bin += String.fromCharCode(...aiBytes.subarray(i, i + 0x8000));
       }
       const base64 = btoa(bin);
-      const ex = await extractReceiptFromImage(base64, mime);
+      const ex = await extractReceiptFromImage(base64, aiMime);
       return {
         originalPath,
+        scanPath,
+        originalUrl,
+        scanUrl,
         mime,
         extracted: {
           company: ex.company || "",
@@ -139,6 +176,9 @@ export const extractReceipt = createServerFn({ method: "POST" })
       console.error("[extractReceipt] extraction failed", e);
       return {
         originalPath,
+        scanPath,
+        originalUrl,
+        scanUrl,
         mime,
         extracted: fallback,
         extractionOk: false,
