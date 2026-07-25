@@ -64,9 +64,6 @@ function sanitizeItems(input: unknown): LineItem[] {
     .filter((x): x is LineItem => x !== null);
 }
 
-// Step 1: upload the original and run AI extraction. Returns editable draft.
-export const extractReceipt = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
 // Step 1: upload original (and optional client-side scanned image) and run AI
 // extraction on the scan when available, otherwise the original. Returns
 // signed URLs so the review dialog can show a before/after toggle.
