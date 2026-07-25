@@ -240,13 +240,17 @@ export const saveReceipt = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
       originalPath: string;
+      scanPath?: string | null;
+      useScan?: boolean;
       fields: ExtractedFields;
       lang?: "da" | "en";
     }) => {
       if (!data?.originalPath) throw new Error("Missing originalPath");
       if (!data?.fields) throw new Error("Missing fields");
+      const useScan = data.useScan !== false;
       return {
         originalPath: data.originalPath,
+        scanPath: useScan ? (data.scanPath ?? null) : null,
         lang: data.lang === "en" ? ("en" as const) : ("da" as const),
         fields: normalizeFields(data.fields),
       };
@@ -270,6 +274,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         category: f.category,
         notes: f.notes,
         original_path: data.originalPath,
+        scan_path: data.scanPath,
         status: f.due_date ? "unpaid" : "paid",
       })
       .select("*")
