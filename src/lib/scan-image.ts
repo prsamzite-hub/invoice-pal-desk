@@ -106,6 +106,7 @@ export interface ScanResult {
 }
 
 export async function heicToJpegIfNeeded(file: File): Promise<File> {
+  if (typeof window === "undefined") throw new Error("client only");
   const isHeic = /heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
   if (!isHeic) return file;
   try {
@@ -119,6 +120,125 @@ export async function heicToJpegIfNeeded(file: File): Promise<File> {
   }
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Order 4 points as [tl, tr, br, bl] using x+y sum and x-y diff.
+function orderQuad(pts: Array<{ x: number; y: number }>): Array<{ x: number; y: number }> {
+  const bySum = [...pts].sort((a, b) => a.x + a.y - (b.x + b.y));
+  const tl = bySum[0];
+  const br = bySum[3];
+  const byDiff = [...pts].sort((a, b) => a.x - a.y - (b.x - b.y));
+  const bl = byDiff[0];
+  const tr = byDiff[3];
+  return [tl, tr, br, bl];
+}
+
+// Detect the largest convex 4-point contour in the image using raw OpenCV.
+// Returns the ordered quad in source-image coordinates, or null.
+function detectPaperQuad(cv: any, srcCanvas: HTMLCanvasElement): Array<{ x: number; y: number }> | null {
+  const imgArea = srcCanvas.width * srcCanvas.height;
+  const src = cv.imread(srcCanvas);
+  const gray = new cv.Mat();
+  const blur = new cv.Mat();
+  const edges = new cv.Mat();
+  const dilated = new cv.Mat();
+  const contours = new cv.MatVector();
+  const hierarchy = new cv.Mat();
+  const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+
+  try {
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
+    cv.Canny(blur, edges, 75, 200);
+    cv.dilate(edges, dilated, kernel, new cv.Point(-1, -1), 1);
+    cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+    const candidates: Array<{ index: number; area: number }> = [];
+    for (let i = 0; i < contours.size(); i++) {
+      const c = contours.get(i);
+      const a = cv.contourArea(c);
+      candidates.push({ index: i, area: a });
+      c.delete();
+    }
+    candidates.sort((a, b) => b.area - a.area);
+
+    for (const { index } of candidates.slice(0, 10)) {
+      const c = contours.get(index);
+      const peri = cv.arcLength(c, true);
+      const approx = new cv.Mat();
+      cv.approxPolyDP(c, approx, 0.02 * peri, true);
+      try {
+        if (approx.rows === 4 && cv.isContourConvex(approx)) {
+          const area = cv.contourArea(approx);
+          const ratio = area / imgArea;
+          if (ratio >= 0.2 && ratio <= 0.98) {
+            const pts: Array<{ x: number; y: number }> = [];
+            for (let k = 0; k < 4; k++) {
+              pts.push({ x: approx.intAt(k, 0), y: approx.intAt(k, 1) });
+            }
+            return orderQuad(pts);
+          }
+        }
+      } finally {
+        approx.delete();
+        c.delete();
+      }
+    }
+    return null;
+  } finally {
+    src.delete();
+    gray.delete();
+    blur.delete();
+    edges.delete();
+    dilated.delete();
+    contours.delete();
+    hierarchy.delete();
+    kernel.delete();
+  }
+}
+
+function warpToCanvas(
+  cv: any,
+  srcCanvas: HTMLCanvasElement,
+  quad: Array<{ x: number; y: number }>,
+): HTMLCanvasElement {
+  const [tl, tr, br, bl] = quad;
+  const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.hypot(a.x - b.x, a.y - b.y);
+  const wTop = dist(tl, tr);
+  const wBot = dist(bl, br);
+  const hLeft = dist(tl, bl);
+  const hRight = dist(tr, br);
+  let outW = Math.round(Math.max(wTop, wBot));
+  let outH = Math.round(Math.max(hLeft, hRight));
+  outW = Math.max(600, Math.min(MAX_DIM, outW));
+  outH = Math.max(600, Math.min(MAX_DIM, outH));
+
+  const src = cv.imread(srcCanvas);
+  const dst = new cv.Mat();
+  const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+    tl.x, tl.y, tr.x, tr.y, br.x, br.y, bl.x, bl.y,
+  ]);
+  const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+    0, 0, outW, 0, outW, outH, 0, outH,
+  ]);
+  const M = cv.getPerspectiveTransform(srcTri, dstTri);
+  try {
+    cv.warpPerspective(src, dst, M, new cv.Size(outW, outH), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+    const out = document.createElement("canvas");
+    out.width = outW;
+    out.height = outH;
+    cv.imshow(out, dst);
+    return out;
+  } finally {
+    src.delete();
+    dst.delete();
+    srcTri.delete();
+    dstTri.delete();
+    M.delete();
+  }
+}
+
 // Runs edge detection + perspective correction + enhancement on a raw image blob.
 // If detection fails or confidence is low, returns the mildly-enhanced raw
 // image with ok=false so callers can fall back gracefully.
@@ -126,32 +246,16 @@ export async function scanImageBlob(input: Blob): Promise<ScanResult> {
   if (typeof window === "undefined") throw new Error("client only");
   const img = await blobToImage(input);
   const srcCanvas = drawToCanvas(img);
-  const imgArea = srcCanvas.width * srcCanvas.height;
 
   try {
     await loadOpenCV();
-    const cv = (window as unknown as { cv: any }).cv; // eslint-disable-line @typescript-eslint/no-explicit-any
-    const jsMod = await import("jscanify");
-    const Scanner = (jsMod as unknown as { default: any }).default ?? (jsMod as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-    const scanner = new Scanner();
-
-    const mat = cv.imread(srcCanvas);
-    try {
-      const contour = scanner.findPaperContour(mat);
-      if (!contour) throw new Error("no contour");
-      const area = cv.contourArea(contour);
-      const conf = area / imgArea;
-      if (conf < 0.2 || conf > 0.98) throw new Error("low confidence");
-      const rect = cv.boundingRect(contour);
-      const outW = Math.max(600, Math.min(MAX_DIM, rect.width));
-      const outH = Math.max(600, Math.min(MAX_DIM, rect.height));
-      const warped = scanner.extractPaper(srcCanvas, outW, outH, contour) as HTMLCanvasElement;
-      enhance(warped);
-      const blob = await canvasToBlob(warped);
-      return { blob, ok: true, width: warped.width, height: warped.height };
-    } finally {
-      try { mat.delete?.(); } catch { /* noop */ }
-    }
+    const cv = (window as unknown as { cv: any }).cv;
+    const quad = detectPaperQuad(cv, srcCanvas);
+    if (!quad) throw new Error("no confident quad");
+    const warped = warpToCanvas(cv, srcCanvas, quad);
+    enhance(warped);
+    const blob = await canvasToBlob(warped);
+    return { blob, ok: true, width: warped.width, height: warped.height };
   } catch {
     // Fall back: mild enhancement on the raw photo, no warp. ok=false.
     enhance(srcCanvas);

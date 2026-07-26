@@ -1,49 +1,66 @@
-Extend the existing read-only admin area (`/app/admin`) into a full admin console with user + document CRUD, role management, and auth actions. Everything gated by the existing `has_role(uid, 'admin')` check and logged to `audit_log`.
+## Exact build error
 
-## Access model
+```
+[UNLOADABLE_DEPENDENCY] Could not load node_modules/unenv/dist/runtime/node/punycode.mjs/
+   ╭─[ node_modules/tr46/index.js:3:26 ]
+ 3 │ const punycode = require("punycode/");
+   │                          ─────┬─────
+   │                               ╰─── Not a directory (os error 20)
+```
 
-- Reuse the current `user_roles` table + `has_role` RPC and the `assertAdmin` guard in `src/lib/admin.functions.ts`. No schema change needed.
-- All new server functions go in `src/lib/admin.functions.ts`, use `requireSupabaseAuth` + `assertAdmin`, and load `supabaseAdmin` inside the handler. Every mutation writes an `audit_log` row.
-- Admins cannot delete themselves or remove their own admin role (server-side guard).
+Rolldown (Vite 8 Workers SSR build) can't resolve unenv's `punycode` shim while bundling `tr46`. `tr46` is pulled in via `jscanify → jsdom → whatwg-url → tr46`. Even a dynamic `import("jscanify")` from a browser-only module keeps the graph reachable, and `ssr.external` is forbidden on this stack.
 
-## New server functions
+## Fix — remove the dependency chain, reimplement detection on raw OpenCV
 
-Users:
-- `adminUpdateUser` — update `email`, `display_name`, `full_name` metadata (via `supabaseAdmin.auth.admin.updateUserById` + `profiles` upsert).
-- `adminDeleteUser` — `supabaseAdmin.auth.admin.deleteUser` (cascades receipts/profiles via existing FKs).
-- `adminSendPasswordReset` — `supabaseAdmin.auth.admin.generateLink({ type: 'recovery' })` and enqueue the existing recovery email template via `enqueue_email` so it flows through the queue like normal auth mail.
-- `adminSendMagicLink` — same pattern with `type: 'magiclink'`.
-- `adminResendConfirmation` — `type: 'signup'` for users whose `email_confirmed_at` is null.
-- `adminVerifyEmail` — `updateUserById(id, { email_confirm: true })` to mark verified without an email round-trip.
-- `adminSetUserRole` — takes `{ userId, role: 'admin' | 'user' }`. For `admin`, upsert `user_roles`; for `user`, delete the admin row. Blocks self-demotion.
-- `adminListUserRoles` — returns the roles for a user so the UI can show current state.
+### 1. Uninstall `jscanify`
 
-Documents (receipts):
-- `adminUpdateDocument` — update editable fields on `receipts` (`company`, `amount`, `currency`, `issued_date`, `due_date`, `document_type`, `category`, `status`, `is_business`-if-still-present, notes). Zod-validated.
-- `adminDeleteDocument` — delete the `receipts` row and its storage objects (`pdf_path`, `original_path`).
-- `adminListDocuments` — global paginated list with search by company/amount and filter by user, for a new "Alle dokumenter" admin tab.
+- `bun remove jscanify`, then prune stale transitive dirs (`jsdom`, `whatwg-url`, `tr46`, `data-urls`) and `bun install` so the lockfile no longer references them.
+- Verify: `ls node_modules/tr46 node_modules/jsdom` → both gone.
 
-## UI changes
+### 2. Reimplement paper detection in `src/lib/scan-image.ts`
 
-`src/routes/_authenticated/app.admin.tsx` (users tab):
-- Add per-row action menu: "Rediger", "Slet", "Send nulstil-mail", "Send login-link", "Gensend bekræftelse", "Marker verificeret", "Gør til admin" / "Fjern admin".
-- Confirmation dialog for destructive actions (delete, role change).
-- Show badges: "Admin", "Ikke verificeret".
+Replace the `jscanify` calls in `scanImageBlob` with a direct OpenCV pipeline (no new dependencies):
 
-`src/routes/_authenticated/app.admin.$userId.tsx`:
-- Add an "Rediger bruger" section (display_name, email) and the same action buttons as the row menu.
-- In the documents table, add row actions "Rediger" (opens the existing review dialog in admin mode) and "Slet".
+```
+src → cvtColor(GRAY)
+    → GaussianBlur(5×5)
+    → Canny(75, 200)
+    → dilate(3×3, iter=1)         // close small gaps
+    → findContours(RETR_EXTERNAL, CHAIN_APPROX_SIMPLE)
+    → for each contour sorted by area desc (top ~10):
+        peri = arcLength(true)
+        approx = approxPolyDP(0.02 * peri, true)
+        if approx.rows === 4 && isContourConvex(approx)
+          && contourArea(approx) / imgArea >= 0.2
+          && contourArea(approx) / imgArea <= 0.98
+        → accept
+    → order the 4 points (tl, tr, br, bl) by sum/diff of x+y
+    → compute output size from max edge lengths
+    → getPerspectiveTransform(src4, dst4)
+    → warpPerspective → HTMLCanvasElement
+    → existing enhance() (gray-world WB + gentle contrast)
+```
 
-New route `src/routes/_authenticated/app.admin.documents.tsx`:
-- Global documents table using `adminListDocuments` with search/filter, links back to each owner and to `/app/admin/$userId`.
+If no quad passes the confidence gate, catch and fall through to the existing fallback: mild `enhance()` on the raw canvas, returned with `ok: false`. Every allocated `cv.Mat` / `cv.MatVector` is wrapped in `try/finally` and `.delete()`d to avoid WASM heap leaks.
 
-Sidebar: add "Admin" submenu entries "Brugere" and "Dokumenter" (only rendered when `isCurrentUserAdmin` is true — already fetched).
+### 3. Preserve all previous constraints
 
-All copy in Danish. No changes to landing, auth, or non-admin flows.
+- OpenCV.js still lazy-loaded via the existing CDN `<script>` injector on first use inside `scanImageBlob`.
+- Module still browser-only: `typeof window === "undefined"` guard at the top of every exported function (already present on `scanImageBlob`; add to `heicToJpegIfNeeded`).
+- Only reached via `await import("@/lib/scan-image")` from the upload mutation — never at any module top level, never in `*.server.ts`, never in a server function.
+- Review dialog's Behandlet scan / Originalfoto toggle unchanged.
+- HEIC path (`heic2any` npm dep) unchanged — it does not pull tr46/jsdom.
 
-## Technical notes
+### 4. Verify
 
-- Password reset / magic link / confirmation resend go through the existing Lovable auth email queue by calling `supabase.rpc('enqueue_email', { queue_name: 'auth_emails', payload })` with the same payload shape the auth webhook uses (`email_action_type`, `redirect_to`, generated `token_hash`, user metadata). This keeps branding + Danish subjects consistent.
-- `adminDeleteUser` runs `supabaseAdmin.storage.from('receipts').remove([...paths])` for that user's receipts before the auth delete so no orphan files remain.
-- Self-protection: `if (data.userId === context.userId) throw` on delete and on admin-role removal.
-- All new server fns append to the existing file; no new middleware, no schema migration.
+- `bun run build` completes; no `UNLOADABLE_DEPENDENCY`, prerender step succeeds.
+- `grep -r "jscanify\|jsdom\|tr46" node_modules/.package-lock.json` → no results.
+- Three-photo manual test on `/app/upload`:
+  1. Angled receipt photo → detected quad, warped to a straight rectangle.
+  2. Straight top-down photo → detected quad ≈ image bounds, output nearly identical (only enhance applied).
+  3. Blurry / no-clear-edges photo → no confident quad, `ok: false`, review dialog defaults to Originalfoto without a broken crop.
+
+## Technical details
+
+- Files changed: `src/lib/scan-image.ts` (swap jscanify block for OpenCV pipeline, add window guard to `heicToJpegIfNeeded`), `package.json` + `bun.lockb` (remove jscanify), `src/types/scan-modules.d.ts` (drop `declare module "jscanify"`).
+- Files NOT changed: `vite.config.ts` (no `ssr.external`), `src/routes/_authenticated/app.upload.tsx`, `src/components/receipt-review-dialog.tsx`, server functions in `src/lib/receipts.functions.ts`, storage schema.
