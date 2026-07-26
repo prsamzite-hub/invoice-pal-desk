@@ -75,15 +75,22 @@ function UploadPage() {
     mutationFn: async (file: File) => {
       setProgress(5);
       setProgressLabel("Forbereder dokument…");
-      const { heicToJpegIfNeeded, scanImageBlob } = await import("@/lib/scan-image");
 
       // Convert HEIC/HEIF client-side so the scanner (and preview) can read it.
+      // heic2any is heavy (~1.3 MB) — only load it when a HEIC file is picked.
       let workFile = file;
-      try {
-        workFile = await heicToJpegIfNeeded(file);
-      } catch {
-        // Keep the raw HEIC as original if conversion fails.
+      const { isHeicFile } = await import("@/lib/heic");
+      if (isHeicFile(file)) {
+        try {
+          const { heicToJpeg } = await import("@/lib/heic");
+          workFile = await heicToJpeg(file);
+        } catch {
+          // Keep the raw HEIC as original if conversion fails.
+        }
       }
+
+      const { scanImageBlob } = await import("@/lib/scan-image");
+
 
       // Client-side deterministic scan: edge detect + perspective warp +
       // mild white balance / contrast. Falls back to raw photo on failure.
