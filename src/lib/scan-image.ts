@@ -105,20 +105,9 @@ export interface ScanResult {
   height: number;
 }
 
-export async function heicToJpegIfNeeded(file: File): Promise<File> {
-  if (typeof window === "undefined") throw new Error("client only");
-  const isHeic = /heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
-  if (!isHeic) return file;
-  try {
-    const mod = await import("heic2any");
-    const heic2any = (mod as unknown as { default: (o: unknown) => Promise<Blob | Blob[]> }).default;
-    const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
-    const b = Array.isArray(out) ? out[0] : out;
-    return new File([b], file.name.replace(/\.hei[cf]$/i, ".jpg"), { type: "image/jpeg" });
-  } catch {
-    return file;
-  }
-}
+// HEIC conversion lives in src/lib/heic.ts so heic2any is only pulled in
+// via a separate dynamic import when a .heic file is actually selected.
+
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
