@@ -122,50 +122,95 @@ function orderQuad(pts: Array<{ x: number; y: number }>): Array<{ x: number; y: 
   return [tl, tr, br, bl];
 }
 
-// Detect the largest convex 4-point contour in the image using raw OpenCV.
-// Returns the ordered quad in source-image coordinates, or null.
-function detectPaperQuad(cv: any, srcCanvas: HTMLCanvasElement): Array<{ x: number; y: number }> | null {
-  const imgArea = srcCanvas.width * srcCanvas.height;
-  const src = cv.imread(srcCanvas);
+// Detect the largest, most rectangular 4-point contour. Runs on a downscaled
+// copy for speed and robustness, then rescales the quad to source coordinates.
+function detectPaperQuad(
+  cv: any,
+  srcCanvas: HTMLCanvasElement,
+): Array<{ x: number; y: number }> | null {
+  const DETECT_MAX = 1000;
+  const scale = Math.min(1, DETECT_MAX / Math.max(srcCanvas.width, srcCanvas.height));
+  let work: HTMLCanvasElement = srcCanvas;
+  if (scale < 1) {
+    work = document.createElement("canvas");
+    work.width = Math.max(1, Math.round(srcCanvas.width * scale));
+    work.height = Math.max(1, Math.round(srcCanvas.height * scale));
+    const wctx = work.getContext("2d");
+    if (!wctx) return null;
+    wctx.drawImage(srcCanvas, 0, 0, work.width, work.height);
+  }
+
+  const invScale = srcCanvas.width / work.width;
+  const imgArea = work.width * work.height;
+
+  const src = cv.imread(work);
   const gray = new cv.Mat();
   const blur = new cv.Mat();
-  const edges = new cv.Mat();
+  const thresh = new cv.Mat();
   const dilated = new cv.Mat();
   const contours = new cv.MatVector();
   const hierarchy = new cv.Mat();
-  const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+  const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 5));
 
   try {
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
-    cv.Canny(blur, edges, 75, 200);
-    cv.dilate(edges, dilated, kernel, new cv.Point(-1, -1), 1);
+    // Adaptive threshold copes with uneven lighting far better than raw Canny
+    // for receipts on desks / hands / dark backgrounds.
+    cv.adaptiveThreshold(
+      blur,
+      thresh,
+      255,
+      cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+      cv.THRESH_BINARY_INV,
+      15,
+      10,
+    );
+    cv.dilate(thresh, dilated, kernel, new cv.Point(-1, -1), 2);
     cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
     const candidates: Array<{ index: number; area: number }> = [];
     for (let i = 0; i < contours.size(); i++) {
       const c = contours.get(i);
       const a = cv.contourArea(c);
-      candidates.push({ index: i, area: a });
+      if (a / imgArea >= 0.05) candidates.push({ index: i, area: a });
       c.delete();
     }
     candidates.sort((a, b) => b.area - a.area);
 
-    for (const { index } of candidates.slice(0, 10)) {
+    let best: { score: number; pts: Array<{ x: number; y: number }> } | null = null;
+    for (const { index } of candidates.slice(0, 15)) {
       const c = contours.get(index);
       const peri = cv.arcLength(c, true);
       const approx = new cv.Mat();
-      cv.approxPolyDP(c, approx, 0.02 * peri, true);
-      try {
+      // Try a few epsilon values — some receipts don't collapse to 4 pts at 0.02.
+      let quadMat: any = null;
+      for (const eps of [0.02, 0.03, 0.04, 0.05]) {
+        cv.approxPolyDP(c, approx, eps * peri, true);
         if (approx.rows === 4 && cv.isContourConvex(approx)) {
-          const area = cv.contourArea(approx);
+          quadMat = approx;
+          break;
+        }
+      }
+      try {
+        if (quadMat) {
+          const area = cv.contourArea(quadMat);
           const ratio = area / imgArea;
-          if (ratio >= 0.2 && ratio <= 0.98) {
-            const pts: Array<{ x: number; y: number }> = [];
-            for (let k = 0; k < 4; k++) {
-              pts.push({ x: approx.intAt(k, 0), y: approx.intAt(k, 1) });
+          if (ratio >= 0.12 && ratio <= 0.98) {
+            const rect = cv.minAreaRect(quadMat);
+            const rectArea = rect.size.width * rect.size.height || 1;
+            const rectangularity = area / rectArea; // 1.0 = perfect rectangle
+            const score = area * Math.max(0.3, rectangularity);
+            if (!best || score > best.score) {
+              const pts: Array<{ x: number; y: number }> = [];
+              for (let k = 0; k < 4; k++) {
+                pts.push({
+                  x: quadMat.intAt(k, 0) * invScale,
+                  y: quadMat.intAt(k, 1) * invScale,
+                });
+              }
+              best = { score, pts: orderQuad(pts) };
             }
-            return orderQuad(pts);
           }
         }
       } finally {
@@ -173,12 +218,12 @@ function detectPaperQuad(cv: any, srcCanvas: HTMLCanvasElement): Array<{ x: numb
         c.delete();
       }
     }
-    return null;
+    return best?.pts ?? null;
   } finally {
     src.delete();
     gray.delete();
     blur.delete();
-    edges.delete();
+    thresh.delete();
     dilated.delete();
     contours.delete();
     hierarchy.delete();
@@ -236,19 +281,22 @@ export async function scanImageBlob(input: Blob): Promise<ScanResult> {
   const img = await blobToImage(input);
   const srcCanvas = drawToCanvas(img);
 
+  await loadOpenCV();
+  const cv = (window as unknown as { cv: any }).cv;
   try {
-    await loadOpenCV();
-    const cv = (window as unknown as { cv: any }).cv;
     const quad = detectPaperQuad(cv, srcCanvas);
-    if (!quad) throw new Error("no confident quad");
-    const warped = warpToCanvas(cv, srcCanvas, quad);
-    enhance(warped);
-    const blob = await canvasToBlob(warped);
-    return { blob, ok: true, width: warped.width, height: warped.height };
-  } catch {
-    // Fall back: mild enhancement on the raw photo, no warp. ok=false.
-    enhance(srcCanvas);
-    const blob = await canvasToBlob(srcCanvas);
-    return { blob, ok: false, width: srcCanvas.width, height: srcCanvas.height };
+    if (quad) {
+      const warped = warpToCanvas(cv, srcCanvas, quad);
+      enhance(warped);
+      const blob = await canvasToBlob(warped);
+      return { blob, ok: true, width: warped.width, height: warped.height };
+    }
+  } catch (e) {
+    console.warn("[scanImageBlob] detection error, falling back", e);
   }
+  // Fall back: mild enhancement on the raw photo, no warp. ok=false.
+  enhance(srcCanvas);
+  const blob = await canvasToBlob(srcCanvas);
+  return { blob, ok: false, width: srcCanvas.width, height: srcCanvas.height };
 }
+
