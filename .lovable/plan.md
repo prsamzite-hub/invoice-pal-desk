@@ -1,66 +1,59 @@
-## Exact build error
+# Full DA/EN language support
 
-```
-[UNLOADABLE_DEPENDENCY] Could not load node_modules/unenv/dist/runtime/node/punycode.mjs/
-   ╭─[ node_modules/tr46/index.js:3:26 ]
- 3 │ const punycode = require("punycode/");
-   │                          ─────┬─────
-   │                               ╰─── Not a directory (os error 20)
-```
+This is a large refactor touching ~30 files and hundreds of strings. Approving this plan will run all steps in one pass.
 
-Rolldown (Vite 8 Workers SSR build) can't resolve unenv's `punycode` shim while bundling `tr46`. `tr46` is pulled in via `jscanify → jsdom → whatwg-url → tr46`. Even a dynamic `import("jscanify")` from a browser-only module keeps the graph reachable, and `ssr.external` is forbidden on this stack.
+## 1. i18n foundation (src/lib/i18n.tsx)
 
-## Fix — remove the dependency chain, reimplement detection on raw OpenCV
+Replace the current tiny dictionary with a typed, namespaced dictionary module (no runtime library — keeps bundle small and lets TypeScript catch missing keys):
 
-### 1. Uninstall `jscanify`
+- Full `da` and `en` dictionaries covering: nav, sidebar, topbar, user menu, landing, auth (login/signup/reset), privacy/terms headings, dashboard, documents (filters, sort, tabs, empty), analytics (chart toggles, legend, budgets), upload flow, review dialog, settings, admin console (users + documents + user detail), toasts, validation, confirmation dialogs, empty states.
+- Category label translations (Dagligvarer/Groceries etc.). Stored `category` value in DB stays as-is; translation is display-only via a `tCategory(value)` helper.
+- Default language: Danish. First-visit detection: if `navigator.language` starts with `en`, default EN; otherwise DA. Persisted in `localStorage("kvitregn.lang")`.
+- New `useFormat()` hook returning `formatDate`, `formatMoney` bound to current locale (`da-DK` / `en-DK`, DKK in both).
 
-- `bun remove jscanify`, then prune stale transitive dirs (`jsdom`, `whatwg-url`, `tr46`, `data-urls`) and `bun install` so the lockfile no longer references them.
-- Verify: `ls node_modules/tr46 node_modules/jsdom` → both gone.
+## 2. Profile persistence
 
-### 2. Reimplement paper detection in `src/lib/scan-image.ts`
+- Migration: add `locale text` column already exists on `profiles` — reuse it. Values: `da-DK` | `en-DK`.
+- On login: `LanguageProvider` reads `profiles.locale` via a small server fn and syncs to state + localStorage.
+- On toggle: update localStorage immediately; if authenticated, persist to `profiles.locale` (fire-and-forget, ignore errors).
 
-Replace the `jscanify` calls in `scanImageBlob` with a direct OpenCV pipeline (no new dependencies):
+## 3. Language switcher placement
 
-```
-src → cvtColor(GRAY)
-    → GaussianBlur(5×5)
-    → Canny(75, 200)
-    → dilate(3×3, iter=1)         // close small gaps
-    → findContours(RETR_EXTERNAL, CHAIN_APPROX_SIMPLE)
-    → for each contour sorted by area desc (top ~10):
-        peri = arcLength(true)
-        approx = approxPolyDP(0.02 * peri, true)
-        if approx.rows === 4 && isContourConvex(approx)
-          && contourArea(approx) / imgArea >= 0.2
-          && contourArea(approx) / imgArea <= 0.98
-        → accept
-    → order the 4 points (tl, tr, br, bl) by sum/diff of x+y
-    → compute output size from max edge lengths
-    → getPerspectiveTransform(src4, dst4)
-    → warpPerspective → HTMLCanvasElement
-    → existing enhance() (gray-world WB + gentle contrast)
-```
+- Keep existing `LanguageToggle` component (already in app topbar).
+- Add it to the public landing header (`src/routes/index.tsx`) and auth page header (`src/routes/auth.tsx`).
+- Mobile: the topbar toggle is already visible; landing/auth pages get it in their mobile menu / header.
 
-If no quad passes the confidence gate, catch and fall through to the existing fallback: mild `enhance()` on the raw canvas, returned with `ok: false`. Every allocated `cv.Mat` / `cv.MatVector` is wrapped in `try/finally` and `.delete()`d to avoid WASM heap leaks.
+## 4. Auth error mapping
 
-### 3. Preserve all previous constraints
+Rework `src/lib/auth-errors.ts` to return a translation key + params instead of a Danish string. Callers resolve via `t(key)`. Add EN equivalents for every existing DA message.
 
-- OpenCV.js still lazy-loaded via the existing CDN `<script>` injector on first use inside `scanImageBlob`.
-- Module still browser-only: `typeof window === "undefined"` guard at the top of every exported function (already present on `scanImageBlob`; add to `heicToJpegIfNeeded`).
-- Only reached via `await import("@/lib/scan-image")` from the upload mutation — never at any module top level, never in `*.server.ts`, never in a server function.
-- Review dialog's Behandlet scan / Originalfoto toggle unchanged.
-- HEIC path (`heic2any` npm dep) unchanged — it does not pull tr46/jsdom.
+## 5. PDF language
 
-### 4. Verify
+- `receipt-pdf.server.ts` already accepts `lang`. Wire caller in `receipts.functions.ts` to read `profiles.locale` for the acting user and pass `'da'` or `'en'`. Regeneration path uses the same lookup, so existing docs re-render in current language.
+- Add EN label set: Receipt/Invoice, Due date, Sender, Issued, Category, Items, Total, etc.
 
-- `bun run build` completes; no `UNLOADABLE_DEPENDENCY`, prerender step succeeds.
-- `grep -r "jscanify\|jsdom\|tr46" node_modules/.package-lock.json` → no results.
-- Three-photo manual test on `/app/upload`:
-  1. Angled receipt photo → detected quad, warped to a straight rectangle.
-  2. Straight top-down photo → detected quad ≈ image bounds, output nearly identical (only enhance applied).
-  3. Blurry / no-clear-edges photo → no confident quad, `ok: false`, review dialog defaults to Originalfoto without a broken crop.
+## 6. Files touched (translations wired in)
 
-## Technical details
+Public: `index.tsx`, `auth.tsx`, `privacy.tsx`, `terms.tsx`, `reset-password.tsx`.
+App shell: `app-sidebar.tsx`, `app-topbar.tsx`, `user-menu.tsx`, `theme-toggle.tsx`.
+App pages: `app.index.tsx`, `app.documents.tsx`, `app.analytics.tsx`, `app.upload.tsx`, `app.settings.tsx`, `app.admin.index.tsx`, `app.admin.documents.tsx`, `app.admin.$userId.tsx`.
+Components: `receipt-review-dialog.tsx`, `document-detail-sheet.tsx`, `admin-document-edit-dialog.tsx`, `items-editor.tsx`, `inbound-email-card.tsx`, `file-preview-card.tsx`, `pdf-viewer-dialog.tsx`, `company-combobox.tsx`.
+Server: `receipts.functions.ts`, `receipt-pdf.server.ts`, `profile.functions.ts` (add `updateLocale`), `admin.functions.ts` (for locale in user detail).
 
-- Files changed: `src/lib/scan-image.ts` (swap jscanify block for OpenCV pipeline, add window guard to `heicToJpegIfNeeded`), `package.json` + `bun.lockb` (remove jscanify), `src/types/scan-modules.d.ts` (drop `declare module "jscanify"`).
-- Files NOT changed: `vite.config.ts` (no `ssr.external`), `src/routes/_authenticated/app.upload.tsx`, `src/components/receipt-review-dialog.tsx`, server functions in `src/lib/receipts.functions.ts`, storage schema.
+## 7. Not translated
+
+User-entered `company`, `notes`, item descriptions; CVR data; email addresses; brand name "Kvitregn".
+
+## 8. Verification
+
+- `tsgo` typecheck (dictionary is typed — any missing key errors compile).
+- Manual walk of every route in EN mode via Playwright screenshots (landing, auth, dashboard, documents, analytics, upload, settings, admin) then flip back to DA.
+
+## Technical notes
+
+- Dictionary shape: `const dict = { da: {...}, en: {...} } as const; type Key = keyof typeof dict.da;` — `t(k: Key)` is fully typed.
+- No `i18next` dependency — keeps bundle unchanged and avoids SSR init dance.
+- `LanguageProvider` stays in `__root.tsx`; add auth-driven sync inside it.
+- SSR: initial render uses `da` (matches root `<html lang="da">`); after hydration, `useEffect` reads localStorage/profile and swaps if needed. `<html lang>` is updated client-side to reflect current choice.
+
+Scope estimate: ~30 file edits, one small server fn addition, no schema change, no new dependencies.
