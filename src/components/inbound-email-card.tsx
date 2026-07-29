@@ -4,8 +4,10 @@ import { Mail, Copy, Check } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLang } from "@/lib/i18n";
 
 export function InboundEmailCard({ token }: { token: string | null }) {
+  const { t } = useLang();
   const [copied, setCopied] = useState(false);
   const address = token ? `${token}@receipts.kvitregn.dk` : "—";
 
@@ -13,7 +15,7 @@ export function InboundEmailCard({ token }: { token: string | null }) {
     if (!token) return;
     navigator.clipboard.writeText(address).then(() => {
       setCopied(true);
-      toast.success("Email kopieret til udklipsholderen");
+      toast.success(t("settings.inbound.copied"));
       setTimeout(() => setCopied(false), 1800);
     });
   }
@@ -25,37 +27,26 @@ export function InboundEmailCard({ token }: { token: string | null }) {
           <Mail className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="text-base font-bold text-foreground">Videresend kvitteringer på email</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Send eller videresend dine kvitteringer hertil — Kvitregn læser dem automatisk.
-          </p>
+          <h2 className="text-base font-bold text-foreground">{t("settings.inbound.title")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("settings.inbound.desc")}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5">
         <code className="flex-1 truncate font-mono text-sm">{address}</code>
-        <Button
-          type="button" size="sm" variant="ghost" className="rounded-full"
-          onClick={copy} disabled={!token}
-        >
+        <Button type="button" size="sm" variant="ghost" className="rounded-full" onClick={copy} disabled={!token}>
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         </Button>
       </div>
 
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="gmail">
-          <AccordionTrigger className="text-sm">Sådan sætter du videresendelse op i Gmail</AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground">
-            Indstillinger → Videresendelse og POP/IMAP → Tilføj en videresendelsesadresse. Indsæt
-            din Kvitregn-adresse ovenfor og opret et filter, der matcher "kvittering" eller "receipt".
-          </AccordionContent>
+          <AccordionTrigger className="text-sm">{t("settings.inbound.gmail")}</AccordionTrigger>
+          <AccordionContent className="text-sm text-muted-foreground">{t("settings.inbound.gmailDesc")}</AccordionContent>
         </AccordionItem>
         <AccordionItem value="outlook">
-          <AccordionTrigger className="text-sm">Sådan sætter du videresendelse op i Outlook / Hotmail</AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground">
-            Indstillinger → Mail → Regler → Tilføj ny regel. Betingelse: emne indeholder "kvittering"
-            eller "receipt". Handling: videresend til din Kvitregn-adresse ovenfor.
-          </AccordionContent>
+          <AccordionTrigger className="text-sm">{t("settings.inbound.outlook")}</AccordionTrigger>
+          <AccordionContent className="text-sm text-muted-foreground">{t("settings.inbound.outlookDesc")}</AccordionContent>
         </AccordionItem>
       </Accordion>
     </section>

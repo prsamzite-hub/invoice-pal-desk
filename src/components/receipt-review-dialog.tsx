@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CompanyCombobox } from "@/components/company-combobox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ItemsEditor } from "@/components/items-editor";
+import { useLang } from "@/lib/i18n";
 import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
 interface Props {
@@ -26,6 +27,7 @@ interface Props {
 const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved }: Props) {
+  const { t, tCategory } = useLang();
   const [fields, setFields] = useState<ExtractedFields | null>(null);
   const [useScan, setUseScan] = useState(true);
   const findDupFn = useServerFn(findDuplicates);
@@ -60,7 +62,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!initial || !fields) throw new Error("Mangler data");
+      if (!initial || !fields) throw new Error("Missing data");
       return await saveFn({
         data: {
           originalPath: initial.originalPath,
@@ -72,7 +74,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
       });
     },
     onSuccess: (row) => {
-      toast.success(`Gemt: ${row.company}`);
+      toast.success(`${t("review.toast.savedPrefix")} ${row.company}`);
       onSaved();
       onOpenChange(false);
     },
@@ -82,11 +84,9 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
         !!raw &&
         raw.length < 120 &&
         !/[_${}]|toESM|undefined|Cannot|Error:|TypeError|extends/i.test(raw);
-      if (!isFriendly) {
-        console.error("[saveReceipt] failed", e);
-      }
-      toast.error("Kunne ikke gemme dokumentet", {
-        description: isFriendly ? raw : "Noget gik galt. Prøv igen om et øjeblik.",
+      if (!isFriendly) console.error("[saveReceipt] failed", e);
+      toast.error(t("review.toast.cannotSave"), {
+        description: isFriendly ? raw : t("review.toast.retry"),
       });
     },
   });
@@ -102,25 +102,23 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Gennemgå og gem</DialogTitle>
+          <DialogTitle>{t("review.title")}</DialogTitle>
           <DialogDescription>
-            {initial?.extractionOk
-              ? "Tjek at oplysningerne er rigtige — ret dem hvis noget er forkert."
-              : "Automatisk aflæsning virkede ikke. Udfyld felterne selv."}
+            {initial?.extractionOk ? t("review.desc.ok") : t("review.desc.err")}
           </DialogDescription>
         </DialogHeader>
 
         {initial?.extractionOk ? (
           <Alert>
             <Sparkles className="h-4 w-4" />
-            <AlertTitle>AI-forslag</AlertTitle>
-            <AlertDescription>Vi har foreslået værdier — ret dem hvis noget ser forkert ud.</AlertDescription>
+            <AlertTitle>{t("review.ai.title")}</AlertTitle>
+            <AlertDescription>{t("review.ai.desc")}</AlertDescription>
           </Alert>
         ) : (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Kunne ikke aflæse automatisk</AlertTitle>
-            <AlertDescription>{initial?.errorMessage ?? "Udfyld felterne manuelt."}</AlertDescription>
+            <AlertTitle>{t("review.err.title")}</AlertTitle>
+            <AlertDescription>{initial?.errorMessage ?? t("review.err.desc")}</AlertDescription>
           </Alert>
         )}
 
@@ -128,91 +126,67 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Forhåndsvisning
+                {t("review.preview")}
               </span>
               {initial?.scanUrl ? (
                 <div className="inline-flex overflow-hidden rounded-full border border-border text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setUseScan(true)}
-                    className={`px-3 py-1 transition ${
-                      useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    Behandlet scan
+                  <button type="button" onClick={() => setUseScan(true)}
+                    className={`px-3 py-1 transition ${useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"}`}>
+                    {t("review.scan")}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setUseScan(false)}
-                    className={`px-3 py-1 transition ${
-                      !useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    Originalfoto
+                  <button type="button" onClick={() => setUseScan(false)}
+                    className={`px-3 py-1 transition ${!useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"}`}>
+                    {t("review.original")}
                   </button>
                 </div>
               ) : (
-                <span className="text-xs text-muted-foreground">Kun originalfoto</span>
+                <span className="text-xs text-muted-foreground">{t("review.onlyOriginal")}</span>
               )}
             </div>
             <div className="flex justify-center overflow-hidden rounded-2xl border border-border bg-muted">
               {(() => {
                 const src = useScan && initial?.scanUrl ? initial.scanUrl : initial?.originalUrl;
                 return src ? (
-                  <img
-                    src={src}
-                    alt={useScan ? "Behandlet scan" : "Originalfoto"}
-                    className="max-h-64 w-auto object-contain"
-                  />
+                  <img src={src} alt={useScan ? t("review.scan") : t("review.original")}
+                    className="max-h-64 w-auto object-contain" />
                 ) : null;
               })()}
             </div>
             {initial?.scanUrl && !useScan && (
-              <p className="text-xs text-muted-foreground">
-                Vi gemmer originalfotoet uden auto-beskæring.
-              </p>
+              <p className="text-xs text-muted-foreground">{t("review.originalNote")}</p>
             )}
           </div>
         )}
 
         {duplicates.length > 0 && (
           <Alert variant="destructive">
-
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Muligt dublet</AlertTitle>
+            <AlertTitle>{t("review.dup.title")}</AlertTitle>
             <AlertDescription>
-              Du har allerede {duplicates.length} dokument{duplicates.length === 1 ? "" : "er"} for “{fields.company}” på{" "}
-              {fields.issued_date} med samme beløb. Gem alligevel, hvis det ikke er det samme.
+              {t("review.dup.desc.pre")} {duplicates.length}{" "}
+              {duplicates.length === 1 ? t("review.dup.doc.one") : t("review.dup.doc.many")}{" "}
+              {t("review.dup.desc.mid")} “{fields.company}” {t("review.dup.desc.on")}{" "}
+              {fields.issued_date} {t("review.dup.desc.suffix")}
             </AlertDescription>
           </Alert>
         )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="company">Firma</Label>
-            <CompanyCombobox
-              id="company"
-              value={fields.company}
-              onChange={(v) => set("company", v)}
-              placeholder="Skriv eller vælg firma"
-              suggestions={companySuggestions}
-            />
+            <Label htmlFor="company">{t("review.field.company")}</Label>
+            <CompanyCombobox id="company" value={fields.company} onChange={(v) => set("company", v)}
+              placeholder={t("review.field.companyPh")} suggestions={companySuggestions} />
           </div>
 
           <div>
-            <Label htmlFor="amount">Beløb</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
+            <Label htmlFor="amount">{t("review.field.amount")}</Label>
+            <Input id="amount" type="number" step="0.01" min="0"
               value={Number.isFinite(fields.amount) ? fields.amount : 0}
-              onChange={(e) => set("amount", parseFloat(e.target.value) || 0)}
-            />
+              onChange={(e) => set("amount", parseFloat(e.target.value) || 0)} />
           </div>
 
           <div>
-            <Label htmlFor="currency">Valuta</Label>
+            <Label htmlFor="currency">{t("review.field.currency")}</Label>
             <Select value={fields.currency} onValueChange={(v) => set("currency", v)}>
               <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -222,72 +196,56 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           </div>
 
           <div>
-            <Label htmlFor="issued_date">Dato</Label>
-            <Input
-              id="issued_date"
-              type="date"
-              value={fields.issued_date ?? ""}
-              onChange={(e) => set("issued_date", e.target.value || null)}
-            />
+            <Label htmlFor="issued_date">{t("review.field.date")}</Label>
+            <Input id="issued_date" type="date" value={fields.issued_date ?? ""}
+              onChange={(e) => set("issued_date", e.target.value || null)} />
           </div>
 
           <div>
-            <Label htmlFor="document_type">Type</Label>
-            <Select
-              value={fields.document_type}
-              onValueChange={(v) => set("document_type", v === "invoice" ? "invoice" : "receipt")}
-            >
+            <Label htmlFor="document_type">{t("review.field.type")}</Label>
+            <Select value={fields.document_type}
+              onValueChange={(v) => set("document_type", v === "invoice" ? "invoice" : "receipt")}>
               <SelectTrigger id="document_type"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="receipt">Kvittering</SelectItem>
-                <SelectItem value="invoice">Faktura</SelectItem>
+                <SelectItem value="receipt">{t("docs.type.receipt")}</SelectItem>
+                <SelectItem value="invoice">{t("docs.type.invoice")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="due_date">Forfaldsdato {fields.document_type === "receipt" && <span className="text-muted-foreground">(valgfri)</span>}</Label>
-            <Input
-              id="due_date"
-              type="date"
-              value={fields.due_date ?? ""}
-              onChange={(e) => set("due_date", e.target.value || null)}
-            />
+            <Label htmlFor="due_date">
+              {t("review.field.due")}{" "}
+              {fields.document_type === "receipt" && <span className="text-muted-foreground">({t("common.optional")})</span>}
+            </Label>
+            <Input id="due_date" type="date" value={fields.due_date ?? ""}
+              onChange={(e) => set("due_date", e.target.value || null)} />
           </div>
 
           <div>
-            <Label htmlFor="category">Kategori</Label>
+            <Label htmlFor="category">{t("review.field.category")}</Label>
             <Select value={fields.category ?? "Other"} onValueChange={(v) => set("category", v)}>
               <SelectTrigger id="category"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{tCategory(c)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
 
           <div className="sm:col-span-2">
-            <Label htmlFor="notes">Noter</Label>
+            <Label htmlFor="notes">{t("review.field.notes")}</Label>
             <Textarea id="notes" rows={2} value={fields.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
           </div>
-
         </div>
 
-        <ItemsEditor
-          items={fields.items}
-          currency={fields.currency}
-          onChange={(items: LineItem[]) => set("items", items)}
-        />
-
-
-
-
+        <ItemsEditor items={fields.items} currency={fields.currency} onChange={(items: LineItem[]) => set("items", items)} />
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={save.isPending}>
-            Annuller
+            {t("common.cancel")}
           </Button>
           <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {save.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Gemmer…</> : "Gem dokument"}
+            {save.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("app.saving")}</> : t("review.save")}
           </Button>
         </DialogFooter>
       </DialogContent>
