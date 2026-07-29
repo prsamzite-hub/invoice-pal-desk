@@ -16,17 +16,25 @@ export const getMyProfile = createServerFn({ method: "GET" })
 
 export const updateMyProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { display_name: string }) => {
-    const name = (data?.display_name ?? "").trim();
-    if (name.length < 1) throw new Error("Navn må ikke være tomt");
-    if (name.length > 80) throw new Error("Navn er for langt");
-    return { display_name: name };
+  .inputValidator((data: { display_name?: string; locale?: string }) => {
+    const patch: { display_name?: string; locale?: string } = {};
+    if (typeof data?.display_name === "string") {
+      const name = data.display_name.trim();
+      if (name.length < 1) throw new Error("Navn må ikke være tomt");
+      if (name.length > 80) throw new Error("Navn er for langt");
+      patch.display_name = name;
+    }
+    if (typeof data?.locale === "string") {
+      const loc = data.locale.trim();
+      if (loc === "da-DK" || loc === "en-DK") patch.locale = loc;
+    }
+    return patch;
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: row, error } = await supabase
       .from("profiles")
-      .update({ display_name: data.display_name })
+      .update(data)
       .eq("id", userId)
       .select("id, display_name, avatar_url, currency, locale, email_inbox_token")
       .single();

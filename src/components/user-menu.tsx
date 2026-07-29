@@ -14,8 +14,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile } from "@/lib/profile.functions";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
+import { useLang } from "@/lib/i18n";
 
 export function UserMenu() {
+  const { t } = useLang();
   const navigate = useNavigate();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchIsAdmin = useServerFn(isCurrentUserAdmin);
@@ -25,15 +27,9 @@ export function UserMenu() {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
   }, []);
 
-  const { data: profile } = useQuery({
-    queryKey: ["my-profile"],
-    queryFn: () => fetchProfile(),
-  });
-
+  const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: () => fetchProfile() });
   const { data: isAdmin } = useQuery({
-    queryKey: ["is-admin"],
-    queryFn: () => fetchIsAdmin(),
-    staleTime: 5 * 60_000,
+    queryKey: ["is-admin"], queryFn: () => fetchIsAdmin(), staleTime: 5 * 60_000,
   });
 
   const source = profile?.display_name?.trim() || email || "";
@@ -47,8 +43,8 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Brugermenu"
-        title="Brugermenu"
+        aria-label={t("user.menu")}
+        title={t("user.menu")}
         className="ml-1 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[#6b93a8] text-sm font-bold text-[#f5f2ea] outline-none ring-1 ring-transparent ring-offset-2 ring-offset-background transition hover:brightness-110 hover:ring-[#6b93a8]/50 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:ring-[#6b93a8]"
       >
         {initial}
@@ -58,18 +54,18 @@ export function UserMenu() {
           <>
             <DropdownMenuItem onSelect={() => navigate({ to: "/app/admin" })}>
               <ShieldCheck className="mr-2 h-4 w-4" />
-              Admin
+              {t("user.admin")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>
         ) : null}
         <DropdownMenuItem onSelect={() => navigate({ to: "/app/settings" })}>
           <Settings className="mr-2 h-4 w-4" />
-          Indstillinger
+          {t("user.settings")}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          Log ud
+          {t("user.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
