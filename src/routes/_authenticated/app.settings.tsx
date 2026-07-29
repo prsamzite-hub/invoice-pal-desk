@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { LogOut, Mail, User, Save, KeyRound, Trash2, Loader2 } from "lucide-react";
+import { LogOut, Mail, User, Save, KeyRound, Trash2, Loader2, Languages } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/atoms/page-header";
@@ -11,17 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InboundEmailCard } from "@/components/inbound-email-card";
+import { useLang } from "@/lib/i18n";
+import { danishAuthError } from "@/lib/auth-errors";
 
 import { getMyProfile, updateMyProfile, deleteMyAccount } from "@/lib/profile.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,16 +34,14 @@ export const Route = createFileRoute("/_authenticated/app/settings")({
 });
 
 function SettingsPage() {
+  const { t, lang, setLang } = useLang();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const fetchProfile = useServerFn(getMyProfile);
   const updateFn = useServerFn(updateMyProfile);
   const deleteFn = useServerFn(deleteMyAccount);
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["my-profile"],
-    queryFn: () => fetchProfile(),
-  });
+  const { data: profile, isLoading } = useQuery({ queryKey: ["my-profile"], queryFn: () => fetchProfile() });
 
   const [name, setName] = useState("");
   useEffect(() => {
@@ -55,50 +50,32 @@ function SettingsPage() {
 
   const [savingName, setSavingName] = useState(false);
   async function saveName() {
-    if (!name.trim()) {
-      toast.error("Navn må ikke være tomt");
-      return;
-    }
+    if (!name.trim()) { toast.error(t("settings.nameEmpty")); return; }
     setSavingName(true);
     try {
       await updateFn({ data: { display_name: name.trim() } });
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
-      toast.success("Profil opdateret");
+      toast.success(t("settings.saved"));
     } catch (e) {
-      toast.error("Kunne ikke gemme profil", {
-        description: e instanceof Error ? e.message : "",
-      });
-    } finally {
-      setSavingName(false);
-    }
+      toast.error(t("settings.cannotSave"), { description: e instanceof Error ? e.message : "" });
+    } finally { setSavingName(false); }
   }
 
   const [pw1, setPw1] = useState("");
   const [pw2, setPw2] = useState("");
   const [savingPw, setSavingPw] = useState(false);
   async function changePassword() {
-    if (pw1.length < 8) {
-      toast.error("Adgangskoden skal være mindst 8 tegn");
-      return;
-    }
-    if (pw1 !== pw2) {
-      toast.error("Adgangskoderne matcher ikke");
-      return;
-    }
+    if (pw1.length < 8) { toast.error(t("settings.pwShort")); return; }
+    if (pw1 !== pw2) { toast.error(t("settings.pwMismatch")); return; }
     setSavingPw(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: pw1 });
       if (error) throw error;
-      setPw1("");
-      setPw2("");
-      toast.success("Adgangskode ændret");
+      setPw1(""); setPw2("");
+      toast.success(t("settings.passwordChanged"));
     } catch (e) {
-      toast.error("Kunne ikke ændre adgangskode", {
-        description: e instanceof Error ? e.message : "",
-      });
-    } finally {
-      setSavingPw(false);
-    }
+      toast.error(t("settings.cannotChangePw"), { description: danishAuthError(e) });
+    } finally { setSavingPw(false); }
   }
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -109,12 +86,10 @@ function SettingsPage() {
       await deleteFn();
       await supabase.auth.signOut();
       qc.clear();
-      toast.success("Din konto er slettet");
+      toast.success(t("settings.deleted"));
       navigate({ to: "/auth", replace: true });
     } catch (e) {
-      toast.error("Kunne ikke slette konto", {
-        description: e instanceof Error ? e.message : "",
-      });
+      toast.error(t("settings.cannotDelete"), { description: e instanceof Error ? e.message : "" });
       setDeleting(false);
     }
   }
@@ -122,47 +97,47 @@ function SettingsPage() {
   async function signOut() {
     await supabase.auth.signOut();
     qc.clear();
-    toast.success("Du er logget ud");
+    toast.success(t("user.signedOut"));
     navigate({ to: "/auth", replace: true });
   }
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Indstillinger" description="Gør Kvitregn til dit eget." />
+      <PageHeader title={t("settings.title")} description={t("settings.desc")} />
 
       <section className="shadow-soft flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-bold text-foreground">Profil</h2>
+        <h2 className="text-base font-bold text-foreground">{t("settings.profile")}</h2>
         {isLoading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-full" />
-          </div>
+          <div className="flex flex-col gap-3"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full" /></div>
         ) : (
           <>
             <div className="flex flex-col gap-2">
               <Label htmlFor="display_name" className="text-xs uppercase tracking-wide text-muted-foreground">
-                Vist navn
+                {t("settings.displayName")}
               </Label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="display_name"
-                    className="pl-9"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Dit navn"
-                  />
+                  <Input id="display_name" className="pl-9" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("settings.displayNamePh")} />
                 </div>
                 <Button onClick={saveName} disabled={savingName} className="rounded-full">
                   {savingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Gem
+                  {t("common.save")}
                 </Button>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <ReadonlyField icon={Mail} label="Valuta" value={profile?.currency ?? "DKK"} />
-              <ReadonlyField icon={Mail} label="Sprog" value={profile?.locale ?? "da-DK"} />
+              <ReadonlyField icon={Mail} label={t("settings.currency")} value={profile?.currency ?? "DKK"} />
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("settings.language")}</span>
+                <Select value={lang} onValueChange={(v) => setLang(v as "da" | "en")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="da"><Languages className="mr-2 inline h-3.5 w-3.5" />Dansk (DA)</SelectItem>
+                    <SelectItem value="en"><Languages className="mr-2 inline h-3.5 w-3.5" />English (EN)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </>
         )}
@@ -173,8 +148,8 @@ function SettingsPage() {
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-foreground">Udseende</h2>
-            <p className="text-sm text-muted-foreground">Skift mellem lyst og mørkt tema.</p>
+            <h2 className="text-base font-bold text-foreground">{t("settings.appearance")}</h2>
+            <p className="text-sm text-muted-foreground">{t("settings.appearanceDesc")}</p>
           </div>
           <ThemeToggle />
         </div>
@@ -182,57 +157,47 @@ function SettingsPage() {
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <div>
-          <h2 className="text-base font-bold text-foreground">Adgangskode</h2>
-          <p className="text-sm text-muted-foreground">Vælg en ny adgangskode på mindst 8 tegn.</p>
+          <h2 className="text-base font-bold text-foreground">{t("settings.password")}</h2>
+          <p className="text-sm text-muted-foreground">{t("settings.passwordDesc")}</p>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="pw1" className="text-xs uppercase tracking-wide text-muted-foreground">
-              Ny adgangskode
-            </Label>
+            <Label htmlFor="pw1" className="text-xs uppercase tracking-wide text-muted-foreground">{t("settings.newPassword")}</Label>
             <Input id="pw1" type="password" value={pw1} onChange={(e) => setPw1(e.target.value)} autoComplete="new-password" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="pw2" className="text-xs uppercase tracking-wide text-muted-foreground">
-              Bekræft adgangskode
-            </Label>
+            <Label htmlFor="pw2" className="text-xs uppercase tracking-wide text-muted-foreground">{t("settings.confirmPassword")}</Label>
             <Input id="pw2" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" />
           </div>
         </div>
         <div>
           <Button onClick={changePassword} disabled={savingPw} className="rounded-full">
             {savingPw ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
-            Skift adgangskode
+            {t("settings.changePassword")}
           </Button>
         </div>
       </section>
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-bold text-foreground">Konto</h2>
-        <p className="text-sm text-muted-foreground">Log ud af Kvitregn på denne enhed.</p>
+        <h2 className="text-base font-bold text-foreground">{t("settings.account")}</h2>
+        <p className="text-sm text-muted-foreground">{t("settings.accountDesc")}</p>
         <div>
           <Button variant="outline" className="rounded-full" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
-            Log ud
+            {t("user.signOut")}
           </Button>
         </div>
       </section>
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-destructive/40 bg-card p-6">
         <div>
-          <h2 className="text-base font-bold text-destructive">Slet konto</h2>
-          <p className="text-sm text-muted-foreground">
-            Sletter din konto, alle dine dokumenter og uploadede filer permanent. Handlingen kan ikke fortrydes.
-          </p>
+          <h2 className="text-base font-bold text-destructive">{t("settings.delete")}</h2>
+          <p className="text-sm text-muted-foreground">{t("settings.deleteDesc")}</p>
         </div>
         <div>
-          <Button
-            variant="destructive"
-            className="rounded-full"
-            onClick={() => setConfirmOpen(true)}
-          >
+          <Button variant="destructive" className="rounded-full" onClick={() => setConfirmOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" />
-            Slet min konto
+            {t("settings.deleteBtn")}
           </Button>
         </div>
       </section>
@@ -240,24 +205,18 @@ function SettingsPage() {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Er du helt sikker?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Dette sletter din konto, alle dine dokumenter og uploadede filer permanent.
-              Handlingen kan ikke fortrydes.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("settings.deleteConfirm.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("settings.deleteConfirm.desc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annuller</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                void deleteAccount();
-              }}
+              onClick={(e) => { e.preventDefault(); void deleteAccount(); }}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-              Slet permanent
+              {t("common.deletePermanent")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
