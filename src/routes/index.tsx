@@ -15,6 +15,7 @@ import { MoneyAmount } from "@/components/atoms/money-amount";
 import { CompanyAvatar } from "@/components/atoms/company-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const { t } = useLang();
   const navigate = useNavigate();
   useEffect(() => {
     let active = true;
@@ -64,11 +66,11 @@ function LandingPage() {
         <nav className="flex items-center gap-2">
           <ThemeToggle />
           <Button asChild variant="ghost" className="rounded-full">
-            <Link to="/auth">Log ind</Link>
+            <Link to="/auth">{t("landing.signIn")}</Link>
           </Button>
           <Button asChild className="rounded-full">
             <Link to="/auth">
-              Kom i gang
+              {t("landing.getStarted")}
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
           </Button>
@@ -81,37 +83,36 @@ function LandingPage() {
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
             <div className="flex flex-col gap-6">
               <span className="inline-flex w-fit items-center gap-2 rounded-full bg-lavender px-3 py-1 text-xs font-semibold text-lavender-foreground">
-                <Sparkles className="h-3.5 w-3.5" /> Lavet i Danmark · priser i DKK
+                <Sparkles className="h-3.5 w-3.5" /> {t("landing.hero.pill")}
               </span>
               <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Hver kvittering og faktura,{" "}
+                {t("landing.hero.title1")}{" "}
                 <span className="bg-gradient-hero rounded-2xl px-2 py-1 text-primary">
-                  samlet ét sted.
+                  {t("landing.hero.title2")}
                 </span>
               </h1>
               <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-                Kvitregn holder styr på hver kvittering og faktura — pænt, søgbart og altid ved
-                hånden. Skoæsken under sengen kan endelig gå på pension.
+                {t("landing.hero.subtitle")}
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" className="rounded-full">
                   <Link to="/auth">
-                    Åbn min mappe
+                    {t("landing.hero.openFolder")}
                     <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="rounded-full">
-                  <a href="#preview">Se hvordan det ser ud</a>
+                  <a href="#preview">{t("landing.hero.seePreview")}</a>
                 </Button>
               </div>
               <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-status-paid-foreground" />
-                  Privat som standard
+                  {t("landing.hero.private")}
                 </li>
                 <li className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-lavender-foreground" />
-                  AI udfylder de kedelige felter
+                  {t("landing.hero.aiFills")}
                 </li>
               </ul>
             </div>
@@ -126,10 +127,10 @@ function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
           <div className="mb-10 max-w-2xl">
             <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-              En roligere måde at holde styr på papirerne.
+              {t("landing.features.title")}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Bygget omkring tre ting: gem det, find det, del det.
+              {t("landing.features.subtitle")}
             </p>
           </div>
 
@@ -137,20 +138,20 @@ function LandingPage() {
             <FeatureCard
               tone="lavender"
               icon={Receipt}
-              title="Upload alt"
-              body="Træk en PDF ind eller tag et billede — Kvitregn læser det og arkiverer det for dig."
+              title={t("landing.features.upload.title")}
+              body={t("landing.features.upload.body")}
             />
             <FeatureCard
               tone="sky"
               icon={Search}
-              title="Find det på et sekund"
-              body="Søg efter firma, dato eller beløb. Filtre der faktisk forstår en kvittering."
+              title={t("landing.features.find.title")}
+              body={t("landing.features.find.body")}
             />
             <FeatureCard
               tone="mint"
               icon={FileText}
-              title="Altid en pæn PDF"
-              body="Hvert dokument bliver til en ren, delbar PDF — klar til bogholderen eller din egen mappe."
+              title={t("landing.features.pdf.title")}
+              body={t("landing.features.pdf.body")}
             />
           </div>
         </section>
@@ -159,15 +160,15 @@ function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
           <div className="shadow-pop relative overflow-hidden rounded-3xl bg-gradient-hero p-10 text-center sm:p-16">
             <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight text-primary sm:text-4xl">
-              Få styr på papirerne.
+              {t("landing.cta.title")}
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-base text-primary/80">
-              Kom i gang på under et minut. Gratis mens vi bygger.
+              {t("landing.cta.subtitle")}
             </p>
             <div className="mt-6 flex justify-center">
               <Button asChild size="lg" className="rounded-full">
                 <Link to="/auth">
-                  Åbn Kvitregn
+                  {t("landing.cta.open")}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
@@ -181,11 +182,11 @@ function LandingPage() {
           <div className="flex items-center gap-3">
             <img src="/brand/lockup-on-light.png" alt="Kvitregn logo" className="h-7 w-auto dark:hidden" />
             <img src="/brand/lockup-on-dark.png" alt="Kvitregn logo" className="hidden h-7 w-auto dark:block" />
-            <span className="hidden sm:inline">· Lavet med omhu i København</span>
+            <span className="hidden sm:inline">{t("landing.footer.tagline")}</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/terms" className="hover:text-foreground">Vilkår</Link>
-            <Link to="/privacy" className="hover:text-foreground">Privatlivspolitik</Link>
+            <Link to="/terms" className="hover:text-foreground">{t("landing.footer.terms")}</Link>
+            <Link to="/privacy" className="hover:text-foreground">{t("landing.footer.privacy")}</Link>
             <a href="https://kvitregn.dk" className="hover:text-foreground">kvitregn.dk</a>
           </div>
         </div>
