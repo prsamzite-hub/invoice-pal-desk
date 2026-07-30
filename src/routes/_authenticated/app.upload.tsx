@@ -49,7 +49,7 @@ function isAcceptedFile(f: File): boolean {
 }
 
 function UploadPage() {
-  const { lang } = useLang();
+  const { lang, t, formatDate, tCategory } = useLang();
   const qc = useQueryClient();
   const extractFn = useServerFn(extractReceipt);
   const listFn = useServerFn(listMyReceipts);
@@ -74,7 +74,7 @@ function UploadPage() {
   const extract = useMutation({
     mutationFn: async (file: File) => {
       setProgress(5);
-      setProgressLabel("Forbereder dokument…");
+      setProgressLabel(t("upload.progress.prepare"));
 
       // Convert HEIC/HEIF client-side so the scanner (and preview) can read it.
       // heic2any is heavy (~1.3 MB) — only load it when a HEIC file is picked.
@@ -100,7 +100,7 @@ function UploadPage() {
       if (looksLikeImage) {
         try {
           setProgress(20);
-          setProgressLabel("Scanner dokumentet…");
+          setProgressLabel(t("upload.progress.scan"));
           const result = await scanImageBlob(workFile);
           scanBlob = result.blob;
         } catch (e) {
@@ -110,7 +110,7 @@ function UploadPage() {
       }
 
       setProgress(40);
-      setProgressLabel("Uploader…");
+      setProgressLabel(t("upload.progress.upload"));
       const fd = new FormData();
       // Always keep the untouched original (the raw camera/upload file).
       fd.append("original", file);
@@ -121,11 +121,11 @@ function UploadPage() {
       const timer = setInterval(() => {
         setProgress((p) => {
           if (p < 60) {
-            setProgressLabel("Uploader…");
+            setProgressLabel(t("upload.progress.upload"));
             return p + 3;
           }
           if (p < 90) {
-            setProgressLabel("AI aflæser dokumentet…");
+            setProgressLabel(t("upload.progress.ai"));
             return p + 2;
           }
           return p;
@@ -134,7 +134,7 @@ function UploadPage() {
       try {
         const res = await extractFn({ data: fd });
         setProgress(100);
-        setProgressLabel("Klar til gennemgang");
+        setProgressLabel(t("upload.progress.ready"));
         return res;
       } finally {
         clearInterval(timer);
@@ -151,8 +151,8 @@ function UploadPage() {
     onError: (e: unknown) => {
       setProgress(0);
       setProgressLabel("");
-      toast.error("Upload mislykkedes", {
-        description: e instanceof Error ? e.message : "Prøv igen.",
+      toast.error(t("upload.err.failed"), {
+        description: e instanceof Error ? e.message : t("common.tryAgain"),
       });
     },
   });
@@ -161,14 +161,14 @@ function UploadPage() {
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!isAcceptedFile(file)) {
-      toast.error("Filtype ikke understøttet", {
-        description: "Vi accepterer kun PDF, JPG, PNG eller HEIC.",
+      toast.error(t("upload.err.unsupported"), {
+        description: t("upload.err.unsupportedDesc"),
       });
       return;
     }
     if (file.size > MAX_BYTES) {
-      toast.error("Filen er for stor", {
-        description: `Maksimal størrelse er ${Math.round(MAX_BYTES / (1024 * 1024))} MB.`,
+      toast.error(t("upload.err.tooLarge"), {
+        description: t("upload.err.tooLargeDesc"),
       });
       return;
     }
@@ -181,8 +181,8 @@ function UploadPage() {
       const { url } = await pdfUrlFn({ data: { id } });
       setPdfState({ open: true, url, title });
     } catch (e) {
-      toast.error("Kunne ikke åbne PDF", {
-        description: e instanceof Error ? e.message : "Prøv igen",
+      toast.error(t("upload.err.cannotOpenPdf"), {
+        description: e instanceof Error ? e.message : t("common.tryAgain"),
       });
       setPdfState({ open: false, url: null, title: "" });
     }
@@ -193,8 +193,8 @@ function UploadPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Tilføj et dokument"
-        description="Tag et billede, træk det ind eller vedhæft — vi udfylder resten."
+        title={t("upload.title")}
+        description={t("upload.desc")}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -212,10 +212,10 @@ function UploadPage() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground">
-                {isBusy ? progressLabel || "Arbejder…" : "Slip dine kvitteringer her"}
+                {isBusy ? progressLabel || t("upload.working") : t("upload.dropzone.title")}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                PDF, JPG, PNG eller HEIC — op til 15 MB. Vi laver hver enkelt til en pæn PDF.
+                {t("upload.dropzone.desc")}
               </p>
             </div>
 
@@ -237,7 +237,7 @@ function UploadPage() {
             />
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button className="rounded-full" onClick={() => inputRef.current?.click()} disabled={isBusy}>
-                Vælg fil
+                {t("upload.chooseFile")}
               </Button>
               <Button
                 variant="outline"
@@ -245,7 +245,7 @@ function UploadPage() {
                 onClick={() => inputRef.current?.click()}
                 disabled={isBusy}
               >
-                Tag et billede
+                {t("upload.takePhoto")}
               </Button>
             </div>
           </div>
@@ -256,31 +256,30 @@ function UploadPage() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-foreground">AI klarer skrivearbejdet</h3>
+            <h3 className="text-base font-bold text-foreground">{t("upload.ai.title")}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Kvitregn læser hvert dokument og foreslår firma, beløb, dato og kategori. Du gennemgår og retter
-              før vi gemmer.
+              {t("upload.ai.desc")}
             </p>
           </div>
           <ul className="flex flex-col gap-2 text-sm text-foreground">
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Virker på dansk og engelsk
+              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> {t("upload.ai.bullet.langs")}
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Skelner kvittering fra faktura
+              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> {t("upload.ai.bullet.type")}
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> Advarer om dubletter
+              <span className="h-1.5 w-1.5 rounded-full bg-status-paid" /> {t("upload.ai.bullet.dup")}
             </li>
           </ul>
         </aside>
       </div>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold text-foreground">Seneste uploads</h2>
+        <h2 className="text-lg font-bold text-foreground">{t("upload.recent")}</h2>
         {receipts.isLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Indlæser…
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("app.loading")}
           </div>
         ) : receipts.data && receipts.data.length > 0 ? (
           <div className="flex flex-col gap-2">
@@ -299,8 +298,8 @@ function UploadPage() {
                       <StatusBadge status={r.status as "paid" | "unpaid" | "overdue"} />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {r.issued_date ?? ""} · {r.category ?? "Ukategoriseret"} ·{" "}
-                      {r.document_type === "invoice" ? "faktura" : "kvittering"}
+                      {r.issued_date ? formatDate(r.issued_date) : ""} · {tCategory(r.category)} ·{" "}
+                      {r.document_type === "invoice" ? t("docs.type.invoice") : t("docs.type.receipt")}
                     </p>
                   </div>
                 </div>
@@ -313,7 +312,7 @@ function UploadPage() {
                     disabled={!r.pdf_path}
                     onClick={() => openPdf(r.id, `${r.company} — ${r.issued_date ?? ""}`)}
                   >
-                    <Eye className="mr-1.5 h-3.5 w-3.5" /> Se PDF
+                    <Eye className="mr-1.5 h-3.5 w-3.5" /> {t("detail.viewPdf")}
                   </Button>
                   <Button
                     size="sm"
@@ -334,8 +333,8 @@ function UploadPage() {
         ) : (
           <EmptyState
             icon={FileText}
-            title="Ingen dokumenter endnu"
-            description="Så snart du uploader dit første dokument, dukker det op her mens vi aflæser detaljerne."
+            title={t("dashboard.empty.docs.title")}
+            description={t("upload.empty.desc")}
           />
         )}
       </section>

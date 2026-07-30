@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { FileText, MoreHorizontal, Search } from "lucide-react";
 import { toast } from "sonner";
 
+import { useLang } from "@/lib/i18n";
 import { PageHeader } from "@/components/atoms/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,13 +50,8 @@ export const Route = createFileRoute("/_authenticated/app/admin/documents")({
   component: AdminDocumentsPage,
 });
 
-const dateFmt = new Intl.DateTimeFormat("da-DK", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
 function AdminDocumentsPage() {
+  const { t, formatDate } = useLang();
   const [q, setQ] = useState("");
   const [submitted, setSubmitted] = useState("");
   const listFn = useServerFn(adminListDocuments);
@@ -68,26 +64,26 @@ function AdminDocumentsPage() {
   const del = useMutation({
     mutationFn: useServerFn(adminDeleteDocument),
     onSuccess: () => {
-      toast.success("Dokument slettet");
+      toast.success(t("admin.toast.docDeleted"));
       setToDelete(null);
       query.refetch();
     },
-    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke slette"),
+    onError: (e: any) => toast.error(e?.message ?? t("admin.toast.cannotDelete")),
   });
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Admin — Dokumenter"
-        description="Alle dokumenter på tværs af brugere."
+        title={t("admin.docs.title")}
+        description={t("admin.docs.desc")}
       />
 
       <div className="flex gap-2">
         <Button asChild variant="ghost" className="rounded-full" size="sm">
-          <Link to="/app/admin">Brugere</Link>
+          <Link to="/app/admin">{t("admin.tab.users")}</Link>
         </Button>
         <Button asChild variant="outline" className="rounded-full" size="sm">
-          <Link to="/app/admin/documents">Dokumenter</Link>
+          <Link to="/app/admin/documents">{t("admin.tab.documents")}</Link>
         </Button>
       </div>
 
@@ -102,12 +98,12 @@ function AdminDocumentsPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Søg på firma eller beløb…"
+            placeholder={t("admin.search.docs")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <Button type="submit" className="rounded-full">Søg</Button>
+        <Button type="submit" className="rounded-full">{t("common.search")}</Button>
       </form>
 
       {query.isLoading ? (
@@ -117,10 +113,10 @@ function AdminDocumentsPage() {
           ))}
         </div>
       ) : query.isError ? (
-        <p className="text-sm text-destructive">Kunne ikke hente dokumenter.</p>
+        <p className="text-sm text-destructive">{t("admin.docs.cannotFetch")}</p>
       ) : (query.data ?? []).length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          <FileText className="mx-auto mb-2 h-6 w-6" /> Ingen dokumenter.
+          <FileText className="mx-auto mb-2 h-6 w-6" /> {t("admin.empty.docs")}
         </div>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -132,8 +128,8 @@ function AdminDocumentsPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">{d.company}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {d.issued_date ? dateFmt.format(new Date(d.issued_date)) : "—"} ·{" "}
-                  {d.document_type === "invoice" ? "Faktura" : "Kvittering"}
+                  {d.issued_date ? formatDate(d.issued_date) : "—"} ·{" "}
+                  {d.document_type === "invoice" ? t("docs.type.invoice") : t("docs.type.receipt")}
                   {d.category ? ` · ${d.category}` : ""}
                 </p>
                 <Link
@@ -154,11 +150,11 @@ function AdminDocumentsPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setEditId(d.id)}>
-                      Rediger
+                      {t("admin.action.edit")}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/app/admin/$userId" params={{ userId: d.user_id }}>
-                        Vis hos bruger
+                        {t("admin.action.viewAtUser")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -166,7 +162,7 @@ function AdminDocumentsPage() {
                       className="text-destructive focus:text-destructive"
                       onSelect={() => setToDelete(d.id)}
                     >
-                      Slet dokument
+                      {t("admin.action.deleteDoc")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -179,18 +175,18 @@ function AdminDocumentsPage() {
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Slet dokument?</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.confirm.deleteDoc.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Dokumentet og tilhørende filer slettes permanent.
+              {t("admin.confirm.deleteDoc.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => toDelete && del.mutate({ data: { id: toDelete } })}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Slet
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

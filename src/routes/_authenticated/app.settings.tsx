@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InboundEmailCard } from "@/components/inbound-email-card";
 import { useLang } from "@/lib/i18n";
-import { danishAuthError } from "@/lib/auth-errors";
+import { authErrorKey } from "@/lib/auth-errors";
 
 import { getMyProfile, updateMyProfile, deleteMyAccount } from "@/lib/profile.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +74,7 @@ function SettingsPage() {
       setPw1(""); setPw2("");
       toast.success(t("settings.passwordChanged"));
     } catch (e) {
-      toast.error(t("settings.cannotChangePw"), { description: danishAuthError(e) });
+      toast.error(t("settings.cannotChangePw"), { description: t(authErrorKey(e)) });
     } finally { setSavingPw(false); }
   }
 

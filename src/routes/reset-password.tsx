@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { danishAuthError } from "@/lib/auth-errors";
+import { authErrorKey } from "@/lib/auth-errors";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -25,17 +26,8 @@ export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
 });
 
-const passSchema = z
-  .object({
-    password: z.string().min(8, "Adgangskoden skal være mindst 8 tegn"),
-    confirm: z.string(),
-  })
-  .refine((d) => d.password === d.confirm, {
-    message: "Adgangskoderne er ikke ens",
-    path: ["confirm"],
-  });
-
 function ResetPasswordPage() {
+  const { t } = useLang();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [ready, setReady] = useState(false);
@@ -43,6 +35,20 @@ function ResetPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+
+  const passSchema = useMemo(
+    () =>
+      z
+        .object({
+          password: z.string().min(8, t("reset.tooShort")),
+          confirm: z.string(),
+        })
+        .refine((d) => d.password === d.confirm, {
+          message: t("reset.notMatch"),
+          path: ["confirm"],
+        }),
+    [t]
+  );
 
   useEffect(() => {
     // Supabase recovery link puts a recovery session in the URL hash.
@@ -67,7 +73,7 @@ function ResetPasswordPage() {
     e.preventDefault();
     const parsed = passSchema.safeParse({ password, confirm });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Tjek dine oplysninger");
+      toast.error(parsed.error.issues[0]?.message ?? t("auth.checkInputs"));
       return;
     }
     setLoading(true);
@@ -75,10 +81,10 @@ function ResetPasswordPage() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       setDone(true);
-      toast.success("Adgangskoden er opdateret");
+      toast.success(t("reset.success"));
       setTimeout(() => navigate({ to: "/app", replace: true }), 1200);
     } catch (err) {
-      toast.error(danishAuthError(err));
+      toast.error(t(authErrorKey(err)));
     } finally {
       setLoading(false);
     }
@@ -98,12 +104,12 @@ function ResetPasswordPage() {
               {done ? <CheckCircle2 className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
             </div>
             <h1 className="text-2xl font-bold text-foreground">
-              {done ? "Adgangskoden er opdateret" : "Vælg en ny adgangskode"}
+              {done ? t("reset.title.done") : t("reset.title.choose")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {done
-                ? "Du bliver sendt videre til din konto…"
-                : "Vælg en adgangskode på mindst 8 tegn."}
+                ? t("reset.subtitle.done")
+                : t("reset.subtitle.choose")}
             </p>
           </div>
 
@@ -114,31 +120,31 @@ function ResetPasswordPage() {
           ) : done ? null : ready ? (
             <form onSubmit={onSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password">Ny adgangskode</Label>
+                <Label htmlFor="password">{t("reset.password")}</Label>
                 <Input
                   id="password" type="password" autoComplete="new-password" required minLength={8}
                   value={password} onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mindst 8 tegn"
+                  placeholder={t("auth.passwordPlaceholder")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="confirm">Bekræft adgangskode</Label>
+                <Label htmlFor="confirm">{t("reset.confirm")}</Label>
                 <Input
                   id="confirm" type="password" autoComplete="new-password" required minLength={8}
                   value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Skriv den samme igen"
+                  placeholder={t("reset.confirmPlaceholder")}
                 />
               </div>
               <Button type="submit" className="rounded-full" disabled={loading}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Gem ny adgangskode
+                {t("reset.submit")}
               </Button>
             </form>
           ) : (
             <div className="flex flex-col gap-4 text-center text-sm text-muted-foreground">
-              <p>Linket er udløbet eller ugyldigt. Bed om et nyt fra login-siden.</p>
+              <p>{t("reset.expired")}</p>
               <Button asChild variant="outline" className="rounded-full">
-                <Link to="/auth">Tilbage til login</Link>
+                <Link to="/auth">{t("auth.backToLogin")}</Link>
               </Button>
             </div>
           )}

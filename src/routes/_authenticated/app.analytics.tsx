@@ -59,6 +59,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   Shopping: "#a8846b",
 };
 
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  Dagligvarer: "analytics.cat.groceries",
+  Forsyning: "analytics.cat.utilities",
+  Abonnementer: "analytics.cat.subscriptions",
+  "Mad ude": "analytics.cat.dining",
+  Shopping: "analytics.cat.shopping",
+};
+
 const CATEGORIES: Array<{ label: string; value: number }> = [
   { label: "Dagligvarer", value: 1850 },
   { label: "Forsyning", value: 892 },
@@ -80,21 +88,21 @@ const STORAGE_KEY = "kvitregn.budgets";
 const PREFS_KEY = "kvitregn.analytics.prefs";
 
 const MONTH_SERIES = [
-  { label: "Jan", value: 3200 },
-  { label: "Feb", value: 4100 },
-  { label: "Mar", value: 3650 },
-  { label: "Apr", value: 4480 },
-  { label: "Maj", value: 3920 },
+  { monthIndex: 0, value: 3200 },
+  { monthIndex: 1, value: 4100 },
+  { monthIndex: 2, value: 3650 },
+  { monthIndex: 3, value: 4480 },
+  { monthIndex: 4, value: 3920 },
 ];
 
 const WEEK_SERIES = [
-  { label: "U18", value: 820 },
-  { label: "U19", value: 1180 },
-  { label: "U20", value: 940 },
-  { label: "U21", value: 1360 },
-  { label: "U22", value: 1010 },
-  { label: "U23", value: 970 },
-  { label: "U24", value: 890 },
+  { weekNum: 18, value: 820 },
+  { weekNum: 19, value: 1180 },
+  { weekNum: 20, value: 940 },
+  { weekNum: 21, value: 1360 },
+  { weekNum: 22, value: 1010 },
+  { weekNum: 23, value: 970 },
+  { weekNum: 24, value: 890 },
 ];
 
 type TrendChart = "bar" | "line";
@@ -135,13 +143,7 @@ function loadPrefs(): Prefs {
   }
 }
 
-const dkk = new Intl.NumberFormat("da-DK", {
-  style: "currency",
-  currency: "DKK",
-  maximumFractionDigits: 0,
-});
-
-function BrandTooltip({ active, payload, label }: any) {
+function BrandTooltip({ active, payload, label, formatMoney }: any) {
   if (!active || !payload || !payload.length) return null;
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-soft">
@@ -155,7 +157,7 @@ function BrandTooltip({ active, payload, label }: any) {
             style={{ background: p.color ?? p.payload?.fill ?? BRAND_PRIMARY }}
           />
           <span className="text-muted-foreground">{p.name}</span>
-          <span className="font-semibold">{dkk.format(p.value as number)}</span>
+          <span className="font-semibold">{formatMoney(p.value as number, "DKK", { maximumFractionDigits: 0 })}</span>
         </div>
       ))}
     </div>
@@ -163,7 +165,7 @@ function BrandTooltip({ active, payload, label }: any) {
 }
 
 function AnalyticsPage() {
-  const { t } = useLang();
+  const { t, lang, locale, formatMoney } = useLang();
   const [budgets, setBudgets] = useState<Record<string, number>>(DEFAULT_BUDGETS);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -213,13 +215,21 @@ function AnalyticsPage() {
     scaledCategories.map((c) => [c.label, c.value]),
   );
 
+  const catLabel = (label: string) => {
+    const key = CATEGORY_LABEL_KEYS[label];
+    return key ? t(key) : label;
+  };
+
+  const monthName = (monthIndex: number) =>
+    new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(2026, monthIndex, 1));
+
   const trendData = useMemo(() => {
-    const series =
-      prefs.grouping === "week"
-        ? WEEK_SERIES
-        : [...MONTH_SERIES, { label: "Jun", value: total }];
-    return series.map((p) => ({ name: p.label, value: p.value }));
-  }, [prefs.grouping, total]);
+    if (prefs.grouping === "week") {
+      return WEEK_SERIES.map((p) => ({ name: `${t("analytics.weekPrefix")}${p.weekNum}`, value: p.value }));
+    }
+    const series = [...MONTH_SERIES, { monthIndex: 5, value: total }];
+    return series.map((p) => ({ name: monthName(p.monthIndex), value: p.value }));
+  }, [prefs.grouping, total, lang]);
 
   const pieData = [...scaledCategories]
     .sort((a, b) => b.value - a.value)
@@ -229,7 +239,7 @@ function AnalyticsPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title={t("analytics.title")}
-        description="Juni 2026 · alle beløb i DKK"
+        description={t("analytics.pageDesc")}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" className="rounded-full" onClick={openEdit}>
@@ -242,23 +252,23 @@ function AnalyticsPage() {
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
-          label="Brugt i denne måned"
+          label={t("analytics.stat.spent")}
           value={<MoneyAmount value={total} size="lg" />}
-          hint="+12% vs. maj"
+          hint={t("analytics.stat.vsMay")}
           icon={Wallet}
           tone="lavender"
         />
         <StatCard
-          label="Gennemsnit pr. måned"
+          label={t("analytics.stat.avg")}
           value={<MoneyAmount value={3920} size="lg" />}
-          hint="Sidste 6 måneder"
+          hint={t("analytics.stat.avgHint")}
           icon={TrendingUp}
           tone="sky"
         />
         <StatCard
-          label="Sparet i forhold til budget"
+          label={t("analytics.stat.saved")}
           value={<MoneyAmount value={Math.max(0, budgets["I alt"] - total)} size="lg" />}
-          hint={`${Math.max(0, Math.round(((budgets["I alt"] - total) / budgets["I alt"]) * 100))}% under målet`}
+          hint={`${Math.max(0, Math.round(((budgets["I alt"] - total) / budgets["I alt"]) * 100))}% ${t("analytics.stat.underGoal")}`}
           icon={PiggyBank}
           tone="mint"
         />
@@ -267,16 +277,16 @@ function AnalyticsPage() {
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="shadow-soft lg:col-span-3 flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="text-lg font-bold text-foreground">Forbrug pr. kategori</h2>
+            <h2 className="text-lg font-bold text-foreground">{t("analytics.byCategory")}</h2>
             <div className="flex items-center gap-3">
               <MoneyAmount value={total} size="md" className="text-muted-foreground" />
               <SegmentedControl<CategoryChart>
-                ariaLabel="Visning af kategorier"
+                ariaLabel={t("analytics.categoryView")}
                 value={prefs.category}
                 onChange={(v) => updatePref("category", v)}
                 options={[
-                  { value: "list", label: "Liste" },
-                  { value: "donut", label: "Donut" },
+                  { value: "list", label: t("analytics.list") },
+                  { value: "donut", label: t("analytics.donut") },
                 ]}
               />
             </div>
@@ -292,7 +302,7 @@ function AnalyticsPage() {
                       width: `${(c.value / total) * 100}%`,
                       background: CATEGORY_COLORS[c.label],
                     }}
-                    aria-label={c.label}
+                    aria-label={catLabel(c.label)}
                   />
                 ))}
               </div>
@@ -304,7 +314,7 @@ function AnalyticsPage() {
                         className="h-2.5 w-2.5 rounded-full"
                         style={{ background: CATEGORY_COLORS[c.label] }}
                       />
-                      {c.label}
+                      {catLabel(c.label)}
                     </span>
                     <span className="flex items-baseline gap-3 text-xs text-muted-foreground">
                       <span>{Math.round((c.value / total) * 100)}%</span>
@@ -333,7 +343,7 @@ function AnalyticsPage() {
                         <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
                       ))}
                     </Pie>
-                    <Tooltip content={<BrandTooltip />} cursor={false} />
+                    <Tooltip content={<BrandTooltip formatMoney={formatMoney} />} cursor={false} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -348,10 +358,10 @@ function AnalyticsPage() {
                         className="h-3 w-3 shrink-0 rounded-full"
                         style={{ background: CATEGORY_COLORS[entry.name] }}
                       />
-                      {entry.name}
+                      {catLabel(entry.name)}
                     </span>
                     <span className="text-sm font-semibold text-foreground tabular-nums">
-                      {dkk.format(entry.value)}
+                      {formatMoney(entry.value, "DKK", { maximumFractionDigits: 0 })}
                     </span>
                   </li>
                 ))}
@@ -361,15 +371,15 @@ function AnalyticsPage() {
         </div>
 
         <div className="shadow-soft lg:col-span-2 flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
-          <h2 className="text-lg font-bold text-foreground">Budgetter</h2>
-          <BudgetProgressBar label="I alt" spent={total} budget={budgets["I alt"]} />
+          <h2 className="text-lg font-bold text-foreground">{t("analytics.budgets")}</h2>
+          <BudgetProgressBar label={t("analytics.total")} spent={total} budget={budgets["I alt"]} />
           <div className="h-px bg-border" />
           {Object.keys(DEFAULT_BUDGETS)
             .filter((k) => k !== "I alt")
             .map((label) => (
               <BudgetProgressBar
                 key={label}
-                label={label}
+                label={catLabel(label)}
                 spent={spentByLabel[label] ?? 0}
                 budget={budgets[label] ?? DEFAULT_BUDGETS[label]}
               />
@@ -379,24 +389,24 @@ function AnalyticsPage() {
 
       <section className="shadow-soft rounded-2xl border border-border bg-card p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-foreground">Forbrug over tid</h2>
+          <h2 className="text-lg font-bold text-foreground">{t("analytics.overTime")}</h2>
           <div className="flex items-center gap-2">
             <SegmentedControl<Grouping>
-              ariaLabel="Gruppering"
+              ariaLabel={t("analytics.grouping")}
               value={prefs.grouping}
               onChange={(v) => updatePref("grouping", v)}
               options={[
-                { value: "month", label: "Måned" },
-                { value: "week", label: "Uge" },
+                { value: "month", label: t("analytics.month") },
+                { value: "week", label: t("analytics.week") },
               ]}
             />
             <SegmentedControl<TrendChart>
-              ariaLabel="Diagramtype"
+              ariaLabel={t("analytics.chartType")}
               value={prefs.trend}
               onChange={(v) => updatePref("trend", v)}
               options={[
-                { value: "bar", label: "Søjler" },
-                { value: "line", label: "Linje" },
+                { value: "bar", label: t("analytics.bar") },
+                { value: "line", label: t("analytics.line") },
               ]}
             />
           </div>
@@ -423,16 +433,16 @@ function AnalyticsPage() {
                   axisLine={false}
                   fontSize={12}
                   tick={{ fill: "currentColor" }}
-                  tickFormatter={(v) => dkk.format(v)}
+                  tickFormatter={(v) => formatMoney(v, "DKK", { maximumFractionDigits: 0 })}
                   width={80}
                 />
                 <Tooltip
-                  content={<BrandTooltip />}
+                  content={<BrandTooltip formatMoney={formatMoney} />}
                   cursor={{ fill: BRAND_PRIMARY, opacity: 0.08 }}
                 />
                 <Bar
                   dataKey="value"
-                  name="Forbrug"
+                  name={t("analytics.spend")}
                   fill={BRAND_PRIMARY}
                   radius={[8, 8, 0, 0]}
                   maxBarSize={48}
@@ -464,17 +474,17 @@ function AnalyticsPage() {
                   axisLine={false}
                   fontSize={12}
                   tick={{ fill: "currentColor" }}
-                  tickFormatter={(v) => dkk.format(v)}
+                  tickFormatter={(v) => formatMoney(v, "DKK", { maximumFractionDigits: 0 })}
                   width={80}
                 />
                 <Tooltip
-                  content={<BrandTooltip />}
+                  content={<BrandTooltip formatMoney={formatMoney} />}
                   cursor={{ stroke: BRAND_PRIMARY, strokeOpacity: 0.3, strokeWidth: 1 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="value"
-                  name="Forbrug"
+                  name={t("analytics.spend")}
                   stroke={BRAND_PRIMARY}
                   strokeWidth={2.5}
                   fill="url(#brandLineFill)"
@@ -496,7 +506,7 @@ function AnalyticsPage() {
             {Object.keys(DEFAULT_BUDGETS).map((k) => (
               <div key={k} className="flex items-center justify-between gap-3">
                 <Label htmlFor={`budget-${k}`} className="text-sm">
-                  {k}
+                  {k === "I alt" ? t("analytics.total") : catLabel(k)}
                 </Label>
                 <Input
                   id={`budget-${k}`}

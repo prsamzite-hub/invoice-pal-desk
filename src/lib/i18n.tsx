@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { EXTRA } from "./i18n-parts";
 
 export type Lang = "da" | "en";
 
@@ -924,7 +925,12 @@ const DICT = {
   },
 } as const;
 
-type Key = keyof (typeof DICT)["da"];
+const MERGED: Record<Lang, Record<string, string>> = {
+  da: { ...(DICT.da as Record<string, string>), ...EXTRA.da },
+  en: { ...(DICT.en as Record<string, string>), ...EXTRA.en },
+};
+
+type Key = keyof (typeof DICT)["da"] | (string & {});
 
 interface Ctx {
   lang: Lang;
@@ -1000,11 +1006,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => {
     const locale = lang === "en" ? "en-DK" : "da-DK";
-    const t = (k: Key) => (DICT[lang][k] ?? DICT.da[k] ?? k) as string;
+    const t = (k: Key) => (MERGED[lang][k as string] ?? MERGED.da[k as string] ?? (k as string)) as string;
     const tCategory = (raw?: string | null) => {
       if (!raw) return t("common.uncategorized");
       const key = `cat.${raw}` as Key;
-      const v = DICT[lang][key] ?? DICT.da[key];
+      const v = MERGED[lang][key] ?? MERGED.da[key];
       return (v as string) ?? raw;
     };
     const formatDate = (input: string | Date | null | undefined, opts?: Intl.DateTimeFormatOptions) => {
@@ -1034,7 +1040,7 @@ export function useLang(): Ctx {
     return {
       lang: "da",
       setLang: () => {},
-      t: (k: string) => ((DICT.da as Record<string, string>)[k] ?? k),
+      t: (k: string) => (MERGED.da[k] ?? k),
       tCategory: (raw?: string | null) => raw || "Ukategoriseret",
       locale,
       formatDate: (input) => (input ? new Date(input as any).toLocaleDateString(locale) : "—"),
