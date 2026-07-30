@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { z } from "zod";
@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { danishAuthError, EMAIL_EXISTS_MESSAGE } from "@/lib/auth-errors";
+import { authErrorKey } from "@/lib/auth-errors";
+import { useLang } from "@/lib/i18n";
 
 
 export const Route = createFileRoute("/auth")({
@@ -27,14 +28,10 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const schema = z.object({
-  email: z.string().trim().email("Indtast en gyldig email"),
-  password: z.string().min(8, "Adgangskoden skal være mindst 8 tegn"),
-});
-
 type View = "signin" | "signup" | "forgot";
 
 function AuthPage() {
+  const { t } = useLang();
   const navigate = useNavigate();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
@@ -44,6 +41,15 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | null>(null);
   const [resetSent, setResetSent] = useState(false);
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().trim().email(t("auth.invalidEmail")),
+        password: z.string().min(8, t("reset.tooShort")),
+      }),
+    [t]
+  );
 
   async function goToApp() {
     await router.invalidate();
@@ -71,7 +77,7 @@ function AuthPage() {
     e.preventDefault();
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Tjek dine oplysninger");
+      toast.error(parsed.error.issues[0]?.message ?? t("auth.checkInputs"));
       return;
     }
     setLoading(true);
@@ -91,32 +97,32 @@ function AuthPage() {
           return;
         }
         if (!data.session) {
-          toast.success("Tjek din email for at bekræfte din konto.");
+          toast.success(t("auth.check.emailDesc"));
           return;
         }
-        toast.success("Velkommen til Kvitregn! 🎉");
+        toast.success(t("auth.welcomeNew"));
         await goToApp();
         return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Du er logget ind");
+        toast.success(t("auth.welcomeBack"));
       }
       await goToApp();
 
     } catch (err) {
-      const msg = danishAuthError(err);
-      if (msg === EMAIL_EXISTS_MESSAGE) showEmailExistsToast();
-      else toast.error(msg);
+      const key = authErrorKey(err);
+      if (key === "err.emailExists") showEmailExistsToast();
+      else toast.error(t(key));
     } finally {
       setLoading(false);
     }
   }
 
   function showEmailExistsToast() {
-    toast.error(EMAIL_EXISTS_MESSAGE, {
+    toast.error(t("err.emailExists"), {
       action: {
-        label: "Log ind",
+        label: t("auth.tab.signin"),
         onClick: () => {
           setView("signin");
           setPassword("");
@@ -129,7 +135,7 @@ function AuthPage() {
     e.preventDefault();
     const parsed = z.string().trim().email().safeParse(email);
     if (!parsed.success) {
-      toast.error("Indtast en gyldig email");
+      toast.error(t("auth.invalidEmail"));
       return;
     }
     setLoading(true);
@@ -139,9 +145,9 @@ function AuthPage() {
       });
       if (error) throw error;
       setResetSent(true);
-      toast.success("Vi har sendt dig en email med et link til at nulstille adgangskoden.");
+      toast.success(t("auth.check.reset"));
     } catch (err) {
-      toast.error(danishAuthError(err));
+      toast.error(t(authErrorKey(err)));
     } finally {
       setLoading(false);
     }
@@ -154,7 +160,7 @@ function AuthPage() {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(danishAuthError(result.error));
+        toast.error(t(authErrorKey(result.error)));
         setOauthBusy(null);
         return;
       }
@@ -162,7 +168,7 @@ function AuthPage() {
       await goToApp();
 
     } catch (err) {
-      toast.error(danishAuthError(err));
+      toast.error(t(authErrorKey(err)));
       setOauthBusy(null);
     }
   }
@@ -190,12 +196,12 @@ function AuthPage() {
               <img src="/brand/icon-on-dark.svg" alt="" aria-hidden="true" className="hidden h-8 w-8 dark:block" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
-              {view === "forgot" ? "Nulstil adgangskode" : "Velkommen"}
+              {view === "forgot" ? t("auth.title.reset") : t("auth.title.welcome")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {view === "forgot"
-                ? "Indtast din email, så sender vi dig et link."
-                : "Log ind eller opret en bruger for at samle dine kvitteringer ét sted."}
+                ? t("auth.subtitle.reset")
+                : t("auth.subtitle.welcome")}
             </p>
           </div>
 
@@ -203,24 +209,24 @@ function AuthPage() {
             <div className="flex flex-col gap-4">
               {resetSent ? (
                 <div className="rounded-2xl border border-border bg-mint/40 p-4 text-sm text-foreground">
-                  Vi har sendt et link til <strong>{email}</strong>. Tjek din indbakke (og spam-mappen).
+                  {t("auth.check.resetSentTo")} <strong>{email}</strong>. {t("auth.check.resetInbox")}
                 </div>
               ) : (
                 <form onSubmit={onForgot} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("auth.email")}</Label>
                     <div className="relative">
                       <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="email" type="email" autoComplete="email" required
                         value={email} onChange={(e) => setEmail(e.target.value)}
-                        placeholder="dig@eksempel.dk" className="pl-9"
+                        placeholder={t("auth.emailPlaceholder")} className="pl-9"
                       />
                     </div>
                   </div>
                   <Button type="submit" className="rounded-full" disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Send nulstillingslink
+                    {t("auth.submit.reset")}
                   </Button>
                 </form>
               )}
@@ -229,15 +235,15 @@ function AuthPage() {
                 onClick={() => { setView("signin"); setResetSent(false); }}
                 className="inline-flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground"
               >
-                <ArrowLeft className="h-3.5 w-3.5" /> Tilbage til login
+                <ArrowLeft className="h-3.5 w-3.5" /> {t("auth.backToLogin")}
               </button>
             </div>
           ) : (
             <>
               <Tabs value={view} onValueChange={(v) => setView(v as View)} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 rounded-full">
-                  <TabsTrigger value="signin" className="rounded-full">Log ind</TabsTrigger>
-                  <TabsTrigger value="signup" className="rounded-full">Opret bruger</TabsTrigger>
+                  <TabsTrigger value="signin" className="rounded-full">{t("auth.tab.signin")}</TabsTrigger>
+                  <TabsTrigger value="signup" className="rounded-full">{t("auth.tab.signup")}</TabsTrigger>
                 </TabsList>
 
 
@@ -247,14 +253,14 @@ function AuthPage() {
                     email={email} setEmail={setEmail}
                     password={password} setPassword={setPassword}
                     onSubmit={onSubmit} loading={loading}
-                    submitLabel="Log ind"
+                    submitLabel={t("auth.submit.signin")}
                     footer={
                       <button
                         type="button"
                         onClick={() => setView("forgot")}
                         className="self-end text-xs text-muted-foreground hover:text-foreground"
                       >
-                        Glemt adgangskode?
+                        {t("auth.forgot")}
                       </button>
                     }
                   />
@@ -264,14 +270,14 @@ function AuthPage() {
                     email={email} setEmail={setEmail}
                     password={password} setPassword={setPassword}
                     onSubmit={onSubmit} loading={loading}
-                    submitLabel="Opret bruger"
+                    submitLabel={t("auth.submit.signup")}
                   />
                 </TabsContent>
               </Tabs>
 
               <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
                 <div className="h-px flex-1 bg-border" />
-                eller
+                {t("auth.or")}
                 <div className="h-px flex-1 bg-border" />
               </div>
 
@@ -280,14 +286,14 @@ function AuthPage() {
                 onClick={() => oauth("google")} disabled={oauthBusy !== null}
               >
                 {oauthBusy === "google" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                Fortsæt med Google
+                {t("auth.google")}
               </Button>
 
               <p className="mt-6 text-center text-xs text-muted-foreground">
-                Ved at fortsætte accepterer du Kvitregns{" "}
-                <Link to="/terms" className="underline hover:text-foreground">vilkår</Link>
-                {" "}og{" "}
-                <Link to="/privacy" className="underline hover:text-foreground">privatlivspolitik</Link>.
+                {t("auth.terms.prefix")}{" "}
+                <Link to="/terms" className="underline hover:text-foreground">{t("auth.terms.terms")}</Link>
+                {" "}{t("auth.terms.and")}{" "}
+                <Link to="/privacy" className="underline hover:text-foreground">{t("auth.terms.privacy")}</Link>.
               </p>
             </>
           )}
@@ -305,25 +311,26 @@ function EmailForm({
   onSubmit: (e: React.FormEvent) => void; loading: boolean; submitLabel: string;
   footer?: React.ReactNode;
 }) {
+  const { t } = useLang();
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("auth.email")}</Label>
         <div className="relative">
           <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             id="email" type="email" autoComplete="email" required
             value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="dig@eksempel.dk" className="pl-9"
+            placeholder={t("auth.emailPlaceholder")} className="pl-9"
           />
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Adgangskode</Label>
+        <Label htmlFor="password">{t("auth.password")}</Label>
         <Input
           id="password" type="password" autoComplete="current-password" required minLength={8}
           value={password} onChange={(e) => setPassword(e.target.value)}
-          placeholder="Mindst 8 tegn"
+          placeholder={t("auth.passwordPlaceholder")}
         />
         {footer}
       </div>
