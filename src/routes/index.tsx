@@ -227,6 +227,7 @@ function FeatureCard({
 
 
 function HeroPreview() {
+  const { t } = useLang();
   return (
     <div className="relative">
       <div className="bg-gradient-hero shadow-pop absolute -inset-6 -z-10 rounded-[36px] opacity-70 blur-2xl" />
@@ -234,19 +235,19 @@ function HeroPreview() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Juni i alt
+              {t("landing.preview.total")}
             </p>
             <MoneyAmount value={4287.5} size="xl" className="block text-foreground" />
           </div>
           <span className="inline-flex items-center gap-1 rounded-full bg-mint px-2.5 py-1 text-xs font-semibold text-mint-foreground">
-            +12% vs. maj
+            {t("landing.preview.delta")}
           </span>
         </div>
 
         <div className="flex flex-col gap-3">
-          <PreviewRow company="Netto" amount={247.5} status="paid" date="26. jun" />
-          <PreviewRow company="Ørsted" amount={892} status="unpaid" date="Forfalder 5. jul" />
-          <PreviewRow company="Telenor" amount={199} status="overdue" date="Forfalder 25. jun" />
+          <PreviewRow company="Netto" amount={247.5} status="paid" date={t("landing.preview.dateNetto")} />
+          <PreviewRow company="Ørsted" amount={892} status="unpaid" date={t("landing.preview.dateOrsted")} />
+          <PreviewRow company="Telenor" amount={199} status="overdue" date={t("landing.preview.dateTelenor")} />
         </div>
       </div>
     </div>
