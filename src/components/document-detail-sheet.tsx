@@ -56,6 +56,7 @@ import { CompanyCombobox } from "@/components/company-combobox";
 import { StatusBadge } from "@/components/atoms/status-badge";
 import { CategoryChip } from "@/components/atoms/category-chip";
 import { MoneyAmount } from "@/components/atoms/money-amount";
+import { useLang } from "@/lib/i18n";
 import { PdfViewerDialog } from "./pdf-viewer-dialog";
 import type { DocumentCardData } from "@/components/atoms/document-card";
 import {
@@ -69,15 +70,6 @@ import {
   type ExtractedFields,
   type LineItem,
 } from "@/lib/receipts.functions";
-
-function formatDate(iso: string | null | undefined) {
-  if (!iso) return "—";
-  return new Intl.DateTimeFormat("da-DK", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(iso));
-}
 
 const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
@@ -98,6 +90,7 @@ export function DocumentDetailSheet({
   fileUrl?: string | null;
   filename?: string;
 }) {
+  const { t, tCategory, formatDate, formatMoney } = useLang();
   const qc = useQueryClient();
   const [pdfOpen, setPdfOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -125,23 +118,23 @@ export function DocumentDetailSheet({
   const markPaid = useMutation({
     mutationFn: (id: string) => markPaidFn({ data: { id, paid: true } }),
     onSuccess: () => {
-      toast.success("Markeret som betalt");
+      toast.success(t("detail.toast.paid"));
       invalidate();
     },
     onError: (e: unknown) =>
-      toast.error("Kunne ikke opdatere", { description: e instanceof Error ? e.message : "" }),
+      toast.error(t("detail.toast.cannotUpdate"), { description: e instanceof Error ? e.message : "" }),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Dokument slettet");
+      toast.success(t("detail.toast.deleted"));
       setConfirmDelete(false);
       onOpenChange(false);
       invalidate();
     },
     onError: (e: unknown) =>
-      toast.error("Kunne ikke slette", { description: e instanceof Error ? e.message : "" }),
+      toast.error(t("detail.toast.cannotDelete"), { description: e instanceof Error ? e.message : "" }),
   });
 
   const downloadOriginal = async () => {
@@ -150,7 +143,7 @@ export function DocumentDetailSheet({
       const { url } = await originalUrlFn({ data: { id: doc.id } });
       window.open(url, "_blank");
     } catch (e) {
-      toast.error("Kunne ikke hente original", {
+      toast.error(t("detail.toast.cannotFetchOriginal"), {
         description: e instanceof Error ? e.message : "",
       });
     }
@@ -168,7 +161,7 @@ export function DocumentDetailSheet({
                   <div className="min-w-0 flex-1">
                     <SheetTitle className="truncate text-lg">{doc.company}</SheetTitle>
                     <SheetDescription className="text-xs">
-                      {doc.type === "invoice" ? "Faktura" : "Kvittering"}
+                      {doc.type === "invoice" ? t("docs.type.invoice") : t("docs.type.receipt")}
                     </SheetDescription>
                   </div>
                   <StatusBadge status={doc.status} />
@@ -177,7 +170,7 @@ export function DocumentDetailSheet({
 
               <div className="rounded-2xl bg-gradient-card p-5 text-center">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Beløb
+                  {t("detail.amount")}
                 </p>
                 <MoneyAmount
                   value={doc.amount}
@@ -188,17 +181,17 @@ export function DocumentDetailSheet({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field icon={CalendarDays} label="Dato" value={formatDate(doc.issuedDate)} />
+                <Field icon={CalendarDays} label={t("detail.date")} value={formatDate(doc.issuedDate)} />
                 {doc.type === "invoice" && doc.dueDate ? (
-                  <Field icon={CalendarClock} label="Forfaldsdato" value={formatDate(doc.dueDate)} />
+                  <Field icon={CalendarClock} label={t("detail.dueDate")} value={formatDate(doc.dueDate)} />
                 ) : null}
                 {doc.category ? (
                   <div className="col-span-2 flex flex-col gap-1.5">
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Kategori
+                      {t("detail.category")}
                     </span>
                     <CategoryChip
-                      label={doc.category.label}
+                      label={tCategory(doc.category.label)}
                       tone={doc.category.tone ?? "lavender"}
                     />
                   </div>
@@ -206,7 +199,7 @@ export function DocumentDetailSheet({
                 {doc.notes ? (
                   <div className="col-span-2 flex flex-col gap-1.5">
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Noter
+                      {t("detail.notes")}
                     </span>
                     <p className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground">
                       {doc.notes}
@@ -218,7 +211,7 @@ export function DocumentDetailSheet({
               {items.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Varer
+                    {t("detail.items")}
                   </span>
                   <ul className="divide-y divide-border rounded-xl border border-border bg-background">
                     {items.map((it, i) => (
@@ -229,10 +222,7 @@ export function DocumentDetailSheet({
                             <p className="text-xs text-muted-foreground">
                               {it.quantity != null ? `${it.quantity} × ` : ""}
                               {it.unit_price != null
-                                ? new Intl.NumberFormat("da-DK", {
-                                    style: "currency",
-                                    currency: doc.currency ?? "DKK",
-                                  }).format(it.unit_price)
+                                ? formatMoney(it.unit_price, doc.currency ?? "DKK")
                                 : ""}
                             </p>
                           ) : null}
@@ -242,10 +232,7 @@ export function DocumentDetailSheet({
                             it.total < 0 ? "text-emerald-600" : "text-foreground"
                           }`}
                         >
-                          {new Intl.NumberFormat("da-DK", {
-                            style: "currency",
-                            currency: doc.currency ?? "DKK",
-                          }).format(it.total)}
+                          {formatMoney(it.total, doc.currency ?? "DKK")}
                         </span>
                       </li>
                     ))}
@@ -257,7 +244,7 @@ export function DocumentDetailSheet({
 
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Vedhæftning
+                  {t("detail.attachment")}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
@@ -267,7 +254,7 @@ export function DocumentDetailSheet({
                     disabled={!fileUrl}
                     onClick={() => setPdfOpen(true)}
                   >
-                    <Eye className="mr-2 h-4 w-4" /> Se PDF
+                    <Eye className="mr-2 h-4 w-4" /> {t("detail.viewPdf")}
                   </Button>
                   <Button
                     size="sm"
@@ -276,7 +263,7 @@ export function DocumentDetailSheet({
                     disabled={!fileUrl}
                     onClick={() => fileUrl && window.open(fileUrl, "_blank")}
                   >
-                    <Download className="mr-2 h-4 w-4" /> Download PDF
+                    <Download className="mr-2 h-4 w-4" /> {t("detail.downloadPdf")}
                   </Button>
                   <Button
                     size="sm"
@@ -284,7 +271,7 @@ export function DocumentDetailSheet({
                     className="rounded-full"
                     onClick={downloadOriginal}
                   >
-                    <FileText className="mr-2 h-4 w-4" /> Original fil
+                    <FileText className="mr-2 h-4 w-4" /> {t("detail.originalFile")}
                   </Button>
                 </div>
               </div>
@@ -301,7 +288,7 @@ export function DocumentDetailSheet({
                     ) : (
                       <CheckCircle2 className="mr-2 h-4 w-4" />
                     )}
-                    Markér som betalt
+                    {t("detail.markPaid")}
                   </Button>
                 ) : null}
                 <Button
@@ -309,14 +296,14 @@ export function DocumentDetailSheet({
                   className="rounded-full"
                   onClick={() => setEditOpen(true)}
                 >
-                  <Pencil className="mr-2 h-4 w-4" /> Rediger
+                  <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                 </Button>
                 <Button
                   variant="ghost"
                   className="rounded-full text-destructive hover:text-destructive"
                   onClick={() => setConfirmDelete(true)}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" /> Slet
+                  <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                 </Button>
               </div>
             </div>
@@ -334,14 +321,13 @@ export function DocumentDetailSheet({
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Slet dokument?</AlertDialogTitle>
+            <AlertDialogTitle>{t("detail.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Dette sletter dokumentet permanent, inklusive den vedhæftede fil. Handlingen kan
-              ikke fortrydes.
+              {t("detail.deleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={del.isPending}>Annuller</AlertDialogCancel>
+            <AlertDialogCancel disabled={del.isPending}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={del.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -351,7 +337,7 @@ export function DocumentDetailSheet({
               }}
             >
               {del.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Slet permanent
+              {t("common.deletePermanent")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
