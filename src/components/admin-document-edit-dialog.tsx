@@ -136,7 +136,7 @@ export function AdminDocumentEditDialog({ documentId, onOpenChange, onSaved }: P
               />
             </div>
             <div>
-              <Label htmlFor="a-currency">Valuta</Label>
+              <Label htmlFor="a-currency">{t("admin.doc.currency")}</Label>
               <Input id="a-currency" value={currency} onChange={(e) => setCurrency(e.target.value)} />
             </div>
             <div>

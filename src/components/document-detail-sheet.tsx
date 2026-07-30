@@ -372,6 +372,7 @@ function EditReceiptDialog({
   onSaved: () => void;
   updateFn: ReturnType<typeof useServerFn<typeof updateReceipt>>;
 }) {
+  const { t, tCategory } = useLang();
   const itemsFn = useServerFn(getReceiptItems);
   const itemsQuery = useQuery({
     enabled: open,
@@ -405,12 +406,12 @@ function EditReceiptDialog({
   const save = useMutation({
     mutationFn: () => updateFn({ data: { id: doc.id, fields } }),
     onSuccess: () => {
-      toast.success("Dokument opdateret");
+      toast.success(t("detail.toast.updated"));
       onSaved();
     },
     onError: (e: unknown) =>
-      toast.error("Kunne ikke gemme", {
-        description: e instanceof Error ? e.message : "Prøv igen.",
+      toast.error(t("detail.toast.cannotSave"), {
+        description: e instanceof Error ? e.message : t("common.tryAgain"),
       }),
   });
 
@@ -421,12 +422,12 @@ function EditReceiptDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Rediger dokument</DialogTitle>
-          <DialogDescription>Opdater felterne og gem.</DialogDescription>
+          <DialogTitle>{t("detail.edit.title")}</DialogTitle>
+          <DialogDescription>{t("detail.edit.desc")}</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="e-company">Firma</Label>
+            <Label htmlFor="e-company">{t("detail.edit.company")}</Label>
             <CompanyCombobox
               id="e-company"
               value={fields.company}
@@ -435,7 +436,7 @@ function EditReceiptDialog({
             />
           </div>
           <div>
-            <Label htmlFor="e-amount">Beløb</Label>
+            <Label htmlFor="e-amount">{t("detail.edit.amount")}</Label>
             <Input
               id="e-amount"
               type="number"
@@ -446,7 +447,7 @@ function EditReceiptDialog({
             />
           </div>
           <div>
-            <Label htmlFor="e-currency">Valuta</Label>
+            <Label htmlFor="e-currency">{t("detail.edit.currency")}</Label>
             <Select value={fields.currency} onValueChange={(v) => set("currency", v)}>
               <SelectTrigger id="e-currency">
                 <SelectValue />
@@ -461,7 +462,7 @@ function EditReceiptDialog({
             </Select>
           </div>
           <div>
-            <Label htmlFor="e-date">Dato</Label>
+            <Label htmlFor="e-date">{t("detail.edit.date")}</Label>
             <Input
               id="e-date"
               type="date"
@@ -470,7 +471,7 @@ function EditReceiptDialog({
             />
           </div>
           <div>
-            <Label htmlFor="e-type">Type</Label>
+            <Label htmlFor="e-type">{t("detail.edit.type")}</Label>
             <Select
               value={fields.document_type}
               onValueChange={(v) =>
@@ -481,13 +482,13 @@ function EditReceiptDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="receipt">Kvittering</SelectItem>
-                <SelectItem value="invoice">Faktura</SelectItem>
+                <SelectItem value="receipt">{t("docs.type.receipt")}</SelectItem>
+                <SelectItem value="invoice">{t("docs.type.invoice")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="e-due">Forfaldsdato</Label>
+            <Label htmlFor="e-due">{t("detail.edit.dueDate")}</Label>
             <Input
               id="e-due"
               type="date"
@@ -496,7 +497,7 @@ function EditReceiptDialog({
             />
           </div>
           <div>
-            <Label htmlFor="e-cat">Kategori</Label>
+            <Label htmlFor="e-cat">{t("detail.edit.category")}</Label>
             <Select
               value={fields.category ?? "Other"}
               onValueChange={(v) => set("category", v)}
@@ -507,14 +508,14 @@ function EditReceiptDialog({
               <SelectContent>
                 {CATEGORIES.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {c}
+                    {tCategory(c)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="e-notes">Noter</Label>
+            <Label htmlFor="e-notes">{t("detail.edit.notes")}</Label>
             <Textarea
               id="e-notes"
               rows={2}
@@ -533,16 +534,16 @@ function EditReceiptDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={save.isPending}>
-            Annuller
+            {t("common.cancel")}
           </Button>
           <Button onClick={() => save.mutate()} disabled={save.isPending}>
             {save.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Gemmer…
+                {t("app.saving")}
               </>
             ) : (
-              "Gem ændringer"
+              t("detail.edit.save")
             )}
           </Button>
         </DialogFooter>
