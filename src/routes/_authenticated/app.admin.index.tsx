@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MoreHorizontal, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 
+import { useLang } from "@/lib/i18n";
 import { PageHeader } from "@/components/atoms/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ export const Route = createFileRoute("/_authenticated/app/admin/")({
 });
 
 function AdminPage() {
+  const { t } = useLang();
   const [q, setQ] = useState("");
   const [submitted, setSubmitted] = useState("");
   const listFn = useServerFn(adminListUsers);
@@ -66,16 +68,16 @@ function AdminPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Admin — Brugere"
-        description="Administrer brugere, verifikation og roller. Alle handlinger logges."
+        title={t("admin.users.title")}
+        description={t("admin.users.desc")}
       />
 
       <div className="flex gap-2">
         <Button asChild variant="outline" className="rounded-full" size="sm">
-          <Link to="/app/admin">Brugere</Link>
+          <Link to="/app/admin">{t("admin.tab.users")}</Link>
         </Button>
         <Button asChild variant="ghost" className="rounded-full" size="sm">
-          <Link to="/app/admin/documents">Dokumenter</Link>
+          <Link to="/app/admin/documents">{t("admin.tab.documents")}</Link>
         </Button>
       </div>
 
@@ -90,12 +92,12 @@ function AdminPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Søg på email eller navn…"
+            placeholder={t("admin.search.users")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <Button type="submit" className="rounded-full">Søg</Button>
+        <Button type="submit" className="rounded-full">{t("common.search")}</Button>
       </form>
 
       {users.isLoading ? (
@@ -105,11 +107,11 @@ function AdminPage() {
           ))}
         </div>
       ) : users.isError ? (
-        <p className="text-sm text-destructive">Kunne ikke hente brugere.</p>
+        <p className="text-sm text-destructive">{t("admin.users.cannotFetch")}</p>
       ) : (users.data ?? []).length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           <Users className="mx-auto mb-2 h-6 w-6" />
-          Ingen brugere matcher søgningen.
+          {t("admin.empty.users")}
         </div>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -134,6 +136,7 @@ function UserRow({
   };
   onChanged: () => void;
 }) {
+  const { t } = useLang();
   const qc = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmRole, setConfirmRole] = useState<null | boolean>(null);
@@ -148,43 +151,43 @@ function UserRow({
   const del = useMutation({
     mutationFn: useServerFn(adminDeleteUser),
     onSuccess: () => {
-      toast.success("Bruger slettet");
+      toast.success(t("admin.toast.userDeleted"));
       setConfirmDelete(false);
       onChanged();
     },
-    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke slette"),
+    onError: (e: any) => toast.error(e?.message ?? t("admin.toast.cannotDelete")),
   });
   const setRole = useMutation({
     mutationFn: useServerFn(adminSetUserRole),
     onSuccess: () => {
-      toast.success("Rolle opdateret");
+      toast.success(t("admin.toast.roleUpdated"));
       setConfirmRole(null);
       qc.invalidateQueries({ queryKey: ["admin-user-roles", user.id] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke opdatere rolle"),
+    onError: (e: any) => toast.error(e?.message ?? t("admin.toast.cannotRole")),
   });
   const recovery = useMutation({
     mutationFn: useServerFn(adminSendPasswordReset),
-    onSuccess: () => toast.success("Nulstil-mail sendt"),
-    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke sende"),
+    onSuccess: () => toast.success(t("admin.toast.resetSent")),
+    onError: (e: any) => toast.error(e?.message ?? t("admin.toast.cannotSend")),
   });
   const magic = useMutation({
     mutationFn: useServerFn(adminSendMagicLink),
-    onSuccess: () => toast.success("Login-link sendt"),
-    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke sende"),
+    onSuccess: () => toast.success(t("admin.toast.magicSent")),
+    onError: (e: any) => toast.error(e?.message ?? t("admin.toast.cannotSend")),
   });
   const resend = useMutation({
     mutationFn: useServerFn(adminResendConfirmation),
-    onSuccess: () => toast.success("Bekræftelse sendt"),
-    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke sende"),
+    onSuccess: () => toast.success(t("admin.toast.confirmResent")),
+    onError: (e: any) => toast.error(e?.message ?? t("admin.toast.cannotSend")),
   });
   const verify = useMutation({
     mutationFn: useServerFn(adminVerifyEmail),
     onSuccess: () => {
-      toast.success("Email markeret som verificeret");
+      toast.success(t("admin.toast.verified"));
       onChanged();
     },
-    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke opdatere"),
+    onError: (e: any) => toast.error(e?.message ?? t("admin.toast.cannotVerify")),
   });
 
   return (
@@ -195,16 +198,16 @@ function UserRow({
         className="min-w-0 flex-1 transition-opacity hover:opacity-80"
       >
         <p className="truncate text-sm font-semibold text-foreground">
-          {user.display_name || user.email || "Ukendt"}
+          {user.display_name || user.email || t("common.unknown")}
         </p>
         <p className="truncate text-xs text-muted-foreground">{user.email}</p>
       </Link>
       <div className="flex items-center gap-2">
         {isAdmin ? (
-          <Badge className="rounded-full bg-primary/15 text-primary">Admin</Badge>
+          <Badge className="rounded-full bg-primary/15 text-primary">{t("admin.badge.admin")}</Badge>
         ) : null}
         <Badge variant="secondary" className="rounded-full">
-          {user.document_count} dok.
+          {user.document_count} {t("admin.badge.docsShort")}
         </Badge>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -214,27 +217,27 @@ function UserRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem onSelect={() => recovery.mutate({ data: { email: user.email } })}>
-              Send nulstil-mail
+              {t("admin.action.sendReset")}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => magic.mutate({ data: { email: user.email } })}>
-              Send login-link
+              {t("admin.action.sendMagic")}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => resend.mutate({ data: { email: user.email } })}>
-              Gensend bekræftelse
+              {t("admin.action.resendConfirm")}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => verify.mutate({ data: { userId: user.id } })}>
-              Marker verificeret
+              {t("admin.action.markVerified")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => setConfirmRole(!isAdmin)}>
-              {isAdmin ? "Fjern admin" : "Gør til admin"}
+              {isAdmin ? t("admin.action.removeAdmin") : t("admin.action.makeAdmin")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onSelect={() => setConfirmDelete(true)}
             >
-              Slet bruger
+              {t("admin.action.deleteUser")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -243,18 +246,18 @@ function UserRow({
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Slet bruger?</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.confirm.deleteUser.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Dette sletter brugeren, alle dokumenter og filer permanent. Handlingen kan ikke fortrydes.
+              {t("admin.confirm.deleteUser.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => del.mutate({ data: { userId: user.id } })}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Slet
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -264,16 +267,16 @@ function UserRow({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmRole ? "Gør til administrator?" : "Fjern administrator-rolle?"}
+              {confirmRole ? t("admin.confirm.role.makeTitle") : t("admin.confirm.role.removeTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmRole
-                ? "Brugeren får fuld adgang til admin-området."
-                : "Brugeren mister adgang til admin-området."}
+                ? t("admin.confirm.role.makeDesc")
+                : t("admin.confirm.role.removeDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuller</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 setRole.mutate({
@@ -281,7 +284,7 @@ function UserRow({
                 })
               }
             >
-              Bekræft
+              {t("common.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

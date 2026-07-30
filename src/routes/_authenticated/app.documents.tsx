@@ -33,19 +33,7 @@ import {
   listMyReceipts,
 } from "@/lib/receipts.functions";
 import { useVendorLogoByName } from "@/hooks/use-vendor-logos";
-
-const CATEGORY_LABELS_DA: Record<string, string> = {
-  Groceries: "Dagligvarer",
-  Utilities: "Forsyning",
-  Subscriptions: "Abonnementer",
-  Dining: "Mad ude",
-  Transport: "Transport",
-  Shopping: "Shopping",
-  Health: "Sundhed",
-  Other: "Andet",
-};
-const labelForCategory = (c?: string | null) =>
-  (c && CATEGORY_LABELS_DA[c]) || c || "Andet";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
@@ -88,6 +76,8 @@ interface EnrichedDoc extends DocumentCardData {
 }
 
 function DocumentsPage() {
+  const { t, tCategory } = useLang();
+  const labelForCategory = (c?: string | null) => tCategory(c);
   const listFn = useServerFn(listMyReceipts);
   const pdfUrlFn = useServerFn(getReceiptPdfUrl);
 
@@ -214,13 +204,13 @@ function DocumentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Dokumenter"
-        description="Alle dine kvitteringer og fakturaer."
+        title={t("docs.title")}
+        description={t("docs.description")}
         actions={
           <Button asChild className="rounded-full">
             <Link to="/app/upload">
               <Plus className="mr-2 h-4 w-4" />
-              Nyt dokument
+              {t("docs.new")}
             </Link>
           </Button>
         }
@@ -231,14 +221,14 @@ function DocumentsPage() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Søg efter firma, beløb, note…"
+            placeholder={t("docs.search")}
           />
           <div className="flex flex-wrap items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="rounded-full">
                   <Filter className="mr-2 h-4 w-4" />
-                  Filtre
+                  {t("docs.filter")}
                   {activeFilterCount > 0 && (
                     <Badge variant="secondary" className="ml-2 rounded-full">
                       {activeFilterCount}
@@ -249,41 +239,41 @@ function DocumentsPage() {
               <PopoverContent align="end" className="w-80 space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Type</Label>
+                    <Label>{t("docs.filter.type")}</Label>
                     <Select
                       value={typeFilter}
                       onValueChange={(v) => setTypeFilter(v as TypeFilter)}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Alle</SelectItem>
-                        <SelectItem value="receipt">Kvittering</SelectItem>
-                        <SelectItem value="invoice">Faktura</SelectItem>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="receipt">{t("docs.type.receipt")}</SelectItem>
+                        <SelectItem value="invoice">{t("docs.type.invoice")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Status</Label>
+                    <Label>{t("docs.filter.status")}</Label>
                     <Select
                       value={statusFilter}
                       onValueChange={(v) => setStatusFilter(v as StatusFilter)}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Alle</SelectItem>
-                        <SelectItem value="paid">Betalt</SelectItem>
-                        <SelectItem value="unpaid">Ubetalt</SelectItem>
-                        <SelectItem value="overdue">Forfalden</SelectItem>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="paid">{t("docs.status.paid")}</SelectItem>
+                        <SelectItem value="unpaid">{t("docs.status.unpaid")}</SelectItem>
+                        <SelectItem value="overdue">{t("docs.status.overdue")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div>
-                  <Label>Kategori</Label>
+                  <Label>{t("docs.filter.category")}</Label>
                   <Select value={category} onValueChange={setCategory}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Alle kategorier</SelectItem>
+                      <SelectItem value="all">{t("docs.filter.allCategories")}</SelectItem>
                       {CATEGORIES.map((c) => (
                         <SelectItem key={c} value={c}>{labelForCategory(c)}</SelectItem>
                       ))}
@@ -292,7 +282,7 @@ function DocumentsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="from">Fra dato</Label>
+                    <Label htmlFor="from">{t("docs.filter.dateFrom")}</Label>
                     <Input
                       id="from"
                       type="date"
@@ -301,7 +291,7 @@ function DocumentsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="to">Til dato</Label>
+                    <Label htmlFor="to">{t("docs.filter.dateTo")}</Label>
                     <Input
                       id="to"
                       type="date"
@@ -316,7 +306,7 @@ function DocumentsPage() {
                     className="w-full rounded-full"
                     onClick={clearFilters}
                   >
-                    <X className="mr-2 h-4 w-4" /> Nulstil filtre
+                    <X className="mr-2 h-4 w-4" /> {t("docs.filter.clear")}
                   </Button>
                 )}
               </PopoverContent>
@@ -327,11 +317,11 @@ function DocumentsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date_desc">Nyeste først</SelectItem>
-                <SelectItem value="date_asc">Ældste først</SelectItem>
-                <SelectItem value="amount_desc">Højeste beløb</SelectItem>
-                <SelectItem value="amount_asc">Laveste beløb</SelectItem>
-                <SelectItem value="company_asc">Firma A–Å</SelectItem>
+                <SelectItem value="date_desc">{t("docs.sort.dateDesc")}</SelectItem>
+                <SelectItem value="date_asc">{t("docs.sort.dateAsc")}</SelectItem>
+                <SelectItem value="amount_desc">{t("docs.sort.amountDesc")}</SelectItem>
+                <SelectItem value="amount_asc">{t("docs.sort.amountAsc")}</SelectItem>
+                <SelectItem value="company_asc">{t("docs.sort.companyAsc")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -339,29 +329,29 @@ function DocumentsPage() {
 
         {activeFilterCount > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span>Filtre aktive:</span>
+            <span>{t("docs.filter.active")}</span>
             {typeFilter !== "all" && (
               <Badge variant="secondary" className="rounded-full">
-                {typeFilter === "receipt" ? "Kvittering" : "Faktura"}
+                {typeFilter === "receipt" ? t("docs.type.receipt") : t("docs.type.invoice")}
               </Badge>
             )}
             {statusFilter !== "all" && (
               <Badge variant="secondary" className="rounded-full">
                 {statusFilter === "paid"
-                  ? "Betalt"
+                  ? t("docs.status.paid")
                   : statusFilter === "unpaid"
-                    ? "Ubetalt"
-                    : "Forfalden"}
+                    ? t("docs.status.unpaid")
+                    : t("docs.status.overdue")}
               </Badge>
             )}
             {category !== "all" && (
               <Badge variant="secondary" className="rounded-full">{labelForCategory(category)}</Badge>
             )}
             {dateFrom && (
-              <Badge variant="secondary" className="rounded-full">Fra {dateFrom}</Badge>
+              <Badge variant="secondary" className="rounded-full">{t("docs.filter.from")} {dateFrom}</Badge>
             )}
             {dateTo && (
-              <Badge variant="secondary" className="rounded-full">Til {dateTo}</Badge>
+              <Badge variant="secondary" className="rounded-full">{t("docs.filter.to")} {dateTo}</Badge>
             )}
           </div>
         )}
@@ -386,13 +376,13 @@ function DocumentsPage() {
       ) : isEmpty ? (
         <EmptyState
           icon={FileText}
-          title="Ingen dokumenter endnu"
-          description="Upload din første kvittering eller faktura, så samler vi alt her — søgbart, sorterbart og klar til deling."
+          title={t("docs.empty.title")}
+          description={t("docs.empty.desc")}
           action={
             <Button asChild className="rounded-full">
               <Link to="/app/upload">
                 <Plus className="mr-2 h-4 w-4" />
-                Upload dit første dokument
+                {t("docs.empty.action")}
               </Link>
             </Button>
           }
@@ -400,18 +390,18 @@ function DocumentsPage() {
       ) : noMatches ? (
         <EmptyState
           icon={FileText}
-          title="Ingen dokumenter matcher"
-          description="Prøv at ændre din søgning eller nulstille filtrene."
+          title={t("docs.noMatch.title")}
+          description={t("docs.noMatch.desc")}
           action={
             <Button variant="outline" className="rounded-full" onClick={clearFilters}>
-              <X className="mr-2 h-4 w-4" /> Nulstil filtre
+              <X className="mr-2 h-4 w-4" /> {t("docs.filter.clear")}
             </Button>
           }
         />
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-xs text-muted-foreground">
-            Viser {filtered.length} af {docs.length} dokument{docs.length === 1 ? "" : "er"}
+            {t("docs.count.showing")} {filtered.length} {t("docs.count.of")} {docs.length} {docs.length === 1 ? t("docs.count.one") : t("docs.count.many")}
           </p>
           {filtered.map((d) => (
             <DocumentCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />

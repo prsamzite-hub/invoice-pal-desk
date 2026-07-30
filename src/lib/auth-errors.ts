@@ -1,8 +1,4 @@
 // Auth error → translation-key mapping. The key resolves via i18n.t().
-// Danish literal fallbacks are kept for callers not inside the LanguageProvider.
-export const EMAIL_EXISTS_MESSAGE =
-  "Der findes allerede en konto med denne email — log ind i stedet.";
-
 export type AuthErrorKey =
   | "err.emailExists"
   | "err.weakPassword"
@@ -52,22 +48,4 @@ export function authErrorKey(err: unknown): AuthErrorKey {
   if (raw.includes("token") && raw.includes("expired")) return "err.tokenExpired";
   if (raw.includes("same password")) return "err.samePassword";
   return "common.somethingWrong";
-}
-
-const DA_FALLBACK: Record<AuthErrorKey, string> = {
-  "err.emailExists": EMAIL_EXISTS_MESSAGE,
-  "err.weakPassword": "Adgangskoden er for svag. Brug mindst 8 tegn med både bogstaver og tal.",
-  "err.signupDisabled": "Det er ikke muligt at oprette en konto i øjeblikket. Prøv igen senere eller kontakt os.",
-  "err.invalidCreds": "Forkert email eller adgangskode.",
-  "err.emailNotConfirmed": "Din email er ikke bekræftet endnu. Tjek din indbakke for et bekræftelseslink.",
-  "err.rateLimit": "For mange forsøg. Vent et øjeblik og prøv igen.",
-  "err.network": "Kunne ikke nå serveren. Tjek din internetforbindelse.",
-  "err.tokenExpired": "Linket er udløbet. Bed om et nyt.",
-  "err.samePassword": "Den nye adgangskode skal være forskellig fra den gamle.",
-  "common.somethingWrong": "Noget gik galt. Prøv igen.",
-};
-
-/** Legacy synchronous Danish fallback used outside of the LanguageProvider. */
-export function danishAuthError(err: unknown): string {
-  return DA_FALLBACK[authErrorKey(err)];
 }

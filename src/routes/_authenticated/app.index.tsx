@@ -51,7 +51,7 @@ function ymKey(iso: string) {
 }
 
 function DashboardPage() {
-  const { t } = useLang();
+  const { t, formatDate, formatMoney } = useLang();
   const listFn = useServerFn(listMyReceipts);
   const pdfUrlFn = useServerFn(getReceiptPdfUrl);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -137,17 +137,18 @@ function DashboardPage() {
     }
   };
 
-  const monthLabel = new Intl.DateTimeFormat("da-DK", { month: "long", year: "numeric" }).format(new Date());
-  const prevMonthLabel = new Intl.DateTimeFormat("da-DK", { month: "long" }).format(
+  const monthLabel = formatDate(new Date(), { month: "long", year: "numeric" });
+  const prevMonthLabel = formatDate(
     new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+    { month: "long" },
   );
 
   const trendHint = (() => {
-    if (receipts.isLoading) return "Indlæser…";
+    if (receipts.isLoading) return t("app.loading");
     if (stats.pct === null) {
       return stats.prevTotal === 0 && stats.currentTotal === 0
-        ? "Ingen data endnu"
-        : `Ingen data for ${prevMonthLabel}`;
+        ? t("dashboard.stat.noData")
+        : `${t("dashboard.stat.noDataFor")} ${prevMonthLabel}`;
     }
     const arrow = stats.diff >= 0 ? "▲" : "▼";
     return `${arrow} ${Math.abs(stats.pct)}% vs. ${prevMonthLabel}`;
@@ -158,7 +159,7 @@ function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Oversigt"
+        title={t("dashboard.title")}
         description={`${t("dashboard.greeting")} · ${monthLabel}`}
         actions={
           <Button asChild className="rounded-full">
@@ -181,41 +182,37 @@ function DashboardPage() {
         ) : (
           <>
             <StatCard
-              label={`Brugt i ${monthLabel}`}
+              label={`${t("dashboard.stat.spentIn")} ${monthLabel}`}
               value={<MoneyAmount value={stats.currentTotal} size="lg" />}
               hint={trendHint}
               icon={stats.diff >= 0 ? TrendingUp : TrendingDown}
               tone="lavender"
             />
             <StatCard
-              label={`Sidste måned (${prevMonthLabel})`}
+              label={`${t("dashboard.stat.lastMonth")} (${prevMonthLabel})`}
               value={<MoneyAmount value={stats.prevTotal} size="lg" />}
               hint={
                 stats.prevTotal === 0
-                  ? "Ingen registrerede beløb"
-                  : `Forskel ${stats.diff >= 0 ? "+" : "−"}${new Intl.NumberFormat("da-DK", {
-                      style: "currency",
-                      currency: "DKK",
-                      maximumFractionDigits: 0,
-                    }).format(Math.abs(stats.diff))}`
+                  ? t("dashboard.stat.noAmounts")
+                  : `${t("dashboard.stat.diff")} ${stats.diff >= 0 ? "+" : "−"}${formatMoney(Math.abs(stats.diff), "DKK", { maximumFractionDigits: 0 })}`
               }
               icon={Wallet}
               tone="sky"
             />
             <StatCard
-              label="Forfalder i denne uge"
+              label={t("dashboard.stat.dueThisWeek")}
               value={<MoneyAmount value={stats.dueThisWeek} size="lg" />}
-              hint={`${stats.upcoming.filter((u) => u.due_date && u.due_date <= new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)).length} kommende`}
+              hint={`${stats.upcoming.filter((u) => u.due_date && u.due_date <= new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)).length} ${t("dashboard.stat.upcoming")}`}
               icon={CalendarClock}
               tone="butter"
             />
             <StatCard
-              label="Forfaldne fakturaer"
+              label={t("dashboard.stat.overdueInvoices")}
               value={<span className="tabular-nums">{stats.overdue.length}</span>}
               hint={
                 stats.overdue.length > 0
-                  ? `Kræver handling nu`
-                  : "Alt er under kontrol"
+                  ? t("dashboard.stat.needsAction")
+                  : t("dashboard.stat.underControl")
               }
               icon={AlertCircle}
               tone={stats.overdue.length > 0 ? "peach" : "mint"}
@@ -229,7 +226,7 @@ function DashboardPage() {
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-status-overdue-foreground" />
             <h2 className="text-base font-bold text-status-overdue-foreground">
-              Forfaldne fakturaer
+              {t("dashboard.overdue")}
             </h2>
           </div>
           <div className="flex flex-col gap-3">
@@ -243,7 +240,7 @@ function DashboardPage() {
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Kommende fakturaer</h2>
+            <h2 className="text-lg font-bold text-foreground">{t("dashboard.upcoming")}</h2>
             <Button variant="ghost" asChild className="rounded-full">
               <Link to="/app/documents">{t("dashboard.viewAll")}</Link>
             </Button>
@@ -257,8 +254,8 @@ function DashboardPage() {
           ) : stats.upcoming.length === 0 ? (
             <EmptyState
               icon={CalendarClock}
-              title="Ingen kommende fakturaer"
-              description="Når du tilføjer en faktura med forfaldsdato, dukker den op her."
+              title={t("dashboard.empty.upcoming.title")}
+              description={t("dashboard.empty.upcoming.desc")}
             />
           ) : (
             <div className="flex flex-col gap-3">
@@ -285,8 +282,8 @@ function DashboardPage() {
           ) : (receipts.data ?? []).length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="Ingen dokumenter endnu"
-              description="Upload din første kvittering for at komme i gang."
+              title={t("dashboard.empty.docs.title")}
+              description={t("dashboard.empty.docs.desc")}
               action={
                 <Button asChild className="rounded-full">
                   <Link to="/app/upload">

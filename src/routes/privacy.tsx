@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Sparkles } from "lucide-react";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/privacy")({
 });
 
 function PrivacyPage() {
+  const { t } = useLang();
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
@@ -26,80 +28,57 @@ function PrivacyPage() {
           Kvitregn
         </Link>
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-3.5 w-3.5" /> Tilbage
+          <ArrowLeft className="h-3.5 w-3.5" /> {t("common.back")}
         </Link>
       </header>
 
       <main className="mx-auto max-w-3xl px-6 pb-24 pt-4">
-        <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Privatlivspolitik</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Senest opdateret: 7. juli 2026</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">{t("privacy.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("privacy.updated")}</p>
 
         <div className="prose prose-neutral mt-8 max-w-none text-foreground [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-bold [&_p]:mt-3 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:mt-1 [&_li]:text-sm [&_li]:text-muted-foreground">
-          <p>
-            Denne privatlivspolitik beskriver, hvordan Kvitregn behandler dine personoplysninger,
-            når du bruger vores tjeneste. Vi følger databeskyttelsesforordningen (GDPR).
-          </p>
+          <p>{t("privacy.intro")}</p>
 
-          <h2>1. Dataansvarlig</h2>
+          <h2>{t("privacy.section1.title")}</h2>
           <p>
-            Kvitregn ApS er dataansvarlig for behandlingen af dine oplysninger. Kontakt:
+            {t("privacy.section1.body")}
             <a href="mailto:privacy@kvitregn.dk" className="text-primary hover:underline"> privacy@kvitregn.dk</a>.
           </p>
 
-          <h2>2. Hvilke oplysninger vi behandler</h2>
+          <h2>{t("privacy.section2.title")}</h2>
           <ul>
-            <li><strong>Kontooplysninger:</strong> navn og email — brugt til login og kommunikation.</li>
-            <li><strong>Dokumenter:</strong> kvitteringer og fakturaer du uploader, samt data aflæst
-              fra dem (fx firma, beløb, dato, kategori).</li>
-            <li><strong>Tekniske oplysninger:</strong> log-data, IP-adresse og enhedsinfo brugt til
-              drift og sikkerhed.</li>
+            <li><strong>{t("privacy.section2.item1.label")}</strong> {t("privacy.section2.item1.rest")}</li>
+            <li><strong>{t("privacy.section2.item2.label")}</strong> {t("privacy.section2.item2.rest")}</li>
+            <li><strong>{t("privacy.section2.item3.label")}</strong> {t("privacy.section2.item3.rest")}</li>
           </ul>
 
-          <h2>3. Formål og retsgrundlag</h2>
-          <p>
-            Vi bruger dine oplysninger til at levere tjenesten (opfyldelse af aftale, GDPR art. 6,
-            stk. 1, litra b), til at beskytte kontoen (legitim interesse, litra f) og til at overholde
-            lovkrav som fx bogføring (litra c).
-          </p>
+          <h2>{t("privacy.section3.title")}</h2>
+          <p>{t("privacy.section3.body")}</p>
 
-          <h2>4. Databehandlere</h2>
-          <p>
-            Vi bruger følgende typer underleverandører til drift af tjenesten: hosting og database
-            (i EU), AI-tjeneste til aflæsning af dokumenter, samt email-udbyder. Alle er bundet af
-            databehandleraftaler.
-          </p>
+          <h2>{t("privacy.section4.title")}</h2>
+          <p>{t("privacy.section4.body")}</p>
 
-          <h2>5. Opbevaring</h2>
-          <p>
-            Vi opbevarer dine dokumenter og kontooplysninger, så længe din konto er aktiv. Sletter
-            du kontoen, fjerner vi dine data inden for 30 dage, med mindre lovgivningen kræver
-            længere opbevaring (fx bogføringsloven).
-          </p>
+          <h2>{t("privacy.section5.title")}</h2>
+          <p>{t("privacy.section5.body")}</p>
 
-          <h2>6. Dine rettigheder</h2>
+          <h2>{t("privacy.section6.title")}</h2>
           <ul>
-            <li>Ret til indsigt i, hvilke oplysninger vi har om dig.</li>
-            <li>Ret til at få rettet eller slettet dine oplysninger.</li>
-            <li>Ret til at få begrænset behandlingen eller til dataportabilitet.</li>
-            <li>Ret til at trække samtykke tilbage og til at klage til Datatilsynet
+            <li>{t("privacy.section6.item1")}</li>
+            <li>{t("privacy.section6.item2")}</li>
+            <li>{t("privacy.section6.item3")}</li>
+            <li>{t("privacy.section6.item4.pre")}
               (<a href="https://datatilsynet.dk" className="text-primary hover:underline">datatilsynet.dk</a>).</li>
           </ul>
 
-          <h2>7. Sikkerhed</h2>
-          <p>
-            Dine dokumenter opbevares privat og krypteres under transport. Adgang er beskyttet af
-            adgangskoder og row-level security, så kun du kan se dine egne filer.
-          </p>
+          <h2>{t("privacy.section7.title")}</h2>
+          <p>{t("privacy.section7.body")}</p>
 
-          <h2>8. Cookies</h2>
-          <p>
-            Vi bruger kun tekniske cookies, der er nødvendige for at holde dig logget ind. Vi bruger
-            ikke tredjeparts-tracking eller reklamecookies.
-          </p>
+          <h2>{t("privacy.section8.title")}</h2>
+          <p>{t("privacy.section8.body")}</p>
 
-          <h2>9. Kontakt</h2>
+          <h2>{t("privacy.section9.title")}</h2>
           <p>
-            Har du spørgsmål eller vil du udøve dine rettigheder, så skriv til
+            {t("privacy.section9.body")}
             <a href="mailto:privacy@kvitregn.dk" className="text-primary hover:underline"> privacy@kvitregn.dk</a>.
           </p>
         </div>
