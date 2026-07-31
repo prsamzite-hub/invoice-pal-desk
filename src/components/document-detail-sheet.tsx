@@ -156,7 +156,7 @@ export function DocumentDetailSheet({
           {doc ? (
             <div className="flex flex-col gap-6">
               <SheetHeader>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 pr-8">
                   <VendorAvatar name={doc.company} logoUrl={doc.vendorLogoUrl} />
                   <div className="min-w-0 flex-1">
                     <SheetTitle className="truncate text-lg">{doc.company}</SheetTitle>
