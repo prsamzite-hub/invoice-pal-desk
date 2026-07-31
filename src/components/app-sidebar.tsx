@@ -61,8 +61,8 @@ export function AppSidebar() {
         <Link to="/app" aria-label="Kvitregn" className="flex items-center px-2 py-2">
           <img src="/brand/icon.svg" alt="" className="h-8 w-8 shrink-0 dark:hidden" />
           <img src="/brand/icon-on-dark.svg" alt="" className="hidden h-8 w-8 shrink-0 dark:block" />
-          <img src="/brand/wordmark-on-light.svg" alt="Kvitregn" className="ml-2 h-6 w-auto dark:hidden group-data-[collapsible=icon]:hidden" />
-          <img src="/brand/wordmark-on-dark.svg" alt="Kvitregn" className="ml-2 hidden h-6 w-auto dark:block group-data-[collapsible=icon]:!hidden" />
+          <img src="/brand/wordmark-on-light.svg" alt="Kvitregn" className="ml-2 h-6 w-auto shrink-0 object-contain dark:hidden group-data-[collapsible=icon]:hidden" />
+          <img src="/brand/wordmark-on-dark.svg" alt="Kvitregn" className="ml-2 hidden h-6 w-auto shrink-0 object-contain dark:block group-data-[collapsible=icon]:!hidden" />
         </Link>
       </SidebarHeader>
       <SidebarContent>

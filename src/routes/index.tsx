@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/atoms/status-badge";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { CompanyAvatar } from "@/components/atoms/company-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang } from "@/lib/i18n";
 
@@ -58,24 +59,27 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <Link to="/" className="flex items-center gap-2" aria-label="Kvitregn — forside">
-          <img src="/brand/lockup-on-light.png" alt="Kvitregn logo" className="h-10 w-auto dark:hidden" />
-          <img src="/brand/lockup-on-dark.png" alt="Kvitregn logo" className="hidden h-10 w-auto dark:block" />
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-5 sm:px-6">
+        <Link to="/" className="flex shrink-0 items-center gap-2" aria-label="Kvitregn — forside">
+          <img src="/brand/lockup-on-light.png" alt="Kvitregn logo" className="h-8 w-auto shrink-0 object-contain dark:hidden sm:h-10" />
+          <img src="/brand/lockup-on-dark.png" alt="Kvitregn logo" className="hidden h-8 w-auto shrink-0 object-contain dark:block sm:h-10" />
         </Link>
-        <nav className="flex items-center gap-2">
+        <nav className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <LanguageToggle />
           <ThemeToggle />
-          <Button asChild variant="ghost" className="rounded-full">
+          <Button asChild variant="ghost" className="hidden rounded-full sm:inline-flex">
             <Link to="/auth">{t("landing.signIn")}</Link>
           </Button>
-          <Button asChild className="rounded-full">
+          <Button asChild className="rounded-full px-3 text-sm sm:px-4">
             <Link to="/auth">
-              {t("landing.getStarted")}
-              <ArrowRight className="ml-1.5 h-4 w-4" />
+              <span className="truncate">{t("landing.getStarted")}</span>
+              <ArrowRight className="ml-1.5 hidden h-4 w-4 sm:inline-block" />
             </Link>
           </Button>
+
         </nav>
       </header>
+
 
       <main>
         {/* Hero */}
@@ -180,8 +184,8 @@ function LandingPage() {
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
           <div className="flex items-center gap-3">
-            <img src="/brand/lockup-on-light.png" alt="Kvitregn logo" className="h-7 w-auto dark:hidden" />
-            <img src="/brand/lockup-on-dark.png" alt="Kvitregn logo" className="hidden h-7 w-auto dark:block" />
+            <img src="/brand/lockup-on-light.png" alt="Kvitregn logo" className="shrink-0 object-contain h-7 w-auto dark:hidden" />
+            <img src="/brand/lockup-on-dark.png" alt="Kvitregn logo" className="hidden shrink-0 object-contain h-7 w-auto dark:block" />
             <span className="hidden sm:inline">{t("landing.footer.tagline")}</span>
           </div>
           <div className="flex items-center gap-4">
@@ -230,7 +234,7 @@ function HeroPreview() {
   const { t } = useLang();
   return (
     <div className="relative">
-      <div className="bg-gradient-hero shadow-pop absolute -inset-6 -z-10 rounded-[36px] opacity-70 blur-2xl" />
+      <div className="bg-gradient-hero shadow-pop absolute -inset-2 -z-10 rounded-[36px] opacity-70 blur-2xl sm:-inset-6" />
       <div className="shadow-card rounded-3xl border border-border bg-card p-6">
         <div className="mb-4 flex items-center justify-between">
           <div>

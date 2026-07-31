@@ -286,11 +286,12 @@ function AdminUserPage() {
                         {d.category ? ` · ${d.category}` : ""}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                       <MoneyAmount value={Number(d.amount)} currency={d.currency || "DKK"} size="sm" />
                       <Button variant="outline" size="sm" className="rounded-full" onClick={() => setDocId(d.id)}>
-                        <Eye className="mr-1.5 h-3.5 w-3.5" /> {t("admin.user.view")}
+                        <Eye className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">{t("admin.user.view")}</span>
                       </Button>
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="rounded-full">
