@@ -202,7 +202,7 @@ function UserRow({
         </p>
         <p className="truncate text-xs text-muted-foreground">{user.email}</p>
       </Link>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         {isAdmin ? (
           <Badge className="rounded-full bg-primary/15 text-primary">{t("admin.badge.admin")}</Badge>
         ) : null}

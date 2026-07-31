@@ -140,7 +140,7 @@ function AdminDocumentsPage() {
                   {d.owner_name || d.user_id.slice(0, 8)}
                 </Link>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                 <MoneyAmount value={Number(d.amount)} currency={d.currency || "DKK"} size="sm" />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

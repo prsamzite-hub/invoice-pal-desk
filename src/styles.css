@@ -264,3 +264,27 @@
 @utility shadow-pop {
   box-shadow: var(--shadow-pop);
 }
+
+/* Touch targets: ensure at least 44px hit area on touch devices */
+@media (pointer: coarse) {
+  button,
+  [role="tab"],
+  [role="menuitem"],
+  a[role="button"],
+  select,
+  textarea,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+    min-height: 44px;
+  }
+
+  button:not(:has(> :not(svg))) {
+    min-width: 44px;
+  }
+}
+
+/* Images keep their aspect ratio by default */
+img,
+svg,
+video {
+  max-width: 100%;
+}
