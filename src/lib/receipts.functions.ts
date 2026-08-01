@@ -235,6 +235,19 @@ async function replaceItems(supabase: any, documentId: string, items: LineItem[]
 }
 
 
+async function loadSenderProfile(supabase: any, userId: string) {
+  try {
+    const { data } = await supabase
+      .from("business_profiles")
+      .select("company_name, cvr, address, postal_code, city, phone, email")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const saveReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -309,6 +322,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         items: f.items,
         receipt_id: row.id,
         vendor_logo: vendorLogo,
+        sender: await loadSenderProfile(supabase, userId),
         lang: data.lang,
       });
       const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
@@ -407,6 +421,7 @@ async function regenerateAndStorePdf(
     })),
     receipt_id: row.id,
     vendor_logo: vendorLogo,
+    sender: await loadSenderProfile(supabase, userId),
     lang,
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;
