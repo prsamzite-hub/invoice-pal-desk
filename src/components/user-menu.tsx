@@ -15,12 +15,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile } from "@/lib/profile.functions";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
 import { useLang } from "@/lib/i18n";
+import { useAppMode } from "@/lib/app-mode";
+import { getMyBusinessProfile } from "@/lib/business.functions";
 
 export function UserMenu() {
   const { t } = useLang();
   const navigate = useNavigate();
+  const { mode, setMode } = useAppMode();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchIsAdmin = useServerFn(isCurrentUserAdmin);
+  const fetchBusiness = useServerFn(getMyBusinessProfile);
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,9 +32,11 @@ export function UserMenu() {
   }, []);
 
   const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: () => fetchProfile() });
+  const { data: business } = useQuery({ queryKey: ["my-business"], queryFn: () => fetchBusiness() });
   const { data: isAdmin } = useQuery({
     queryKey: ["is-admin"], queryFn: () => fetchIsAdmin(), staleTime: 5 * 60_000,
   });
+
 
   const source = profile?.display_name?.trim() || email || "";
   const initial = source.charAt(0).toUpperCase() || "•";
