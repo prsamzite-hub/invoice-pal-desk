@@ -146,6 +146,14 @@ function SettingsPage() {
       <InboundEmailCard token={profile?.email_inbox_token ?? null} />
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
+        <div>
+          <h2 className="text-base font-bold text-foreground">{t("biz.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("biz.desc")}</p>
+        </div>
+        <BusinessProfileForm />
+      </section>
+
+      <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-foreground">{t("settings.appearance")}</h2>
