@@ -50,6 +50,17 @@ export function UserMenu() {
         {initial}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem
+          onSelect={() => {
+            if (mode === "erhverv") { setMode("privat"); return; }
+            if (business) setMode("erhverv");
+            else navigate({ to: "/app/business" });
+          }}
+        >
+          <Briefcase className="mr-2 h-4 w-4" />
+          {mode === "erhverv" ? t("mode.switchToPrivat") : t("mode.switchToErhverv")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         {isAdmin ? (
           <>
             <DropdownMenuItem onSelect={() => navigate({ to: "/app/admin" })}>
