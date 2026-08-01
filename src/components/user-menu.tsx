@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Settings, LogOut, ShieldCheck } from "lucide-react";
+import { Settings, LogOut, ShieldCheck, Briefcase } from "lucide-react";
 
 import {
   DropdownMenu,
