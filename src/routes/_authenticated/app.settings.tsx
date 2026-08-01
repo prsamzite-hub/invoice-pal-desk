@@ -17,6 +17,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InboundEmailCard } from "@/components/inbound-email-card";
+import { BusinessProfileForm } from "@/components/business-profile-form";
 import { useLang } from "@/lib/i18n";
 import { authErrorKey } from "@/lib/auth-errors";
 
