@@ -23,7 +23,18 @@ export interface ReceiptPdfData {
   receipt_id: string;
   /** Raw PNG/JPEG bytes for the vendor logo. If omitted, a monogram is rendered. */
   vendor_logo?: Uint8Array | null;
+  /** Business profile of the user, rendered as an "Afsender" block. */
+  sender?: {
+    company_name: string;
+    cvr?: string | null;
+    address?: string | null;
+    postal_code?: string | null;
+    city?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
   lang?: PdfLang;
+
 }
 
 const L = {
