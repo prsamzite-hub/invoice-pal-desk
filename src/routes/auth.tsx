@@ -3,6 +3,8 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 
+import { useServerFn } from "@tanstack/react-start";
+
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
@@ -12,6 +14,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { authErrorKey } from "@/lib/auth-errors";
 import { useLang } from "@/lib/i18n";
+import { SegmentedControl } from "@/components/atoms/segmented-control";
+import { getMyBusinessProfile } from "@/lib/business.functions";
+import { writeMode, type AppMode } from "@/lib/app-mode";
 
 
 export const Route = createFileRoute("/auth")({
@@ -41,6 +46,8 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | null>(null);
   const [resetSent, setResetSent] = useState(false);
+  const [kind, setKind] = useState<AppMode>("privat");
+  const fetchBusiness = useServerFn(getMyBusinessProfile);
 
   const schema = useMemo(
     () =>
@@ -52,7 +59,20 @@ function AuthPage() {
   );
 
   async function goToApp() {
+    writeMode(kind);
     await router.invalidate();
+    if (kind === "erhverv") {
+      let hasProfile = false;
+      try {
+        hasProfile = Boolean(await fetchBusiness());
+      } catch {
+        hasProfile = false;
+      }
+      if (!hasProfile) {
+        navigate({ to: "/app/business", replace: true });
+        return;
+      }
+    }
     navigate({ to: "/app", replace: true });
   }
 
@@ -247,6 +267,18 @@ function AuthPage() {
                 </TabsList>
 
 
+
+                <div className="mt-4 flex justify-center">
+                  <SegmentedControl
+                    value={kind}
+                    onChange={setKind}
+                    ariaLabel={t("mode.privat") + " / " + t("mode.erhverv")}
+                    options={[
+                      { value: "privat" as AppMode, label: t("mode.privat") },
+                      { value: "erhverv" as AppMode, label: t("mode.erhverv") },
+                    ]}
+                  />
+                </div>
 
                 <TabsContent value="signin" className="mt-6">
                   <EmailForm
