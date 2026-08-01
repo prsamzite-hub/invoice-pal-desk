@@ -23,7 +23,18 @@ export interface ReceiptPdfData {
   receipt_id: string;
   /** Raw PNG/JPEG bytes for the vendor logo. If omitted, a monogram is rendered. */
   vendor_logo?: Uint8Array | null;
+  /** Business profile of the user, rendered as an "Afsender" block. */
+  sender?: {
+    company_name: string;
+    cvr?: string | null;
+    address?: string | null;
+    postal_code?: string | null;
+    city?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
   lang?: PdfLang;
+
 }
 
 const L = {
@@ -248,6 +259,33 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
     draw(k, { x: 48, y, size: 9, font, color: MUTED });
     draw(v, { x: 200, y, size: 11, font, color: INK });
     y -= 22;
+  }
+
+
+  // Sender block (business profile), right-aligned opposite the vendor block
+  if (data.sender) {
+    const s = data.sender;
+    const lines = [
+      s.company_name,
+      s.address ?? "",
+      [s.postal_code ?? "", s.city ?? ""].filter(Boolean).join(" "),
+      s.cvr ? `${t.cvr} ${s.cvr}` : "",
+      s.phone ? `${t.phone} ${s.phone}` : "",
+      s.email ?? "",
+    ].filter((l) => l && l.trim().length > 0);
+    let sy = height - HEADER_H - 40;
+    const rightX = width - 48;
+    const lw = font.widthOfTextAtSize(sanitize(t.sender), 9);
+    draw(t.sender, { x: rightX - lw, y: sy, size: 9, font, color: MUTED });
+    sy -= 16;
+    lines.forEach((line, i) => {
+      const f = i === 0 ? bold : font;
+      const size = i === 0 ? 11 : 9;
+      const w = f.widthOfTextAtSize(sanitize(line), size);
+      draw(line, { x: rightX - w, y: sy, size, font: f, color: i === 0 ? INK : MUTED });
+      sy -= i === 0 ? 16 : 12;
+    });
+    if (sy < y) y = sy - 6;
   }
 
   y -= 6;

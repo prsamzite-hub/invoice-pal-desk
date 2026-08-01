@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Settings, LogOut, ShieldCheck } from "lucide-react";
+import { Settings, LogOut, ShieldCheck, Briefcase } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -15,12 +15,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyProfile } from "@/lib/profile.functions";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
 import { useLang } from "@/lib/i18n";
+import { useAppMode } from "@/lib/app-mode";
+import { getMyBusinessProfile } from "@/lib/business.functions";
 
 export function UserMenu() {
   const { t } = useLang();
   const navigate = useNavigate();
+  const { mode, setMode } = useAppMode();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchIsAdmin = useServerFn(isCurrentUserAdmin);
+  const fetchBusiness = useServerFn(getMyBusinessProfile);
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,9 +32,11 @@ export function UserMenu() {
   }, []);
 
   const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: () => fetchProfile() });
+  const { data: business } = useQuery({ queryKey: ["my-business"], queryFn: () => fetchBusiness() });
   const { data: isAdmin } = useQuery({
     queryKey: ["is-admin"], queryFn: () => fetchIsAdmin(), staleTime: 5 * 60_000,
   });
+
 
   const source = profile?.display_name?.trim() || email || "";
   const initial = source.charAt(0).toUpperCase() || "•";
@@ -50,6 +56,17 @@ export function UserMenu() {
         {initial}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem
+          onSelect={() => {
+            if (mode === "erhverv") { setMode("privat"); return; }
+            if (business) setMode("erhverv");
+            else navigate({ to: "/app/business" });
+          }}
+        >
+          <Briefcase className="mr-2 h-4 w-4" />
+          {mode === "erhverv" ? t("mode.switchToPrivat") : t("mode.switchToErhverv")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         {isAdmin ? (
           <>
             <DropdownMenuItem onSelect={() => navigate({ to: "/app/admin" })}>
