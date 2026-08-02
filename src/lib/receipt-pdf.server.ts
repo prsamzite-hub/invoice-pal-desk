@@ -22,7 +22,14 @@ export interface ReceiptPdfData {
   supplier_invoice_number?: string | null;
   /** Supplier's CVR number from the source document. */
   supplier_cvr?: string | null;
+  /** Stored VAT amount (kr). Null when the document has no VAT. */
+  vat_amount?: number | null;
+  /** Stored VAT rate in percent (25 = 25%). */
+  vat_rate?: number | null;
+  /** True when the VAT was calculated from the total instead of read from the document. */
+  vat_is_calculated?: boolean;
   items?: ReceiptPdfLineItem[];
+
   receipt_id: string;
   /** Kept for API compatibility; no longer rendered (no avatar on financial documents). */
   vendor_logo?: Uint8Array | null;
