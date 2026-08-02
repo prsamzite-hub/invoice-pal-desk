@@ -24,6 +24,8 @@ import { deriveReceiptStatus } from "@/components/atoms/status-badge";
 import { listMyReceipts, getReceiptPdfUrl } from "@/lib/receipts.functions";
 import { useLang } from "@/lib/i18n";
 import { useVendorLogoByName } from "@/hooks/use-vendor-logos";
+import { useAppMode } from "@/lib/app-mode";
+import { getMyBusinessProfile } from "@/lib/business.functions";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -59,8 +61,19 @@ function DashboardPage() {
 
   const receipts = useQuery({ queryKey: ["receipts"], queryFn: () => listFn() });
 
+  const { mode } = useAppMode();
+  const isBiz = mode === "erhverv";
+  const bizFn = useServerFn(getMyBusinessProfile);
+  const bizProfile = useQuery({
+    queryKey: ["business-profile"],
+    queryFn: () => bizFn(),
+    enabled: isBiz,
+    staleTime: 60_000,
+  });
+
   const stats = useMemo(() => {
-    const rows = receipts.data ?? [];
+    const all = receipts.data ?? [];
+    const rows = isBiz ? all.filter((r) => r.is_business === true) : all;
     const now = new Date();
     const currentMonth = now.toISOString().slice(0, 7);
     const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -104,8 +117,12 @@ function DashboardPage() {
       upcoming: upcoming.slice(0, 5),
       overdue: overdue.slice(0, 5),
       count: rows.length,
+      monthCount: rows.filter(
+        (r) => ymKey(r.issued_date ?? r.created_at?.slice(0, 10) ?? "") === currentMonth,
+      ).length,
+      rows,
     };
-  }, [receipts.data]);
+  }, [receipts.data, isBiz]);
 
   const { lookup: logoFor } = useVendorLogoByName();
   const toCard = (r: NonNullable<typeof receipts.data>[number]): DocumentCardData => ({
@@ -121,6 +138,7 @@ function DashboardPage() {
       ? { label: r.category, tone: CATEGORY_TONE[r.category] ?? "lavender" }
       : undefined,
     vendorLogoUrl: logoFor(r.company),
+    isBusiness: r.is_business === true,
   });
 
   const selectedRow = (receipts.data ?? []).find((r) => r.id === selectedId);
@@ -159,8 +177,12 @@ function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title={t("dashboard.title")}
-        description={`${t("dashboard.greeting")} · ${monthLabel}`}
+        title={isBiz ? (bizProfile.data?.company_name ?? t("dashboard.title")) : t("dashboard.title")}
+        description={
+          isBiz
+            ? `${t("biz.business")} · ${monthLabel}`
+            : `${t("dashboard.greeting")} · ${monthLabel}`
+        }
         actions={
           <Button asChild className="rounded-full">
             <Link to="/app/upload">
@@ -182,7 +204,7 @@ function DashboardPage() {
         ) : (
           <>
             <StatCard
-              label={`${t("dashboard.stat.spentIn")} ${monthLabel}`}
+              label={isBiz ? t("dashboard.biz.total") : `${t("dashboard.stat.spentIn")} ${monthLabel}`}
               value={<MoneyAmount value={stats.currentTotal} size="lg" />}
               hint={trendHint}
               icon={stats.diff >= 0 ? TrendingUp : TrendingDown}
@@ -199,6 +221,15 @@ function DashboardPage() {
               icon={Wallet}
               tone="sky"
             />
+            {isBiz ? (
+              <StatCard
+                label={t("dashboard.biz.count")}
+                value={<span className="tabular-nums">{stats.monthCount}</span>}
+                hint={`${stats.count} ${t("dashboard.biz.docs")}`}
+                icon={FileText}
+                tone="butter"
+              />
+            ) : (
             <StatCard
               label={t("dashboard.stat.dueThisWeek")}
               value={<MoneyAmount value={stats.dueThisWeek} size="lg" />}
@@ -206,6 +237,7 @@ function DashboardPage() {
               icon={CalendarClock}
               tone="butter"
             />
+            )}
             <StatCard
               label={t("dashboard.stat.overdueInvoices")}
               value={<span className="tabular-nums">{stats.overdue.length}</span>}
@@ -226,7 +258,7 @@ function DashboardPage() {
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-status-overdue-foreground" />
             <h2 className="text-base font-bold text-status-overdue-foreground">
-              {t("dashboard.overdue")}
+              {isBiz ? t("dashboard.biz.overdue") : t("dashboard.overdue")}
             </h2>
           </div>
           <div className="flex flex-col gap-3">
@@ -240,7 +272,9 @@ function DashboardPage() {
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">{t("dashboard.upcoming")}</h2>
+            <h2 className="text-lg font-bold text-foreground">
+              {isBiz ? t("dashboard.biz.upcoming") : t("dashboard.upcoming")}
+            </h2>
             <Button variant="ghost" asChild className="rounded-full">
               <Link to="/app/documents">{t("dashboard.viewAll")}</Link>
             </Button>
@@ -254,8 +288,8 @@ function DashboardPage() {
           ) : stats.upcoming.length === 0 ? (
             <EmptyState
               icon={CalendarClock}
-              title={t("dashboard.empty.upcoming.title")}
-              description={t("dashboard.empty.upcoming.desc")}
+              title={isBiz ? t("dashboard.biz.none") : t("dashboard.empty.upcoming.title")}
+              description={isBiz ? t("dashboard.biz.noneDesc") : t("dashboard.empty.upcoming.desc")}
             />
           ) : (
             <div className="flex flex-col gap-3">
@@ -279,7 +313,7 @@ function DashboardPage() {
               <CardSkeleton />
               <CardSkeleton />
             </div>
-          ) : (receipts.data ?? []).length === 0 ? (
+          ) : stats.rows.length === 0 ? (
             <EmptyState
               icon={FileText}
               title={t("dashboard.empty.docs.title")}
@@ -295,7 +329,7 @@ function DashboardPage() {
             />
           ) : (
             <div className="flex flex-col gap-3">
-              {(receipts.data ?? []).slice(0, 5).map((r) => (
+              {stats.rows.slice(0, 5).map((r) => (
                 <DocumentCard key={r.id} doc={toCard(r)} onClick={() => openDoc(r.id)} />
               ))}
             </div>
