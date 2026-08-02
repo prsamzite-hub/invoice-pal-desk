@@ -17,6 +17,7 @@ export const appPages = {
     "biz.saved": "Virksomhed gemt",
     "biz.deleted": "Virksomhed fjernet",
     "biz.notFound": "Ingen virksomhed fundet på det CVR-nummer",
+    "biz.lookupFailed": "Kunne ikke hente virksomhedsdata — udfyld manuelt",
     "biz.cvrInvalid": "CVR skal være 8 cifre",
     "biz.cannotSave": "Kunne ikke gemme virksomheden",
     "biz.onboard.title": "Opret din virksomhed",
