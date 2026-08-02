@@ -162,6 +162,13 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 );
               })()}
             </div>
+            {initial?.mime === "application/pdf" && initial?.originalUrl && (
+              <a href={initial.originalUrl} target="_blank" rel="noreferrer"
+                className="text-xs font-medium text-primary hover:underline">
+                Åbn PDF i ny fane
+              </a>
+            )}
+
 
             {initial?.scanUrl && !useScan && (
               <p className="text-xs text-muted-foreground">{t("review.originalNote")}</p>
