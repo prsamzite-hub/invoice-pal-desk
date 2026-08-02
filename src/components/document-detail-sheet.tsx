@@ -432,6 +432,21 @@ function EditReceiptDialog({
   const set = <K extends keyof ExtractedFields>(k: K, v: ExtractedFields[K]) =>
     setFields((f) => ({ ...f, [k]: v }));
 
+  const patch = (p: Partial<ExtractedFields>) => setFields((f) => ({ ...f, ...p }));
+
+  const setAmount = (amount: number) =>
+    setFields((f) =>
+      f.vat_rate != null && Number.isFinite(Number(f.vat_rate))
+        ? { ...f, amount, vat_amount: vatFromRate(amount, Number(f.vat_rate)) }
+        : { ...f, amount },
+    );
+
+  const toggleBusiness = (v: boolean) => {
+    setIsBusiness(v);
+    setFields((f) => ({ ...f, ...resolveVat(f.amount, f, v) }));
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
