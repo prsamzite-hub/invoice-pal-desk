@@ -45,6 +45,7 @@ export const appPages = {
     "biz.saved": "Business saved",
     "biz.deleted": "Business removed",
     "biz.notFound": "No company found for that CVR number",
+    "biz.lookupFailed": "Could not fetch company data — please fill in manually",
     "biz.cvrInvalid": "CVR must be 8 digits",
     "biz.cannotSave": "Could not save the business",
     "biz.onboard.title": "Set up your business",
