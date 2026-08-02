@@ -21,7 +21,9 @@ export interface ExtractedDocument {
   supplier_cvr?: string | null;
   amount_excl_vat?: number | null;
   vat_amount?: number | null;
+  vat_rate?: number | null;
   items?: ExtractedLineItem[];
+
 }
 
 const EXTRACT_SYS =
