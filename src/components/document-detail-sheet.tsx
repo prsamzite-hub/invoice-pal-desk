@@ -398,8 +398,12 @@ function EditReceiptDialog({
     document_type: doc.type,
     category: doc.category?.label ?? null,
     notes: doc.notes ?? null,
+    vat_amount: doc.vatAmount ?? null,
+    vat_rate: doc.vatRate ?? null,
+    vat_is_calculated: doc.vatIsCalculated === true,
     items: itemsQuery.data ?? [],
   });
+
 
   const [fields, setFields] = useState<ExtractedFields>(seed);
   const [isBusiness, setIsBusiness] = useState<boolean>(!!doc.isBusiness);
