@@ -522,9 +522,13 @@ export const getReceiptOriginalUrl = createServerFn({ method: "POST" })
 
 export const updateReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id: string; fields: ExtractedFields }) => {
+  .inputValidator((data: { id: string; fields: ExtractedFields; isBusiness?: boolean }) => {
     if (!data?.id) throw new Error("Missing id");
-    return { id: data.id, fields: normalizeFields(data.fields) };
+    return {
+      id: data.id,
+      fields: normalizeFields(data.fields),
+      isBusiness: typeof data.isBusiness === "boolean" ? data.isBusiness : undefined,
+    };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
