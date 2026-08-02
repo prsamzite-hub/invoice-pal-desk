@@ -76,7 +76,11 @@ const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export interface DetailRow extends DocumentCardData {
   notes?: string | null;
+  vatAmount?: number | null;
+  vatRate?: number | null;
+  vatIsCalculated?: boolean;
 }
+
 
 export function DocumentDetailSheet({
   doc,
