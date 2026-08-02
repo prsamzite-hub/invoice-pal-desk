@@ -130,7 +130,7 @@ export function BusinessProfileForm({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field id="cvr" label={t("biz.cvr")}>
+        <Field id="cvr" label={`${t("biz.cvr")} *`}>
           <div className="flex items-center gap-2">
             <Input id="cvr" inputMode="numeric" maxLength={8} placeholder={t("biz.cvrPh")}
               value={form.cvr} onChange={set("cvr")} />
@@ -140,20 +140,20 @@ export function BusinessProfileForm({
             </Button>
           </div>
         </Field>
-        <Field id="company_name" label={t("biz.company")}>
+        <Field id="company_name" label={`${t("biz.company")} *`}>
           <Input id="company_name" value={form.company_name} onChange={set("company_name")} />
         </Field>
-        <Field id="address" label={t("biz.address")}>
+        <Field id="address" label={`${t("biz.address")} *`}>
           <Input id="address" value={form.address} onChange={set("address")} />
         </Field>
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-1">
-            <Field id="postal_code" label={t("biz.zip")}>
+            <Field id="postal_code" label={`${t("biz.zip")} *`}>
               <Input id="postal_code" value={form.postal_code} onChange={set("postal_code")} />
             </Field>
           </div>
           <div className="col-span-2">
-            <Field id="city" label={t("biz.city")}>
+            <Field id="city" label={`${t("biz.city")} *`}>
               <Input id="city" value={form.city} onChange={set("city")} />
             </Field>
           </div>
