@@ -93,10 +93,17 @@ export function BusinessProfileForm({
   }
 
   async function save() {
+    const cvr = form.cvr.replace(/\D/g, "");
+    if (!form.company_name.trim() || !form.address.trim() || !form.postal_code.trim() || !form.city.trim()) {
+      toast.error(t("biz.requiredFields"));
+      return;
+    }
+    if (!/^\d{8}$/.test(cvr)) { toast.error(t("biz.cvrInvalid")); return; }
     setSaving(true);
     try {
-      await saveFn({ data: { ...form, cvr: form.cvr.replace(/\D/g, "") || null } });
+      await saveFn({ data: { ...form, cvr } });
       await qc.invalidateQueries({ queryKey: ["my-business"] });
+      await qc.invalidateQueries({ queryKey: ["business-gate"] });
       writeMode("erhverv");
       toast.success(t("biz.saved"));
       onSaved?.();
@@ -110,6 +117,7 @@ export function BusinessProfileForm({
     try {
       await deleteFn();
       await qc.invalidateQueries({ queryKey: ["my-business"] });
+      await qc.invalidateQueries({ queryKey: ["business-gate"] });
       setForm(EMPTY);
       writeMode("privat");
       toast.success(t("biz.deleted"));
@@ -117,6 +125,7 @@ export function BusinessProfileForm({
       toast.error(t("biz.cannotSave"), { description: e instanceof Error ? e.message : "" });
     } finally { setRemoving(false); }
   }
+
 
   return (
     <div className="flex flex-col gap-4">
