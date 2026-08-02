@@ -10,6 +10,7 @@ export const appPages2 = {
     "analytics.cat.shopping": "Shopping",
     "analytics.weekPrefix": "U",
     "analytics.scope": "Visning",
+    "analytics.noData": "Ingen data i denne måned endnu.",
 
     "biz.all": "Alle",
     "biz.private": "Privat",
@@ -37,6 +38,7 @@ export const appPages2 = {
     "analytics.cat.shopping": "Shopping",
     "analytics.weekPrefix": "W",
     "analytics.scope": "View",
+    "analytics.noData": "No data for this month yet.",
 
     "biz.all": "All",
     "biz.private": "Personal",
