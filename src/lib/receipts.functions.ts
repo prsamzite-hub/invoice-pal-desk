@@ -210,11 +210,22 @@ export const extractReceipt = createServerFn({ method: "POST" })
       const freeNote = ex.notes?.trim() || null;
       const cvr = ex.supplier_cvr?.toString().trim() || null;
 
+      // VAT is only taken from the document here — never guessed.
+      const statedVat =
+        ex.vat_amount != null && Number.isFinite(Number(ex.vat_amount))
+          ? Number(ex.vat_amount)
+          : null;
+      const statedRate =
+        ex.vat_rate != null && Number.isFinite(Number(ex.vat_rate)) ? Number(ex.vat_rate) : null;
+      const gross = Number(ex.amount) || 0;
+      const derivedRate =
+        statedVat != null && statedRate == null ? rateFromVat(gross, statedVat) : statedRate;
+
       return {
         ...base,
         extracted: {
           company: ex.company || "",
-          amount: Number(ex.amount) || 0,
+          amount: gross,
           currency: ex.currency || "DKK",
           issued_date: ex.date || null,
           due_date: dueDate,
@@ -223,8 +234,12 @@ export const extractReceipt = createServerFn({ method: "POST" })
           notes: freeNote,
           supplier_invoice_number: invoiceNo,
           supplier_cvr: cvr,
+          vat_amount: statedVat,
+          vat_rate: derivedRate,
+          vat_is_calculated: false,
           items: sanitizeItems(ex.items),
         },
+
         extractionOk: true,
       };
     } catch (e) {
