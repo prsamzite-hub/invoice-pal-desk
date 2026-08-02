@@ -101,7 +101,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-[680px] lg:max-w-[960px]">
+      <DialogContent className="w-[calc(100%-1.5rem)] max-h-[92dvh] overflow-y-auto sm:max-w-[720px] lg:max-w-[980px]">
         <DialogHeader>
           <DialogTitle>{t("review.title")}</DialogTitle>
           <DialogDescription>
