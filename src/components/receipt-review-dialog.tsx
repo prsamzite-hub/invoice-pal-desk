@@ -103,6 +103,25 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   const set = <K extends keyof ExtractedFields>(k: K, v: ExtractedFields[K]) =>
     setFields((f) => (f ? { ...f, [k]: v } : f));
 
+  const patch = (p: Partial<ExtractedFields>) => setFields((f) => (f ? { ...f, ...p } : f));
+
+  // Editing the total keeps the VAT breakdown consistent with the stored rate.
+  const setAmount = (amount: number) =>
+    setFields((f) => {
+      if (!f) return f;
+      if (f.vat_rate != null && Number.isFinite(Number(f.vat_rate))) {
+        return { ...f, amount, vat_amount: vatFromRate(amount, Number(f.vat_rate)) };
+      }
+      return { ...f, amount };
+    });
+
+  // Turning on "erhverv" suggests 25% VAT, clearly flagged as calculated.
+  const toggleBusiness = (v: boolean) => {
+    setIsBusiness(v);
+    setFields((f) => (f ? { ...f, ...resolveVat(f.amount, f, v) } : f));
+  };
+
+
   const duplicates = dupQuery.data ?? [];
 
   return (
