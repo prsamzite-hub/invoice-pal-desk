@@ -30,8 +30,8 @@ export interface ExtractedFields {
   document_type: "receipt" | "invoice";
   category: string | null;
   notes: string | null;
-  supplier_invoice_number: string | null;
-  supplier_cvr: string | null;
+  supplier_invoice_number?: string | null;
+  supplier_cvr?: string | null;
   items: LineItem[];
 }
 
@@ -257,7 +257,9 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
     due_date: f.due_date || null,
     document_type: f.document_type === "invoice" ? "invoice" : "receipt",
     category: f.category || null,
-    notes: f.notes || null,
+    notes: f.notes?.trim() || null,
+    supplier_invoice_number: f.supplier_invoice_number?.trim() || null,
+    supplier_cvr: f.supplier_cvr?.trim() || null,
     items: sanitizeItems(f.items),
   };
 }
@@ -329,6 +331,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        supplier_invoice_number: f.supplier_invoice_number ?? null,
+        supplier_cvr: f.supplier_cvr ?? null,
         original_path: data.originalPath,
         scan_path: data.scanPath,
         status: f.due_date ? "unpaid" : "paid",
@@ -362,6 +366,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         document_type: (row.document_type as "receipt" | "invoice") ?? "receipt",
         category: row.category,
         notes: row.notes,
+        supplier_invoice_number: row.supplier_invoice_number,
+        supplier_cvr: row.supplier_cvr,
         items: f.items,
         receipt_id: row.id,
         vendor_logo: vendorLogo,
@@ -456,6 +462,8 @@ async function regenerateAndStorePdf(
     document_type: (row.document_type as "receipt" | "invoice") ?? "receipt",
     category: row.category,
     notes: row.notes,
+    supplier_invoice_number: row.supplier_invoice_number,
+    supplier_cvr: row.supplier_cvr,
     items: (items ?? []).map((it: any) => ({
       description: it.description ?? "",
       quantity: it.quantity == null ? null : Number(it.quantity),
@@ -538,6 +546,12 @@ export const updateReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        ...(data.fields.supplier_invoice_number !== undefined
+          ? { supplier_invoice_number: f.supplier_invoice_number ?? null }
+          : {}),
+        ...(data.fields.supplier_cvr !== undefined
+          ? { supplier_cvr: f.supplier_cvr ?? null }
+          : {}),
         status: nextStatus,
       })
       .eq("id", data.id)
