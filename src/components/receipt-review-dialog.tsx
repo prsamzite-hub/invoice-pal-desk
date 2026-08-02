@@ -15,6 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ItemsEditor } from "@/components/items-editor";
 import { PdfCanvas } from "@/components/pdf-canvas";
 import { useLang } from "@/lib/i18n";
+import { useAppMode } from "@/lib/app-mode";
+import { Switch } from "@/components/ui/switch";
 import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
 interface Props {
@@ -31,6 +33,8 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
   const { t, tCategory } = useLang();
   const [fields, setFields] = useState<ExtractedFields | null>(null);
   const [useScan, setUseScan] = useState(true);
+  const { mode } = useAppMode();
+  const [isBusiness, setIsBusiness] = useState(false);
   const findDupFn = useServerFn(findDuplicates);
   const saveFn = useServerFn(saveReceipt);
   const listFn = useServerFn(listMyReceipts);
@@ -44,6 +48,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
     if (initial) {
       setFields({ ...initial.extracted });
       setUseScan(!!initial.scanUrl);
+      setIsBusiness(mode === "erhverv");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
@@ -71,6 +76,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           useScan,
           fields,
           lang,
+          isBusiness,
         },
       });
     },
@@ -264,6 +270,14 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                   value={fields.supplier_cvr ?? ""}
                   onChange={(e) => set("supplier_cvr", e.target.value || null)}
                 />
+              </div>
+
+              <div className="sm:col-span-2 flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 px-3 py-2.5">
+                <div className="min-w-0">
+                  <Label htmlFor="is_business" className="cursor-pointer">{t("biz.toggleLabel")}</Label>
+                  <p className="text-xs text-muted-foreground">{t("biz.toggleHint")}</p>
+                </div>
+                <Switch id="is_business" checked={isBusiness} onCheckedChange={setIsBusiness} />
               </div>
 
               <div className="sm:col-span-2">

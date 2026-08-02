@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +34,8 @@ import {
 } from "@/lib/receipts.functions";
 import { useVendorLogoByName } from "@/hooks/use-vendor-logos";
 import { useLang } from "@/lib/i18n";
+import { useAppMode } from "@/lib/app-mode";
+import { SegmentedControl } from "@/components/atoms/segmented-control";
 
 export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
@@ -50,6 +52,7 @@ export const Route = createFileRoute("/_authenticated/app/documents")({
 
 type TypeFilter = "all" | "receipt" | "invoice";
 type StatusFilter = "all" | "paid" | "unpaid" | "overdue";
+type BizFilter = "all" | "private" | "business";
 type SortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "company_asc";
 
 const CATEGORY_TONE: Record<string, "mint" | "peach" | "lavender" | "butter" | "sky"> = {
@@ -71,6 +74,7 @@ function toneFor(cat?: string | null) {
 interface EnrichedDoc extends DocumentCardData {
   notes: string | null;
   categoryRaw: string | null;
+  isBusiness: boolean;
   amountNumber: number;
   dateIso: string;
 }
@@ -81,7 +85,14 @@ function DocumentsPage() {
   const listFn = useServerFn(listMyReceipts);
   const pdfUrlFn = useServerFn(getReceiptPdfUrl);
 
+  const { mode } = useAppMode();
   const [q, setQ] = useState("");
+  const [biz, setBiz] = useState<BizFilter>("all");
+  const [bizTouched, setBizTouched] = useState(false);
+
+  useEffect(() => {
+    if (!bizTouched) setBiz(mode === "erhverv" ? "business" : "all");
+  }, [mode, bizTouched]);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [category, setCategory] = useState<string>("all");
@@ -115,6 +126,7 @@ function DocumentsPage() {
           : undefined,
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
+        isBusiness: r.is_business === true,
         vendorLogoUrl: logoFor(r.company),
       };
     });
@@ -127,6 +139,8 @@ function DocumentsPage() {
     const normalized = term.replace(/\s/g, "").replace(",", ".");
     const isAmountPrefix = /^\d+(\.\d*)?$/.test(normalized) && normalized.length > 0;
     const list = docs.filter((d) => {
+      if (biz === "business" && !d.isBusiness) return false;
+      if (biz === "private" && d.isBusiness) return false;
       if (typeFilter !== "all" && d.type !== typeFilter) return false;
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
       if (category !== "all" && d.categoryRaw !== category) return false;
@@ -164,7 +178,7 @@ function DocumentsPage() {
       }
     });
     return list;
-  }, [docs, q, typeFilter, statusFilter, category, dateFrom, dateTo, sort]);
+  }, [docs, q, biz, typeFilter, statusFilter, category, dateFrom, dateTo, sort]);
 
   const selected: DetailRow | null = useMemo(() => {
     const found = docs.find((d) => d.id === selectedId);
@@ -217,6 +231,20 @@ function DocumentsPage() {
       />
 
       <div className="flex flex-col gap-3">
+        <SegmentedControl<BizFilter>
+          className="self-start"
+          ariaLabel={t("biz.all")}
+          value={biz}
+          onChange={(v) => {
+            setBizTouched(true);
+            setBiz(v);
+          }}
+          options={[
+            { value: "all", label: t("biz.all") },
+            { value: "private", label: t("biz.private") },
+            { value: "business", label: t("biz.business") },
+          ]}
+        />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SearchBar
             value={q}

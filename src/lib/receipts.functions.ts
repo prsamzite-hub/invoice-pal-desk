@@ -302,6 +302,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
       useScan?: boolean;
       fields: ExtractedFields;
       lang?: "da" | "en";
+      isBusiness?: boolean;
     }) => {
       if (!data?.originalPath) throw new Error("Missing originalPath");
       if (!data?.fields) throw new Error("Missing fields");
@@ -310,6 +311,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         originalPath: data.originalPath,
         scanPath: useScan ? (data.scanPath ?? null) : null,
         lang: data.lang === "en" ? ("en" as const) : ("da" as const),
+        isBusiness: data.isBusiness === true,
         fields: normalizeFields(data.fields),
       };
     },
@@ -335,6 +337,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         supplier_cvr: f.supplier_cvr ?? null,
         original_path: data.originalPath,
         scan_path: data.scanPath,
+        is_business: data.isBusiness,
         status: f.due_date ? "unpaid" : "paid",
       })
       .select("*")
@@ -519,9 +522,13 @@ export const getReceiptOriginalUrl = createServerFn({ method: "POST" })
 
 export const updateReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id: string; fields: ExtractedFields }) => {
+  .inputValidator((data: { id: string; fields: ExtractedFields; isBusiness?: boolean }) => {
     if (!data?.id) throw new Error("Missing id");
-    return { id: data.id, fields: normalizeFields(data.fields) };
+    return {
+      id: data.id,
+      fields: normalizeFields(data.fields),
+      isBusiness: typeof data.isBusiness === "boolean" ? data.isBusiness : undefined,
+    };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -552,6 +559,7 @@ export const updateReceipt = createServerFn({ method: "POST" })
         ...(data.fields.supplier_cvr !== undefined
           ? { supplier_cvr: f.supplier_cvr ?? null }
           : {}),
+        ...(data.isBusiness !== undefined ? { is_business: data.isBusiness } : {}),
         status: nextStatus,
       })
       .eq("id", data.id)
