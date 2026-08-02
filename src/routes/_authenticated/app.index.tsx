@@ -115,7 +115,10 @@ function DashboardPage() {
 
     return {
       currentTotal,
+      currentVat,
+      currentExVat: currentTotal - currentVat,
       prevTotal,
+
       diff,
       pct,
       dueThisWeek,
