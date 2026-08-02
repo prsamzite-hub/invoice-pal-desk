@@ -347,7 +347,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         scanPath: useScan ? (data.scanPath ?? null) : null,
         lang: data.lang === "en" ? ("en" as const) : ("da" as const),
         isBusiness: data.isBusiness === true,
-        fields: normalizeFields(data.fields),
+        fields: normalizeFields(data.fields, data.isBusiness === true),
+
       };
     },
   )
