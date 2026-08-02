@@ -69,18 +69,26 @@ export const upsertMyBusinessProfile = createServerFn({ method: "POST" })
       const company_name = clean(data?.company_name, 120);
       if (!company_name) throw new Error("Virksomhedsnavn er påkrævet");
       const cvr = clean(data?.cvr, 8);
-      if (cvr && !/^\d{8}$/.test(cvr)) throw new Error("CVR skal være 8 cifre");
+      if (!cvr) throw new Error("CVR-nr. er påkrævet");
+      if (!/^\d{8}$/.test(cvr)) throw new Error("CVR skal være 8 cifre");
+      const address = clean(data?.address, 200);
+      if (!address) throw new Error("Adresse er påkrævet");
+      const postal_code = clean(data?.postal_code, 10);
+      if (!postal_code) throw new Error("Postnr. er påkrævet");
+      const city = clean(data?.city, 80);
+      if (!city) throw new Error("By er påkrævet");
       const email = clean(data?.email, 160);
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Ugyldig email");
       return {
         company_name,
         cvr,
-        address: clean(data?.address, 200),
-        postal_code: clean(data?.postal_code, 10),
-        city: clean(data?.city, 80),
+        address,
+        postal_code,
+        city,
         phone: clean(data?.phone, 40),
         email,
       };
+
     },
   )
   .handler(async ({ data, context }) => {
