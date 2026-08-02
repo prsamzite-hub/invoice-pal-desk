@@ -475,7 +475,7 @@ function EditReceiptDialog({
               step="0.01"
               min="0"
               value={Number.isFinite(fields.amount) ? fields.amount : 0}
-              onChange={(e) => set("amount", parseFloat(e.target.value) || 0)}
+              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
             />
           </div>
           <div>
