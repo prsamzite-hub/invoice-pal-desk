@@ -100,7 +100,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-[680px] lg:max-w-[960px]">
         <DialogHeader>
           <DialogTitle>{t("review.title")}</DialogTitle>
           <DialogDescription>
@@ -122,137 +122,136 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
           </Alert>
         )}
 
-        {(initial?.scanUrl || initial?.originalUrl) && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("review.preview")}
-              </span>
-              {initial?.scanUrl ? (
-                <div className="inline-flex overflow-hidden rounded-full border border-border text-xs">
-                  <button type="button" onClick={() => setUseScan(true)}
-                    className={`px-3 py-1 transition ${useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"}`}>
-                    {t("review.scan")}
-                  </button>
-                  <button type="button" onClick={() => setUseScan(false)}
-                    className={`px-3 py-1 transition ${!useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"}`}>
-                    {t("review.original")}
-                  </button>
-                </div>
-              ) : (
-                <span className="text-xs text-muted-foreground">{t("review.onlyOriginal")}</span>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          {(initial?.scanUrl || initial?.originalUrl) && (
+            <div className="flex min-w-0 flex-col gap-2 lg:sticky lg:top-0 lg:self-start">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("review.preview")}
+                </span>
+                {initial?.scanUrl ? (
+                  <div className="inline-flex overflow-hidden rounded-full border border-border text-xs">
+                    <button type="button" onClick={() => setUseScan(true)}
+                      className={`px-3 py-1 transition ${useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"}`}>
+                      {t("review.scan")}
+                    </button>
+                    <button type="button" onClick={() => setUseScan(false)}
+                      className={`px-3 py-1 transition ${!useScan ? "bg-foreground text-background" : "bg-background text-foreground hover:bg-muted"}`}>
+                      {t("review.original")}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{t("review.onlyOriginal")}</span>
+                )}
+              </div>
+              <div className="flex max-h-[60dvh] justify-center overflow-auto rounded-2xl border border-border bg-muted">
+                {(() => {
+                  const src = useScan && initial?.scanUrl ? initial.scanUrl : initial?.originalUrl;
+                  if (!src) return null;
+                  const isPdf =
+                    (!useScan || !initial?.scanUrl) &&
+                    (initial?.mime === "application/pdf" || /\.pdf(\?|$)/i.test(src));
+                  return isPdf ? (
+                    <PdfCanvas url={src} className="w-full" />
+                  ) : (
+                    <img src={src} alt={useScan ? t("review.scan") : t("review.original")}
+                      className="w-auto max-w-full object-contain" />
+                  );
+                })()}
+              </div>
+              {initial?.mime === "application/pdf" && initial?.originalUrl && (
+                <a href={initial.originalUrl} target="_blank" rel="noreferrer"
+                  className="text-xs font-medium text-primary hover:underline">
+                  Åbn PDF i ny fane
+                </a>
+              )}
+
+              {initial?.scanUrl && !useScan && (
+                <p className="text-xs text-muted-foreground">{t("review.originalNote")}</p>
               )}
             </div>
-            <div className="flex justify-center overflow-hidden rounded-2xl border border-border bg-muted">
-              {(() => {
-                const src = useScan && initial?.scanUrl ? initial.scanUrl : initial?.originalUrl;
-                if (!src) return null;
-                const isPdf =
-                  initial?.mime === "application/pdf" ||
-                  (!initial?.scanUrl && /\.pdf(\?|$)/i.test(src));
-                return isPdf ? (
-                  <iframe
-                    src={`${src}#toolbar=1&navpanes=0&view=FitH`}
-                    title={t("review.preview")}
-                    className="h-64 w-full bg-white"
-                  />
-                ) : (
-                  <img src={src} alt={useScan ? t("review.scan") : t("review.original")}
-                    className="max-h-64 w-auto object-contain" />
-                );
-              })()}
+          )}
+
+          <div className="flex min-w-0 flex-col gap-4">
+            {duplicates.length > 0 && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>{t("review.dup.title")}</AlertTitle>
+                <AlertDescription>
+                  {t("review.dup.desc.pre")} {duplicates.length}{" "}
+                  {duplicates.length === 1 ? t("review.dup.doc.one") : t("review.dup.doc.many")}{" "}
+                  {t("review.dup.desc.mid")} “{fields.company}” {t("review.dup.desc.on")}{" "}
+                  {fields.issued_date} {t("review.dup.desc.suffix")}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label htmlFor="company">{t("review.field.company")}</Label>
+                <CompanyCombobox id="company" value={fields.company} onChange={(v) => set("company", v)}
+                  placeholder={t("review.field.companyPh")} suggestions={companySuggestions} />
+              </div>
+
+              <div>
+                <Label htmlFor="amount">{t("review.field.amount")}</Label>
+                <Input id="amount" type="number" step="0.01" min="0"
+                  value={Number.isFinite(fields.amount) ? fields.amount : 0}
+                  onChange={(e) => set("amount", parseFloat(e.target.value) || 0)} />
+              </div>
+
+              <div>
+                <Label htmlFor="currency">{t("review.field.currency")}</Label>
+                <Select value={fields.currency} onValueChange={(v) => set("currency", v)}>
+                  <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="issued_date">{t("review.field.date")}</Label>
+                <Input id="issued_date" type="date" value={fields.issued_date ?? ""}
+                  onChange={(e) => set("issued_date", e.target.value || null)} />
+              </div>
+
+              <div>
+                <Label htmlFor="document_type">{t("review.field.type")}</Label>
+                <Select value={fields.document_type}
+                  onValueChange={(v) => set("document_type", v === "invoice" ? "invoice" : "receipt")}>
+                  <SelectTrigger id="document_type"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receipt">{t("docs.type.receipt")}</SelectItem>
+                    <SelectItem value="invoice">{t("docs.type.invoice")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="due_date">
+                  {t("review.field.due")}{" "}
+                  {fields.document_type === "receipt" && <span className="text-muted-foreground">({t("common.optional")})</span>}
+                </Label>
+                <Input id="due_date" type="date" value={fields.due_date ?? ""}
+                  onChange={(e) => set("due_date", e.target.value || null)} />
+              </div>
+
+              <div>
+                <Label htmlFor="category">{t("review.field.category")}</Label>
+                <Select value={fields.category ?? "Other"} onValueChange={(v) => set("category", v)}>
+                  <SelectTrigger id="category"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{tCategory(c)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <Label htmlFor="notes">{t("review.field.notes")}</Label>
+                <Textarea id="notes" rows={2} value={fields.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
+              </div>
             </div>
-            {initial?.mime === "application/pdf" && initial?.originalUrl && (
-              <a href={initial.originalUrl} target="_blank" rel="noreferrer"
-                className="text-xs font-medium text-primary hover:underline">
-                Åbn PDF i ny fane
-              </a>
-            )}
-
-
-            {initial?.scanUrl && !useScan && (
-              <p className="text-xs text-muted-foreground">{t("review.originalNote")}</p>
-            )}
-          </div>
-        )}
-
-        {duplicates.length > 0 && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>{t("review.dup.title")}</AlertTitle>
-            <AlertDescription>
-              {t("review.dup.desc.pre")} {duplicates.length}{" "}
-              {duplicates.length === 1 ? t("review.dup.doc.one") : t("review.dup.doc.many")}{" "}
-              {t("review.dup.desc.mid")} “{fields.company}” {t("review.dup.desc.on")}{" "}
-              {fields.issued_date} {t("review.dup.desc.suffix")}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Label htmlFor="company">{t("review.field.company")}</Label>
-            <CompanyCombobox id="company" value={fields.company} onChange={(v) => set("company", v)}
-              placeholder={t("review.field.companyPh")} suggestions={companySuggestions} />
-          </div>
-
-          <div>
-            <Label htmlFor="amount">{t("review.field.amount")}</Label>
-            <Input id="amount" type="number" step="0.01" min="0"
-              value={Number.isFinite(fields.amount) ? fields.amount : 0}
-              onChange={(e) => set("amount", parseFloat(e.target.value) || 0)} />
-          </div>
-
-          <div>
-            <Label htmlFor="currency">{t("review.field.currency")}</Label>
-            <Select value={fields.currency} onValueChange={(v) => set("currency", v)}>
-              <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="issued_date">{t("review.field.date")}</Label>
-            <Input id="issued_date" type="date" value={fields.issued_date ?? ""}
-              onChange={(e) => set("issued_date", e.target.value || null)} />
-          </div>
-
-          <div>
-            <Label htmlFor="document_type">{t("review.field.type")}</Label>
-            <Select value={fields.document_type}
-              onValueChange={(v) => set("document_type", v === "invoice" ? "invoice" : "receipt")}>
-              <SelectTrigger id="document_type"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="receipt">{t("docs.type.receipt")}</SelectItem>
-                <SelectItem value="invoice">{t("docs.type.invoice")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="due_date">
-              {t("review.field.due")}{" "}
-              {fields.document_type === "receipt" && <span className="text-muted-foreground">({t("common.optional")})</span>}
-            </Label>
-            <Input id="due_date" type="date" value={fields.due_date ?? ""}
-              onChange={(e) => set("due_date", e.target.value || null)} />
-          </div>
-
-          <div>
-            <Label htmlFor="category">{t("review.field.category")}</Label>
-            <Select value={fields.category ?? "Other"} onValueChange={(v) => set("category", v)}>
-              <SelectTrigger id="category"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{tCategory(c)}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="sm:col-span-2">
-            <Label htmlFor="notes">{t("review.field.notes")}</Label>
-            <Textarea id="notes" rows={2} value={fields.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
           </div>
         </div>
 
@@ -270,3 +269,4 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
     </Dialog>
   );
 }
+
