@@ -82,6 +82,7 @@ function DashboardPage() {
     const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     let currentTotal = 0;
+    let currentVat = 0;
     let prevTotal = 0;
     let dueThisWeek = 0;
     const upcoming: typeof rows = [];
@@ -91,8 +92,12 @@ function DashboardPage() {
       const iso = r.issued_date ?? r.created_at?.slice(0, 10) ?? "";
       const ym = ymKey(iso);
       const amt = Number(r.amount) || 0;
-      if (ym === currentMonth) currentTotal += amt;
+      if (ym === currentMonth) {
+        currentTotal += amt;
+        currentVat += Number(r.vat_amount) || 0;
+      }
       if (ym === prevMonth) prevTotal += amt;
+
 
       const status = deriveReceiptStatus({ status: r.status ?? "", due_date: r.due_date });
       if (status === "overdue") overdue.push(r);
