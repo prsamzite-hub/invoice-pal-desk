@@ -57,6 +57,7 @@ import { StatusBadge } from "@/components/atoms/status-badge";
 import { CategoryChip } from "@/components/atoms/category-chip";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { useLang } from "@/lib/i18n";
+import { Switch } from "@/components/ui/switch";
 import { PdfViewerDialog } from "./pdf-viewer-dialog";
 import type { DocumentCardData } from "@/components/atoms/document-card";
 import {
@@ -162,6 +163,7 @@ export function DocumentDetailSheet({
                     <SheetTitle className="truncate text-lg">{doc.company}</SheetTitle>
                     <SheetDescription className="text-xs">
                       {doc.type === "invoice" ? t("docs.type.invoice") : t("docs.type.receipt")}
+                      {doc.isBusiness ? ` · ${t("biz.badge")}` : ""}
                     </SheetDescription>
                   </div>
                   <StatusBadge status={doc.status} />
@@ -396,15 +398,19 @@ function EditReceiptDialog({
   });
 
   const [fields, setFields] = useState<ExtractedFields>(seed);
+  const [isBusiness, setIsBusiness] = useState<boolean>(!!doc.isBusiness);
 
   useEffect(() => {
-    if (open) setFields(seed());
+    if (open) {
+      setFields(seed());
+      setIsBusiness(!!doc.isBusiness);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, doc, itemsQuery.data]);
 
 
   const save = useMutation({
-    mutationFn: () => updateFn({ data: { id: doc.id, fields } }),
+    mutationFn: () => updateFn({ data: { id: doc.id, fields, isBusiness } }),
     onSuccess: () => {
       toast.success(t("detail.toast.updated"));
       onSaved();
@@ -513,6 +519,13 @@ function EditReceiptDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="sm:col-span-2 flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 px-3 py-2.5">
+            <div className="min-w-0">
+              <Label htmlFor="e-business" className="cursor-pointer">{t("biz.toggleLabel")}</Label>
+              <p className="text-xs text-muted-foreground">{t("biz.toggleHint")}</p>
+            </div>
+            <Switch id="e-business" checked={isBusiness} onCheckedChange={setIsBusiness} />
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="e-notes">{t("detail.edit.notes")}</Label>
