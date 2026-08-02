@@ -77,7 +77,11 @@ interface EnrichedDoc extends DocumentCardData {
   isBusiness: boolean;
   amountNumber: number;
   dateIso: string;
+  vatAmount: number | null;
+  vatRate: number | null;
+  vatIsCalculated: boolean;
 }
+
 
 function DocumentsPage() {
   const { t, tCategory } = useLang();
