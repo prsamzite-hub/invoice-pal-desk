@@ -187,7 +187,24 @@ export function DocumentDetailSheet({
                   size="xl"
                   className="mt-1 block"
                 />
+                {doc.vatAmount != null ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {t("vat.exVatShort")}{" "}
+                    <span className="font-medium text-foreground">
+                      {formatMoney(
+                        vatBreakdown(doc.amount, doc.vatAmount).exVat,
+                        doc.currency ?? "DKK",
+                      )}
+                    </span>{" "}
+                    · {t("vat.vat")}{" "}
+                    <span className="font-medium text-foreground">
+                      {formatMoney(doc.vatAmount, doc.currency ?? "DKK")}
+                    </span>
+                    {doc.vatIsCalculated ? ` (${t("vat.calculated").toLowerCase()})` : ""}
+                  </p>
+                ) : null}
               </div>
+
 
               <div className="grid grid-cols-2 gap-3">
                 <Field icon={CalendarDays} label={t("detail.date")} value={formatDate(doc.issuedDate)} />
