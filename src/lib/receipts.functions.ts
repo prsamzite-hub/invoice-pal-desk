@@ -274,13 +274,15 @@ export const findDuplicates = createServerFn({ method: "POST" })
     return (rows ?? []).filter((r) => Math.abs(Number(r.amount) - amt) < 0.01);
   });
 
-function normalizeFields(f: ExtractedFields): ExtractedFields {
+function normalizeFields(f: ExtractedFields, isBusiness = false): ExtractedFields {
   if (!f.company || f.company.trim().length === 0) throw new Error("Firma mangler");
   if (!Number.isFinite(Number(f.amount)) || Number(f.amount) <= 0) throw new Error("Beløb skal være større end 0");
   if (!f.issued_date) throw new Error("Dato mangler");
+  const amount = Number(f.amount);
+  const vat = resolveVat(amount, f, isBusiness);
   return {
     company: f.company.trim(),
-    amount: Number(f.amount),
+    amount,
     currency: (f.currency || "DKK").toUpperCase(),
     issued_date: f.issued_date,
     due_date: f.due_date || null,
@@ -289,9 +291,13 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
     notes: f.notes?.trim() || null,
     supplier_invoice_number: f.supplier_invoice_number?.trim() || null,
     supplier_cvr: f.supplier_cvr?.trim() || null,
+    vat_amount: vat.vat_amount,
+    vat_rate: vat.vat_rate,
+    vat_is_calculated: vat.vat_is_calculated,
     items: sanitizeItems(f.items),
   };
 }
+
 
 async function replaceItems(supabase: any, documentId: string, items: LineItem[]) {
   await supabase.from("document_items").delete().eq("document_id", documentId);
