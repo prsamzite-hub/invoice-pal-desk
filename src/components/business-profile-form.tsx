@@ -93,10 +93,17 @@ export function BusinessProfileForm({
   }
 
   async function save() {
+    const cvr = form.cvr.replace(/\D/g, "");
+    if (!form.company_name.trim() || !form.address.trim() || !form.postal_code.trim() || !form.city.trim()) {
+      toast.error(t("biz.requiredFields"));
+      return;
+    }
+    if (!/^\d{8}$/.test(cvr)) { toast.error(t("biz.cvrInvalid")); return; }
     setSaving(true);
     try {
-      await saveFn({ data: { ...form, cvr: form.cvr.replace(/\D/g, "") || null } });
+      await saveFn({ data: { ...form, cvr } });
       await qc.invalidateQueries({ queryKey: ["my-business"] });
+      await qc.invalidateQueries({ queryKey: ["business-gate"] });
       writeMode("erhverv");
       toast.success(t("biz.saved"));
       onSaved?.();
@@ -110,6 +117,7 @@ export function BusinessProfileForm({
     try {
       await deleteFn();
       await qc.invalidateQueries({ queryKey: ["my-business"] });
+      await qc.invalidateQueries({ queryKey: ["business-gate"] });
       setForm(EMPTY);
       writeMode("privat");
       toast.success(t("biz.deleted"));
@@ -118,10 +126,11 @@ export function BusinessProfileForm({
     } finally { setRemoving(false); }
   }
 
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field id="cvr" label={t("biz.cvr")}>
+        <Field id="cvr" label={`${t("biz.cvr")} *`}>
           <div className="flex items-center gap-2">
             <Input id="cvr" inputMode="numeric" maxLength={8} placeholder={t("biz.cvrPh")}
               value={form.cvr} onChange={set("cvr")} />
@@ -131,20 +140,20 @@ export function BusinessProfileForm({
             </Button>
           </div>
         </Field>
-        <Field id="company_name" label={t("biz.company")}>
+        <Field id="company_name" label={`${t("biz.company")} *`}>
           <Input id="company_name" value={form.company_name} onChange={set("company_name")} />
         </Field>
-        <Field id="address" label={t("biz.address")}>
+        <Field id="address" label={`${t("biz.address")} *`}>
           <Input id="address" value={form.address} onChange={set("address")} />
         </Field>
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-1">
-            <Field id="postal_code" label={t("biz.zip")}>
+            <Field id="postal_code" label={`${t("biz.zip")} *`}>
               <Input id="postal_code" value={form.postal_code} onChange={set("postal_code")} />
             </Field>
           </div>
           <div className="col-span-2">
-            <Field id="city" label={t("biz.city")}>
+            <Field id="city" label={`${t("biz.city")} *`}>
               <Input id="city" value={form.city} onChange={set("city")} />
             </Field>
           </div>

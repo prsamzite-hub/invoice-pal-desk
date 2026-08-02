@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isBusinessProfileComplete } from "@/lib/business-gate";
 
 const SELECT = "id, user_id, company_name, cvr, address, postal_code, city, phone, email";
 
@@ -15,6 +16,36 @@ export const getMyBusinessProfile = createServerFn({ method: "GET" })
     if (error) throw error;
     return data;
   });
+
+/** Server-side truth for the erhvervs-mode gate. */
+export const getMyBusinessGate = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("business_profiles")
+      .select(SELECT)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return { complete: isBusinessProfileComplete(data), hasProfile: Boolean(data) };
+  });
+
+/** Any business-only server feature must call this first. Throws when the gate isn't passed. */
+export const requireBusinessAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("business_profiles")
+      .select(SELECT)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!isBusinessProfileComplete(data)) throw new Error("BUSINESS_PROFILE_REQUIRED");
+    return data;
+  });
+
 
 function clean(v: unknown, max = 200): string | null {
   if (typeof v !== "string") return null;
@@ -38,18 +69,26 @@ export const upsertMyBusinessProfile = createServerFn({ method: "POST" })
       const company_name = clean(data?.company_name, 120);
       if (!company_name) throw new Error("Virksomhedsnavn er påkrævet");
       const cvr = clean(data?.cvr, 8);
-      if (cvr && !/^\d{8}$/.test(cvr)) throw new Error("CVR skal være 8 cifre");
+      if (!cvr) throw new Error("CVR-nr. er påkrævet");
+      if (!/^\d{8}$/.test(cvr)) throw new Error("CVR skal være 8 cifre");
+      const address = clean(data?.address, 200);
+      if (!address) throw new Error("Adresse er påkrævet");
+      const postal_code = clean(data?.postal_code, 10);
+      if (!postal_code) throw new Error("Postnr. er påkrævet");
+      const city = clean(data?.city, 80);
+      if (!city) throw new Error("By er påkrævet");
       const email = clean(data?.email, 160);
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Ugyldig email");
       return {
         company_name,
         cvr,
-        address: clean(data?.address, 200),
-        postal_code: clean(data?.postal_code, 10),
-        city: clean(data?.city, 80),
+        address,
+        postal_code,
+        city,
         phone: clean(data?.phone, 40),
         email,
       };
+
     },
   )
   .handler(async ({ data, context }) => {
