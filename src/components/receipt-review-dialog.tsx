@@ -226,8 +226,9 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 <Label htmlFor="amount">{t("review.field.amount")}</Label>
                 <Input id="amount" type="number" step="0.01" min="0"
                   value={Number.isFinite(fields.amount) ? fields.amount : 0}
-                  onChange={(e) => set("amount", parseFloat(e.target.value) || 0)} />
+                  onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} />
               </div>
+
 
               <div>
                 <Label htmlFor="currency">{t("review.field.currency")}</Label>
