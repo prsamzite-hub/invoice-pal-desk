@@ -214,10 +214,15 @@ function DashboardPage() {
             <StatCard
               label={isBiz ? t("dashboard.biz.total") : `${t("dashboard.stat.spentIn")} ${monthLabel}`}
               value={<MoneyAmount value={stats.currentTotal} size="lg" />}
-              hint={trendHint}
+              hint={
+                isBiz
+                  ? `${t("vat.exVatShort")} ${formatMoney(stats.currentExVat, "DKK", { maximumFractionDigits: 0 })} · ${trendHint}`
+                  : trendHint
+              }
               icon={stats.diff >= 0 ? TrendingUp : TrendingDown}
               tone="lavender"
             />
+
             <StatCard
               label={`${t("dashboard.stat.lastMonth")} (${prevMonthLabel})`}
               value={<MoneyAmount value={stats.prevTotal} size="lg" />}
