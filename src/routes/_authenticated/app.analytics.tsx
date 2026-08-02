@@ -327,10 +327,15 @@ function AnalyticsPage() {
         <StatCard
           label={t("analytics.stat.spent")}
           value={<MoneyAmount value={total} size="lg" />}
-          hint={`${monthRows.length} ${t("dashboard.biz.docs")}`}
+          hint={
+            totalVat > 0
+              ? `${t("vat.exVatShort")} ${formatMoney(totalExVat, "DKK", { maximumFractionDigits: 0 })} · ${monthRows.length} ${t("dashboard.biz.docs")}`
+              : `${monthRows.length} ${t("dashboard.biz.docs")}`
+          }
           icon={Wallet}
           tone="lavender"
         />
+
         <StatCard
           label={t("analytics.stat.avg")}
           value={<MoneyAmount value={Math.round(monthlyAvg)} size="lg" />}
