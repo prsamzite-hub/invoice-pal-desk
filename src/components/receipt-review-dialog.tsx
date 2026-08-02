@@ -248,6 +248,24 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 </Select>
               </div>
 
+              <div>
+                <Label htmlFor="supplier_invoice_number">Fakturanr.</Label>
+                <Input
+                  id="supplier_invoice_number"
+                  value={fields.supplier_invoice_number ?? ""}
+                  onChange={(e) => set("supplier_invoice_number", e.target.value || null)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="supplier_cvr">CVR-nr.</Label>
+                <Input
+                  id="supplier_cvr"
+                  value={fields.supplier_cvr ?? ""}
+                  onChange={(e) => set("supplier_cvr", e.target.value || null)}
+                />
+              </div>
+
               <div className="sm:col-span-2">
                 <Label htmlFor="notes">{t("review.field.notes")}</Label>
                 <Textarea id="notes" rows={2} value={fields.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
