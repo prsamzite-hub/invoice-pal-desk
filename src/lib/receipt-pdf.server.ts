@@ -18,6 +18,10 @@ export interface ReceiptPdfData {
   document_type: "receipt" | "invoice";
   category?: string | null;
   notes?: string | null;
+  /** Supplier's own invoice number from the source document. */
+  supplier_invoice_number?: string | null;
+  /** Supplier's CVR number from the source document. */
+  supplier_cvr?: string | null;
   items?: ReceiptPdfLineItem[];
   receipt_id: string;
   /** Kept for API compatibility; no longer rendered (no avatar on financial documents). */
@@ -51,6 +55,7 @@ const L = {
     uncategorized: "Ukategoriseret",
     documentId: "Dokument-ID",
     number: "Nr.",
+    invoiceNo: "Fakturanr.",
     description: "Beskrivelse",
     qty: "Antal",
     unit: "Enhedspris",
@@ -77,6 +82,7 @@ const L = {
     uncategorized: "Uncategorized",
     documentId: "Document ID",
     number: "No.",
+    invoiceNo: "Invoice no.",
     description: "Description",
     qty: "Qty",
     unit: "Unit price",
@@ -188,6 +194,15 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   let ly = partyTop - 16;
   draw(data.company || "-", { x: MARGIN, y: ly, size: HEAD, font: bold, color: INK });
   ly -= 14;
+  const supplierMeta: Array<[string, string]> = [];
+  if (data.supplier_invoice_number?.trim())
+    supplierMeta.push([t.invoiceNo, data.supplier_invoice_number.trim()]);
+  if (data.supplier_cvr?.trim()) supplierMeta.push([t.cvr, data.supplier_cvr.trim()]);
+  for (const [k, v] of supplierMeta) {
+    draw(k, { x: MARGIN, y: ly, size: 8, font, color: MUTED });
+    draw(v, { x: MARGIN + 62, y: ly, size: BODY, font, color: INK });
+    ly -= 13;
+  }
 
   // Right: own company ("Afsender")
   let ry = partyTop;
