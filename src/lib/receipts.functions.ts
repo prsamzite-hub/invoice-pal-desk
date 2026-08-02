@@ -302,6 +302,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
       useScan?: boolean;
       fields: ExtractedFields;
       lang?: "da" | "en";
+      isBusiness?: boolean;
     }) => {
       if (!data?.originalPath) throw new Error("Missing originalPath");
       if (!data?.fields) throw new Error("Missing fields");
@@ -310,6 +311,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         originalPath: data.originalPath,
         scanPath: useScan ? (data.scanPath ?? null) : null,
         lang: data.lang === "en" ? ("en" as const) : ("da" as const),
+        isBusiness: data.isBusiness === true,
         fields: normalizeFields(data.fields),
       };
     },
