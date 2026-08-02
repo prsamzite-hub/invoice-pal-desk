@@ -30,6 +30,8 @@ export interface ExtractedFields {
   document_type: "receipt" | "invoice";
   category: string | null;
   notes: string | null;
+  supplier_invoice_number: string | null;
+  supplier_cvr: string | null;
   items: LineItem[];
 }
 
