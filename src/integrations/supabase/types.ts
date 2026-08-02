@@ -290,6 +290,8 @@ export type Database = {
           pdf_path: string | null
           scan_path: string | null
           status: string
+          supplier_cvr: string | null
+          supplier_invoice_number: string | null
           updated_at: string
           user_id: string
         }
@@ -308,6 +310,8 @@ export type Database = {
           pdf_path?: string | null
           scan_path?: string | null
           status?: string
+          supplier_cvr?: string | null
+          supplier_invoice_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -326,6 +330,8 @@ export type Database = {
           pdf_path?: string | null
           scan_path?: string | null
           status?: string
+          supplier_cvr?: string | null
+          supplier_invoice_number?: string | null
           updated_at?: string
           user_id?: string
         }
