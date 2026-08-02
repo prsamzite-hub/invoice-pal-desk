@@ -203,6 +203,12 @@ function AnalyticsPage() {
   }, [monthRows]);
 
   const total = scaledCategories.reduce((s, c) => s + c.value, 0);
+  const totalVat = useMemo(
+    () => monthRows.reduce((s, r) => s + (Number(r.vat_amount) || 0), 0),
+    [monthRows],
+  );
+  const totalExVat = total - totalVat;
+
 
   const updatePref = <K extends keyof Prefs>(key: K, value: Prefs[K]) => {
     setPrefs((prev) => {
