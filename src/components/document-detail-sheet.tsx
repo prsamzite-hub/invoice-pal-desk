@@ -546,13 +546,22 @@ function EditReceiptDialog({
               </SelectContent>
             </Select>
           </div>
+          <div className="sm:col-span-2">
+            <VatFields
+              idPrefix="e-vat"
+              currency={fields.currency}
+              values={fields}
+              onChange={patch}
+            />
+          </div>
           <div className="sm:col-span-2 flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 px-3 py-2.5">
             <div className="min-w-0">
               <Label htmlFor="e-business" className="cursor-pointer">{t("biz.toggleLabel")}</Label>
               <p className="text-xs text-muted-foreground">{t("biz.toggleHint")}</p>
             </div>
-            <Switch id="e-business" checked={isBusiness} onCheckedChange={setIsBusiness} />
+            <Switch id="e-business" checked={isBusiness} onCheckedChange={toggleBusiness} />
           </div>
+
           <div className="sm:col-span-2">
             <Label htmlFor="e-notes">{t("detail.edit.notes")}</Label>
             <Textarea
