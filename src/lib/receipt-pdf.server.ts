@@ -221,7 +221,7 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const meta: Array<[string, string]> = [
     [t.dateIssued, fmtDate(data.date, lang)],
     ...(data.due_date
-      ? ([[t.dueDate, fmtDate(data.due_date, lang)]] as Array<[string, string]>)
+      ? ([] as Array<[string, string]>) // shown in the highlighted callout near the total
       : []),
     [t.category, data.category || t.uncategorized],
   ];
@@ -295,7 +295,7 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   ty -= 22;
   page.drawRectangle({ x: boxX, y: ty - 8, width: boxW, height: 28, color: SOFT });
   draw(t.grandTotal, { x: boxX + 8, y: ty, size: 9, font: bold, color: INK });
-  drawRight(fmtMoney(gross, currency, lang), right - 8, ty - 2, 14, bold, INK);
+  drawRight(fmtMoney(gross, currency, lang), right - 8, ty - 1, 13, bold, INK);
 
   // Forfaldsdato highlighted, left of the totals
   if (data.due_date) {
