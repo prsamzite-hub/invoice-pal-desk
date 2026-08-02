@@ -30,6 +30,8 @@ export interface ExtractedFields {
   document_type: "receipt" | "invoice";
   category: string | null;
   notes: string | null;
+  supplier_invoice_number?: string | null;
+  supplier_cvr?: string | null;
   items: LineItem[];
 }
 
@@ -131,6 +133,8 @@ export const extractReceipt = createServerFn({ method: "POST" })
       document_type: "receipt",
       category: "Other",
       notes: null,
+      supplier_invoice_number: null,
+      supplier_cvr: null,
       items: [],
     };
 
@@ -189,15 +193,10 @@ export const extractReceipt = createServerFn({ method: "POST" })
       const type: "receipt" | "invoice" =
         invoiceNo || dueDate ? "invoice" : ex.document_type === "invoice" ? "invoice" : "receipt";
 
-      const noteParts = [
-        ex.notes?.trim() || "",
-        invoiceNo ? `Fakturanr.: ${invoiceNo}` : "",
-        ex.supplier_cvr ? `CVR: ${ex.supplier_cvr}` : "",
-        Number.isFinite(Number(ex.amount_excl_vat)) && ex.amount_excl_vat
-          ? `Ekskl. moms: ${ex.amount_excl_vat}`
-          : "",
-        Number.isFinite(Number(ex.vat_amount)) && ex.vat_amount ? `Moms: ${ex.vat_amount}` : "",
-      ].filter(Boolean);
+      // Bemærkninger must contain ONLY genuine free text from the document —
+      // structured values live in their own columns.
+      const freeNote = ex.notes?.trim() || null;
+      const cvr = ex.supplier_cvr?.toString().trim() || null;
 
       return {
         ...base,
@@ -209,7 +208,9 @@ export const extractReceipt = createServerFn({ method: "POST" })
           due_date: dueDate,
           document_type: type,
           category: ex.category || "Other",
-          notes: noteParts.length > 0 ? noteParts.join(" · ") : null,
+          notes: freeNote,
+          supplier_invoice_number: invoiceNo,
+          supplier_cvr: cvr,
           items: sanitizeItems(ex.items),
         },
         extractionOk: true,
@@ -256,7 +257,9 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
     due_date: f.due_date || null,
     document_type: f.document_type === "invoice" ? "invoice" : "receipt",
     category: f.category || null,
-    notes: f.notes || null,
+    notes: f.notes?.trim() || null,
+    supplier_invoice_number: f.supplier_invoice_number?.trim() || null,
+    supplier_cvr: f.supplier_cvr?.trim() || null,
     items: sanitizeItems(f.items),
   };
 }
@@ -328,6 +331,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        supplier_invoice_number: f.supplier_invoice_number ?? null,
+        supplier_cvr: f.supplier_cvr ?? null,
         original_path: data.originalPath,
         scan_path: data.scanPath,
         status: f.due_date ? "unpaid" : "paid",
@@ -361,6 +366,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         document_type: (row.document_type as "receipt" | "invoice") ?? "receipt",
         category: row.category,
         notes: row.notes,
+        supplier_invoice_number: row.supplier_invoice_number,
+        supplier_cvr: row.supplier_cvr,
         items: f.items,
         receipt_id: row.id,
         vendor_logo: vendorLogo,
@@ -455,6 +462,8 @@ async function regenerateAndStorePdf(
     document_type: (row.document_type as "receipt" | "invoice") ?? "receipt",
     category: row.category,
     notes: row.notes,
+    supplier_invoice_number: row.supplier_invoice_number,
+    supplier_cvr: row.supplier_cvr,
     items: (items ?? []).map((it: any) => ({
       description: it.description ?? "",
       quantity: it.quantity == null ? null : Number(it.quantity),
@@ -537,6 +546,12 @@ export const updateReceipt = createServerFn({ method: "POST" })
         document_type: f.document_type,
         category: f.category,
         notes: f.notes,
+        ...(data.fields.supplier_invoice_number !== undefined
+          ? { supplier_invoice_number: f.supplier_invoice_number ?? null }
+          : {}),
+        ...(data.fields.supplier_cvr !== undefined
+          ? { supplier_cvr: f.supplier_cvr ?? null }
+          : {}),
         status: nextStatus,
       })
       .eq("id", data.id)
