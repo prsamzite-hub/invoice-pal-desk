@@ -32,8 +32,15 @@ export interface ExtractedFields {
   notes: string | null;
   supplier_invoice_number?: string | null;
   supplier_cvr?: string | null;
+  /** Moms i kroner. Null when the document states no VAT. */
+  vat_amount?: number | null;
+  /** Momssats i procent (25 = 25%). */
+  vat_rate?: number | null;
+  /** True when the VAT was calculated from the total, not read from the document. */
+  vat_is_calculated?: boolean;
   items: LineItem[];
 }
+
 
 export interface ExtractResult {
   originalPath: string;
