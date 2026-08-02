@@ -82,6 +82,7 @@ function DashboardPage() {
     const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     let currentTotal = 0;
+    let currentVat = 0;
     let prevTotal = 0;
     let dueThisWeek = 0;
     const upcoming: typeof rows = [];
@@ -91,8 +92,12 @@ function DashboardPage() {
       const iso = r.issued_date ?? r.created_at?.slice(0, 10) ?? "";
       const ym = ymKey(iso);
       const amt = Number(r.amount) || 0;
-      if (ym === currentMonth) currentTotal += amt;
+      if (ym === currentMonth) {
+        currentTotal += amt;
+        currentVat += Number(r.vat_amount) || 0;
+      }
       if (ym === prevMonth) prevTotal += amt;
+
 
       const status = deriveReceiptStatus({ status: r.status ?? "", due_date: r.due_date });
       if (status === "overdue") overdue.push(r);
@@ -110,7 +115,10 @@ function DashboardPage() {
 
     return {
       currentTotal,
+      currentVat,
+      currentExVat: currentTotal - currentVat,
       prevTotal,
+
       diff,
       pct,
       dueThisWeek,
@@ -206,10 +214,15 @@ function DashboardPage() {
             <StatCard
               label={isBiz ? t("dashboard.biz.total") : `${t("dashboard.stat.spentIn")} ${monthLabel}`}
               value={<MoneyAmount value={stats.currentTotal} size="lg" />}
-              hint={trendHint}
+              hint={
+                isBiz
+                  ? `${t("vat.exVatShort")} ${formatMoney(stats.currentExVat, "DKK", { maximumFractionDigits: 0 })} · ${trendHint}`
+                  : trendHint
+              }
               icon={stats.diff >= 0 ? TrendingUp : TrendingDown}
               tone="lavender"
             />
+
             <StatCard
               label={`${t("dashboard.stat.lastMonth")} (${prevMonthLabel})`}
               value={<MoneyAmount value={stats.prevTotal} size="lg" />}

@@ -18,6 +18,9 @@ import { useLang } from "@/lib/i18n";
 import { useAppMode } from "@/lib/app-mode";
 import { Switch } from "@/components/ui/switch";
 import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
+import { VatFields } from "@/components/vat-fields";
+import { resolveVat, vatFromRate } from "@/lib/vat";
+
 
 interface Props {
   open: boolean;
@@ -102,6 +105,25 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
 
   const set = <K extends keyof ExtractedFields>(k: K, v: ExtractedFields[K]) =>
     setFields((f) => (f ? { ...f, [k]: v } : f));
+
+  const patch = (p: Partial<ExtractedFields>) => setFields((f) => (f ? { ...f, ...p } : f));
+
+  // Editing the total keeps the VAT breakdown consistent with the stored rate.
+  const setAmount = (amount: number) =>
+    setFields((f) => {
+      if (!f) return f;
+      if (f.vat_rate != null && Number.isFinite(Number(f.vat_rate))) {
+        return { ...f, amount, vat_amount: vatFromRate(amount, Number(f.vat_rate)) };
+      }
+      return { ...f, amount };
+    });
+
+  // Turning on "erhverv" suggests 25% VAT, clearly flagged as calculated.
+  const toggleBusiness = (v: boolean) => {
+    setIsBusiness(v);
+    setFields((f) => (f ? { ...f, ...resolveVat(f.amount, f, v) } : f));
+  };
+
 
   const duplicates = dupQuery.data ?? [];
 
@@ -204,8 +226,9 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 <Label htmlFor="amount">{t("review.field.amount")}</Label>
                 <Input id="amount" type="number" step="0.01" min="0"
                   value={Number.isFinite(fields.amount) ? fields.amount : 0}
-                  onChange={(e) => set("amount", parseFloat(e.target.value) || 0)} />
+                  onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} />
               </div>
+
 
               <div>
                 <Label htmlFor="currency">{t("review.field.currency")}</Label>
@@ -272,13 +295,23 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 />
               </div>
 
+              <div className="sm:col-span-2">
+                <VatFields
+                  idPrefix="r-vat"
+                  currency={fields.currency}
+                  values={fields}
+                  onChange={patch}
+                />
+              </div>
+
               <div className="sm:col-span-2 flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 px-3 py-2.5">
                 <div className="min-w-0">
                   <Label htmlFor="is_business" className="cursor-pointer">{t("biz.toggleLabel")}</Label>
                   <p className="text-xs text-muted-foreground">{t("biz.toggleHint")}</p>
                 </div>
-                <Switch id="is_business" checked={isBusiness} onCheckedChange={setIsBusiness} />
+                <Switch id="is_business" checked={isBusiness} onCheckedChange={toggleBusiness} />
               </div>
+
 
               <div className="sm:col-span-2">
                 <Label htmlFor="notes">{t("review.field.notes")}</Label>

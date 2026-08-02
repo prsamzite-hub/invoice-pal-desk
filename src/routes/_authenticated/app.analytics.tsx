@@ -203,6 +203,12 @@ function AnalyticsPage() {
   }, [monthRows]);
 
   const total = scaledCategories.reduce((s, c) => s + c.value, 0);
+  const totalVat = useMemo(
+    () => monthRows.reduce((s, r) => s + (Number(r.vat_amount) || 0), 0),
+    [monthRows],
+  );
+  const totalExVat = total - totalVat;
+
 
   const updatePref = <K extends keyof Prefs>(key: K, value: Prefs[K]) => {
     setPrefs((prev) => {
@@ -321,10 +327,15 @@ function AnalyticsPage() {
         <StatCard
           label={t("analytics.stat.spent")}
           value={<MoneyAmount value={total} size="lg" />}
-          hint={`${monthRows.length} ${t("dashboard.biz.docs")}`}
+          hint={
+            totalVat > 0
+              ? `${t("vat.exVatShort")} ${formatMoney(totalExVat, "DKK", { maximumFractionDigits: 0 })} · ${monthRows.length} ${t("dashboard.biz.docs")}`
+              : `${monthRows.length} ${t("dashboard.biz.docs")}`
+          }
           icon={Wallet}
           tone="lavender"
         />
+
         <StatCard
           label={t("analytics.stat.avg")}
           value={<MoneyAmount value={Math.round(monthlyAvg)} size="lg" />}

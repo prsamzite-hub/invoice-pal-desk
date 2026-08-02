@@ -77,7 +77,11 @@ interface EnrichedDoc extends DocumentCardData {
   isBusiness: boolean;
   amountNumber: number;
   dateIso: string;
+  vatAmount: number | null;
+  vatRate: number | null;
+  vatIsCalculated: boolean;
 }
+
 
 function DocumentsPage() {
   const { t, tCategory } = useLang();
@@ -127,7 +131,11 @@ function DocumentsPage() {
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
         isBusiness: r.is_business === true,
+        vatAmount: r.vat_amount == null ? null : Number(r.vat_amount),
+        vatRate: r.vat_rate == null ? null : Number(r.vat_rate),
+        vatIsCalculated: r.vat_is_calculated === true,
         vendorLogoUrl: logoFor(r.company),
+
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

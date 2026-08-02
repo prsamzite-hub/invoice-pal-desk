@@ -21,7 +21,9 @@ export interface ExtractedDocument {
   supplier_cvr?: string | null;
   amount_excl_vat?: number | null;
   vat_amount?: number | null;
+  vat_rate?: number | null;
   items?: ExtractedLineItem[];
+
 }
 
 const EXTRACT_SYS =
@@ -29,7 +31,8 @@ const EXTRACT_SYS =
   "Read carefully, including small/faded print. Company is the supplier/merchant brand (e.g. 'BR', 'Netto', 'Rema 1000'), not an address line. " +
   "Numbers may use comma as decimal separator (e.g. '74,25' = 74.25) and dot as thousands separator ('1.234,50' = 1234.50). Convert all amounts to numbers with a dot. " +
   "amount = the final total the customer must pay, incl. VAT/moms (I alt / Total inkl. moms). " +
-  "amount_excl_vat = subtotal excluding VAT (ekskl. moms), vat_amount = the VAT/moms amount. " +
+  "amount_excl_vat = subtotal excluding VAT (ekskl. moms), vat_amount = the VAT/moms amount stated on the document (e.g. 'Moms 25%', 'heraf moms'). " +
+  "vat_rate = the VAT percentage stated on the document as a number (25 for 'Moms 25%'). Set vat_amount and vat_rate to null when the document states no VAT — never guess. " +
   "invoice_number = Fakturanr./Faktura nr./Invoice no. supplier_cvr = the supplier's 8-digit CVR/VAT number. " +
   "DUE DATE RULE: due_date must ONLY come from a field labelled 'Forfaldsdato', 'Betalingsdato', 'Betalingsfrist', 'Sidste rettidige betaling' or 'Due date'. " +
   "NEVER use the invoice date (Fakturadato), order date or delivery date (Leveringsdato) as due_date. If no such label exists, set due_date to null. " +
@@ -38,7 +41,8 @@ const EXTRACT_SYS =
   "Extract every purchased line item with its description and line total; include quantity and unit price when visible. Discounts/rabat can be negative line items. " +
   "Respond with JSON ONLY matching: " +
   '{"company":string,"amount":number,"currency":string,"date":"YYYY-MM-DD","due_date":"YYYY-MM-DD"|null,"document_type":"receipt"|"invoice","category":string,"notes":string|null,' +
-  '"invoice_number":string|null,"supplier_cvr":string|null,"amount_excl_vat":number|null,"vat_amount":number|null,' +
+  '"invoice_number":string|null,"supplier_cvr":string|null,"amount_excl_vat":number|null,"vat_amount":number|null,"vat_rate":number|null,' +
+
   '"items":[{"description":string,"quantity":number|null,"unit_price":number|null,"total":number}]}. ' +
   "Use DKK if currency unclear. " +
   "category ∈ {Groceries, Utilities, Subscriptions, Dining, Transport, Shopping, Health, Other}.";

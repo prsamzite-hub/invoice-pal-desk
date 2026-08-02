@@ -71,12 +71,19 @@ import {
   type ExtractedFields,
   type LineItem,
 } from "@/lib/receipts.functions";
+import { VatFields } from "@/components/vat-fields";
+import { resolveVat, vatBreakdown, vatFromRate } from "@/lib/vat";
+
 
 const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
 export interface DetailRow extends DocumentCardData {
   notes?: string | null;
+  vatAmount?: number | null;
+  vatRate?: number | null;
+  vatIsCalculated?: boolean;
 }
+
 
 export function DocumentDetailSheet({
   doc,
@@ -180,7 +187,24 @@ export function DocumentDetailSheet({
                   size="xl"
                   className="mt-1 block"
                 />
+                {doc.vatAmount != null ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {t("vat.exVatShort")}{" "}
+                    <span className="font-medium text-foreground">
+                      {formatMoney(
+                        vatBreakdown(doc.amount, doc.vatAmount).exVat,
+                        doc.currency ?? "DKK",
+                      )}
+                    </span>{" "}
+                    · {t("vat.vat")}{" "}
+                    <span className="font-medium text-foreground">
+                      {formatMoney(doc.vatAmount, doc.currency ?? "DKK")}
+                    </span>
+                    {doc.vatIsCalculated ? ` (${t("vat.calculated").toLowerCase()})` : ""}
+                  </p>
+                ) : null}
               </div>
+
 
               <div className="grid grid-cols-2 gap-3">
                 <Field icon={CalendarDays} label={t("detail.date")} value={formatDate(doc.issuedDate)} />
@@ -394,8 +418,12 @@ function EditReceiptDialog({
     document_type: doc.type,
     category: doc.category?.label ?? null,
     notes: doc.notes ?? null,
+    vat_amount: doc.vatAmount ?? null,
+    vat_rate: doc.vatRate ?? null,
+    vat_is_calculated: doc.vatIsCalculated === true,
     items: itemsQuery.data ?? [],
   });
+
 
   const [fields, setFields] = useState<ExtractedFields>(seed);
   const [isBusiness, setIsBusiness] = useState<boolean>(!!doc.isBusiness);
@@ -424,6 +452,21 @@ function EditReceiptDialog({
   const set = <K extends keyof ExtractedFields>(k: K, v: ExtractedFields[K]) =>
     setFields((f) => ({ ...f, [k]: v }));
 
+  const patch = (p: Partial<ExtractedFields>) => setFields((f) => ({ ...f, ...p }));
+
+  const setAmount = (amount: number) =>
+    setFields((f) =>
+      f.vat_rate != null && Number.isFinite(Number(f.vat_rate))
+        ? { ...f, amount, vat_amount: vatFromRate(amount, Number(f.vat_rate)) }
+        : { ...f, amount },
+    );
+
+  const toggleBusiness = (v: boolean) => {
+    setIsBusiness(v);
+    setFields((f) => ({ ...f, ...resolveVat(f.amount, f, v) }));
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
@@ -449,7 +492,7 @@ function EditReceiptDialog({
               step="0.01"
               min="0"
               value={Number.isFinite(fields.amount) ? fields.amount : 0}
-              onChange={(e) => set("amount", parseFloat(e.target.value) || 0)}
+              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
             />
           </div>
           <div>
@@ -520,13 +563,22 @@ function EditReceiptDialog({
               </SelectContent>
             </Select>
           </div>
+          <div className="sm:col-span-2">
+            <VatFields
+              idPrefix="e-vat"
+              currency={fields.currency}
+              values={fields}
+              onChange={patch}
+            />
+          </div>
           <div className="sm:col-span-2 flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 px-3 py-2.5">
             <div className="min-w-0">
               <Label htmlFor="e-business" className="cursor-pointer">{t("biz.toggleLabel")}</Label>
               <p className="text-xs text-muted-foreground">{t("biz.toggleHint")}</p>
             </div>
-            <Switch id="e-business" checked={isBusiness} onCheckedChange={setIsBusiness} />
+            <Switch id="e-business" checked={isBusiness} onCheckedChange={toggleBusiness} />
           </div>
+
           <div className="sm:col-span-2">
             <Label htmlFor="e-notes">{t("detail.edit.notes")}</Label>
             <Textarea

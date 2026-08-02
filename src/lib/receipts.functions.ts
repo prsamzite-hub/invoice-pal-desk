@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
+import { rateFromVat, resolveVat } from "./vat";
+
 
 export const CATEGORIES = [
   "Groceries",
@@ -32,8 +34,15 @@ export interface ExtractedFields {
   notes: string | null;
   supplier_invoice_number?: string | null;
   supplier_cvr?: string | null;
+  /** Moms i kroner. Null when the document states no VAT. */
+  vat_amount?: number | null;
+  /** Momssats i procent (25 = 25%). */
+  vat_rate?: number | null;
+  /** True when the VAT was calculated from the total, not read from the document. */
+  vat_is_calculated?: boolean;
   items: LineItem[];
 }
+
 
 export interface ExtractResult {
   originalPath: string;
@@ -135,8 +144,13 @@ export const extractReceipt = createServerFn({ method: "POST" })
       notes: null,
       supplier_invoice_number: null,
       supplier_cvr: null,
+      vat_amount: null,
+      vat_rate: null,
+      vat_is_calculated: false,
       items: [],
     };
+
+
 
     const base = { originalPath, scanPath, originalUrl, scanUrl, mime };
 
@@ -198,11 +212,22 @@ export const extractReceipt = createServerFn({ method: "POST" })
       const freeNote = ex.notes?.trim() || null;
       const cvr = ex.supplier_cvr?.toString().trim() || null;
 
+      // VAT is only taken from the document here — never guessed.
+      const statedVat =
+        ex.vat_amount != null && Number.isFinite(Number(ex.vat_amount))
+          ? Number(ex.vat_amount)
+          : null;
+      const statedRate =
+        ex.vat_rate != null && Number.isFinite(Number(ex.vat_rate)) ? Number(ex.vat_rate) : null;
+      const gross = Number(ex.amount) || 0;
+      const derivedRate =
+        statedVat != null && statedRate == null ? rateFromVat(gross, statedVat) : statedRate;
+
       return {
         ...base,
         extracted: {
           company: ex.company || "",
-          amount: Number(ex.amount) || 0,
+          amount: gross,
           currency: ex.currency || "DKK",
           issued_date: ex.date || null,
           due_date: dueDate,
@@ -211,8 +236,12 @@ export const extractReceipt = createServerFn({ method: "POST" })
           notes: freeNote,
           supplier_invoice_number: invoiceNo,
           supplier_cvr: cvr,
+          vat_amount: statedVat,
+          vat_rate: derivedRate,
+          vat_is_calculated: false,
           items: sanitizeItems(ex.items),
         },
+
         extractionOk: true,
       };
     } catch (e) {
@@ -245,13 +274,15 @@ export const findDuplicates = createServerFn({ method: "POST" })
     return (rows ?? []).filter((r) => Math.abs(Number(r.amount) - amt) < 0.01);
   });
 
-function normalizeFields(f: ExtractedFields): ExtractedFields {
+function normalizeFields(f: ExtractedFields, isBusiness = false): ExtractedFields {
   if (!f.company || f.company.trim().length === 0) throw new Error("Firma mangler");
   if (!Number.isFinite(Number(f.amount)) || Number(f.amount) <= 0) throw new Error("Beløb skal være større end 0");
   if (!f.issued_date) throw new Error("Dato mangler");
+  const amount = Number(f.amount);
+  const vat = resolveVat(amount, f, isBusiness);
   return {
     company: f.company.trim(),
-    amount: Number(f.amount),
+    amount,
     currency: (f.currency || "DKK").toUpperCase(),
     issued_date: f.issued_date,
     due_date: f.due_date || null,
@@ -260,9 +291,13 @@ function normalizeFields(f: ExtractedFields): ExtractedFields {
     notes: f.notes?.trim() || null,
     supplier_invoice_number: f.supplier_invoice_number?.trim() || null,
     supplier_cvr: f.supplier_cvr?.trim() || null,
+    vat_amount: vat.vat_amount,
+    vat_rate: vat.vat_rate,
+    vat_is_calculated: vat.vat_is_calculated,
     items: sanitizeItems(f.items),
   };
 }
+
 
 async function replaceItems(supabase: any, documentId: string, items: LineItem[]) {
   await supabase.from("document_items").delete().eq("document_id", documentId);
@@ -312,7 +347,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         scanPath: useScan ? (data.scanPath ?? null) : null,
         lang: data.lang === "en" ? ("en" as const) : ("da" as const),
         isBusiness: data.isBusiness === true,
-        fields: normalizeFields(data.fields),
+        fields: normalizeFields(data.fields, data.isBusiness === true),
+
       };
     },
   )
@@ -335,6 +371,10 @@ export const saveReceipt = createServerFn({ method: "POST" })
         notes: f.notes,
         supplier_invoice_number: f.supplier_invoice_number ?? null,
         supplier_cvr: f.supplier_cvr ?? null,
+        vat_amount: f.vat_amount ?? null,
+        vat_rate: f.vat_rate ?? null,
+        vat_is_calculated: f.vat_is_calculated === true,
+
         original_path: data.originalPath,
         scan_path: data.scanPath,
         is_business: data.isBusiness,
@@ -371,6 +411,10 @@ export const saveReceipt = createServerFn({ method: "POST" })
         notes: row.notes,
         supplier_invoice_number: row.supplier_invoice_number,
         supplier_cvr: row.supplier_cvr,
+        vat_amount: row.vat_amount == null ? null : Number(row.vat_amount),
+        vat_rate: row.vat_rate == null ? null : Number(row.vat_rate),
+        vat_is_calculated: row.vat_is_calculated === true,
+
         items: f.items,
         receipt_id: row.id,
         vendor_logo: vendorLogo,
@@ -467,6 +511,10 @@ async function regenerateAndStorePdf(
     notes: row.notes,
     supplier_invoice_number: row.supplier_invoice_number,
     supplier_cvr: row.supplier_cvr,
+    vat_amount: row.vat_amount == null ? null : Number(row.vat_amount),
+    vat_rate: row.vat_rate == null ? null : Number(row.vat_rate),
+    vat_is_calculated: row.vat_is_calculated === true,
+
     items: (items ?? []).map((it: any) => ({
       description: it.description ?? "",
       quantity: it.quantity == null ? null : Number(it.quantity),
@@ -526,7 +574,7 @@ export const updateReceipt = createServerFn({ method: "POST" })
     if (!data?.id) throw new Error("Missing id");
     return {
       id: data.id,
-      fields: normalizeFields(data.fields),
+      fields: normalizeFields(data.fields, data.isBusiness === true),
       isBusiness: typeof data.isBusiness === "boolean" ? data.isBusiness : undefined,
     };
   })
@@ -560,6 +608,10 @@ export const updateReceipt = createServerFn({ method: "POST" })
           ? { supplier_cvr: f.supplier_cvr ?? null }
           : {}),
         ...(data.isBusiness !== undefined ? { is_business: data.isBusiness } : {}),
+        vat_amount: f.vat_amount ?? null,
+        vat_rate: f.vat_rate ?? null,
+        vat_is_calculated: f.vat_is_calculated === true,
+
         status: nextStatus,
       })
       .eq("id", data.id)
