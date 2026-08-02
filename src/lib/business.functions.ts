@@ -106,18 +106,47 @@ export const lookupCvr = createServerFn({ method: "POST" })
     recent.push(now);
     hits.set(context.userId, recent);
 
-    const res = await fetch(
-      `https://cvrapi.dk/api?search=${data.cvr}&country=dk`,
-      { headers: { "User-Agent": "Kvitregn/1.0 (kvitregn.dk; kontakt@kvitregn.dk)" } },
-    );
+    let res: Response;
+    try {
+      res = await fetch(
+        `https://cvrapi.dk/api?search=${data.cvr}&country=dk`,
+        { headers: { "User-Agent": "Kvitregn/1.0 (kvitregn.dk; kontakt@kvitregn.dk)", Accept: "application/json" } },
+      );
+    } catch (e) {
+      console.error("[cvr] network error", e);
+      throw new Error("LOOKUP_FAILED");
+    }
     if (res.status === 404) {
       cvrCache.set(data.cvr, { at: Date.now(), value: null });
       return null;
     }
-    if (!res.ok) throw new Error("CVR-opslag mislykkedes");
-    const json = (await res.json()) as Record<string, unknown>;
+    const raw = await res.text();
+    if (!res.ok) {
+      console.error("[cvr] http", res.status, raw.slice(0, 300));
+      throw new Error("LOOKUP_FAILED");
+    }
+    let json: Record<string, unknown>;
+    try {
+      json = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      console.error("[cvr] unparseable body", raw.slice(0, 300));
+      throw new Error("LOOKUP_FAILED");
+    }
+    if (json["error"]) {
+      console.error("[cvr] api error", json["error"]);
+      if (String(json["error"]).toUpperCase().includes("NOT_FOUND")) {
+        cvrCache.set(data.cvr, { at: Date.now(), value: null });
+        return null;
+      }
+      throw new Error("LOOKUP_FAILED");
+    }
+    const name = String(json["name"] ?? "").trim();
+    if (!name) {
+      cvrCache.set(data.cvr, { at: Date.now(), value: null });
+      return null;
+    }
     const value: CvrResult = {
-      company_name: String(json["name"] ?? ""),
+      company_name: name,
       cvr: data.cvr,
       address: (json["address"] as string) ?? null,
       postal_code: json["zipcode"] ? String(json["zipcode"]) : null,
@@ -128,3 +157,4 @@ export const lookupCvr = createServerFn({ method: "POST" })
     cvrCache.set(data.cvr, { at: Date.now(), value });
     return value;
   });
+

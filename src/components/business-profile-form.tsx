@@ -85,8 +85,11 @@ export function BusinessProfileForm({
         email: r.email ?? f.email,
       }));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("biz.notFound"));
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("For mange opslag")) toast.error(msg);
+      else toast.error(t("biz.lookupFailed"));
     } finally { setLooking(false); }
+
   }
 
   async function save() {
