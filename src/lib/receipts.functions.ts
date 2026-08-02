@@ -146,6 +146,8 @@ export const extractReceipt = createServerFn({ method: "POST" })
       vat_rate: null,
       vat_is_calculated: false,
       items: [],
+    };
+
 
 
     const base = { originalPath, scanPath, originalUrl, scanUrl, mime };
