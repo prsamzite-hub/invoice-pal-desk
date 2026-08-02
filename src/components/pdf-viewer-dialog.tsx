@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { PdfCanvas } from "@/components/pdf-canvas";
 
 export function PdfViewerDialog({
   open,
@@ -13,7 +14,7 @@ export function PdfViewerDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl overflow-hidden rounded-2xl p-0 sm:p-0">
+      <DialogContent className="overflow-hidden rounded-2xl p-0 sm:max-w-[680px] sm:p-0 lg:max-w-[960px]">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <DialogTitle className="truncate text-sm font-semibold">{title}</DialogTitle>
           {url ? (
@@ -23,20 +24,16 @@ export function PdfViewerDialog({
               rel="noreferrer"
               className="text-xs font-medium text-primary hover:underline"
             >
-              Open in new tab
+              Åbn PDF i ny fane
             </a>
           ) : null}
         </div>
-        <div className="bg-muted">
+        <div className="max-h-[75dvh] overflow-auto bg-muted">
           {url ? (
-            <iframe
-              src={`${url}#toolbar=1&navpanes=0`}
-              title={title}
-              className="h-[70dvh] w-full rounded-b-2xl bg-white"
-            />
+            <PdfCanvas url={url} className="w-full" maxPages={10} />
           ) : (
             <div className="flex h-[50dvh] items-center justify-center text-sm text-muted-foreground">
-              No file attached yet.
+              Ingen fil vedhæftet endnu.
             </div>
           )}
         </div>
@@ -44,3 +41,4 @@ export function PdfViewerDialog({
     </Dialog>
   );
 }
+
