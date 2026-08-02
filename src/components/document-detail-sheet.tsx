@@ -71,6 +71,9 @@ import {
   type ExtractedFields,
   type LineItem,
 } from "@/lib/receipts.functions";
+import { VatFields } from "@/components/vat-fields";
+import { resolveVat, vatBreakdown, vatFromRate } from "@/lib/vat";
+
 
 const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
 
