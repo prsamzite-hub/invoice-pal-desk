@@ -559,6 +559,7 @@ export const updateReceipt = createServerFn({ method: "POST" })
         ...(data.fields.supplier_cvr !== undefined
           ? { supplier_cvr: f.supplier_cvr ?? null }
           : {}),
+        ...(data.isBusiness !== undefined ? { is_business: data.isBusiness } : {}),
         status: nextStatus,
       })
       .eq("id", data.id)
