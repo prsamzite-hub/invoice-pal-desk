@@ -90,7 +90,7 @@ function UploadPage() {
       }
 
       const { scanImageBlob } = await import("@/lib/scan-image");
-
+      const { isPdfFile, extractFromPdf } = await import("@/lib/pdf-client");
 
       // Client-side deterministic scan: edge detect + perspective warp +
       // mild white balance / contrast. Falls back to raw photo on failure.
@@ -109,6 +109,21 @@ function UploadPage() {
         }
       }
 
+      // PDF: read the text layer, or render the first 2 pages for the vision model.
+      let pdfText: string | null = null;
+      let pdfPages: Blob[] = [];
+      if (isPdfFile(workFile)) {
+        try {
+          setProgress(20);
+          setProgressLabel(t("upload.progress.scan"));
+          const res = await extractFromPdf(workFile);
+          pdfText = res.text;
+          pdfPages = res.pageImages;
+        } catch (e) {
+          console.warn("[extractFromPdf] failed", e);
+        }
+      }
+
       setProgress(40);
       setProgressLabel(t("upload.progress.upload"));
       const fd = new FormData();
@@ -117,6 +132,9 @@ function UploadPage() {
       if (scanBlob) {
         fd.append("scan", scanBlob, "scan.jpg");
       }
+      if (pdfText) fd.append("pdfText", pdfText);
+      pdfPages.forEach((b, i) => fd.append("pdfPage", b, `page-${i + 1}.jpg`));
+
 
       const timer = setInterval(() => {
         setProgress((p) => {
