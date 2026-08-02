@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
+import { rateFromVat, resolveVat } from "./vat";
+
 
 export const CATEGORIES = [
   "Groceries",
