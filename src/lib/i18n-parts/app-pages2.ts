@@ -68,5 +68,18 @@ export const appPages2 = {
     "dashboard.biz.none": "No upcoming invoices",
     "dashboard.biz.noneDesc": "You have no unpaid business invoices right now.",
     "dashboard.biz.overdueCount": "overdue",
+
+    "vat.section": "VAT",
+    "vat.amount": "VAT",
+    "vat.rate": "VAT rate",
+    "vat.exVat": "Amount excl. VAT",
+    "vat.vat": "VAT",
+    "vat.total": "Total incl. VAT",
+    "vat.none": "No VAT stated",
+    "vat.calculated": "Calculated",
+    "vat.calculatedHint": "The VAT was calculated from the total — not read from the document.",
+    "vat.clear": "Clear VAT",
+    "vat.exVatShort": "Excl. VAT",
   } as Record<string, string>,
+
 };
