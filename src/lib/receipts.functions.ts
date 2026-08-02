@@ -75,16 +75,23 @@ export const extractReceipt = createServerFn({ method: "POST" })
     if (!(original instanceof File)) throw new Error("Missing file");
     const scanEntry = data.get("scan");
     const scan = scanEntry instanceof File ? scanEntry : null;
-    return { original, scan };
+    const pdfTextEntry = data.get("pdfText");
+    const pdfText = typeof pdfTextEntry === "string" && pdfTextEntry.trim() ? pdfTextEntry : null;
+    const pdfPages = data
+      .getAll("pdfPage")
+      .filter((f): f is File => f instanceof File)
+      .slice(0, 2);
+    return { original, scan, pdfText, pdfPages };
   })
   .handler(async ({ data, context }): Promise<ExtractResult> => {
     const { supabase, userId } = context;
-    const { extractReceiptFromImage } = await import("./ai-gateway.server");
+    const { extractReceiptFromImages, extractReceiptFromText } = await import("./ai-gateway.server");
     const original = data.original;
     const scan = data.scan;
 
     const originalBytes = new Uint8Array(await original.arrayBuffer());
     const mime = original.type || "application/octet-stream";
+    const isPdf = mime === "application/pdf" || /\.pdf$/i.test(original.name);
     const isImage = mime.startsWith("image/") || /\.(jpe?g|png|heic|heif)$/i.test(original.name);
 
     const stamp = Date.now();
@@ -127,44 +134,82 @@ export const extractReceipt = createServerFn({ method: "POST" })
       items: [],
     };
 
-    if (!isImage) {
+    const base = { originalPath, scanPath, originalUrl, scanUrl, mime };
+
+    // Genuinely unsupported file type (not an image and not a PDF).
+    if (!isImage && !isPdf) {
       return {
-        originalPath,
-        scanPath,
-        originalUrl,
-        scanUrl,
-        mime,
+        ...base,
         extracted: fallback,
         extractionOk: false,
-        errorMessage: "Automatisk aflæsning understøtter kun billeder (JPG, PNG, HEIC). Udfyld felterne manuelt.",
+        errorMessage:
+          "Automatisk aflæsning understøtter JPG, PNG, HEIC og PDF. Udfyld felterne manuelt.",
       };
     }
 
-    // Prefer the scanned (deskewed/enhanced) image for AI extraction.
-    const aiBytes = scanBytes ?? originalBytes;
-    const aiMime = scanBytes ? "image/jpeg" : mime;
-    try {
+    const toBase64 = (bytes: Uint8Array) => {
       let bin = "";
-      for (let i = 0; i < aiBytes.length; i += 0x8000) {
-        bin += String.fromCharCode(...aiBytes.subarray(i, i + 0x8000));
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
       }
-      const base64 = btoa(bin);
-      const ex = await extractReceiptFromImage(base64, aiMime);
+      return btoa(bin);
+    };
+
+    try {
+      let ex;
+      if (isPdf && data.pdfText) {
+        // a) Text-based PDF → text layer extraction.
+        ex = await extractReceiptFromText(data.pdfText);
+      } else if (isPdf && data.pdfPages.length > 0) {
+        // b) Scanned/image-only PDF → rendered pages through the vision model.
+        const images = [];
+        for (const page of data.pdfPages) {
+          images.push({
+            base64: toBase64(new Uint8Array(await page.arrayBuffer())),
+            mime: page.type || "image/jpeg",
+          });
+        }
+        ex = await extractReceiptFromImages(images);
+      } else if (isPdf) {
+        return {
+          ...base,
+          extracted: fallback,
+          extractionOk: false,
+          errorMessage: "Vi kunne ikke læse indholdet af PDF-filen. Udfyld felterne selv nedenfor.",
+        };
+      } else {
+        // Prefer the scanned (deskewed/enhanced) image for AI extraction.
+        const aiBytes = scanBytes ?? originalBytes;
+        const aiMime = scanBytes ? "image/jpeg" : mime;
+        ex = await extractReceiptFromImages([{ base64: toBase64(aiBytes), mime: aiMime }]);
+      }
+
+      const invoiceNo = ex.invoice_number?.toString().trim() || null;
+      const dueDate = ex.due_date ?? null;
+      const type: "receipt" | "invoice" =
+        invoiceNo || dueDate ? "invoice" : ex.document_type === "invoice" ? "invoice" : "receipt";
+
+      const noteParts = [
+        ex.notes?.trim() || "",
+        invoiceNo ? `Fakturanr.: ${invoiceNo}` : "",
+        ex.supplier_cvr ? `CVR: ${ex.supplier_cvr}` : "",
+        Number.isFinite(Number(ex.amount_excl_vat)) && ex.amount_excl_vat
+          ? `Ekskl. moms: ${ex.amount_excl_vat}`
+          : "",
+        Number.isFinite(Number(ex.vat_amount)) && ex.vat_amount ? `Moms: ${ex.vat_amount}` : "",
+      ].filter(Boolean);
+
       return {
-        originalPath,
-        scanPath,
-        originalUrl,
-        scanUrl,
-        mime,
+        ...base,
         extracted: {
           company: ex.company || "",
           amount: Number(ex.amount) || 0,
           currency: ex.currency || "DKK",
           issued_date: ex.date || null,
-          due_date: ex.due_date ?? null,
-          document_type: ex.document_type || "receipt",
+          due_date: dueDate,
+          document_type: type,
           category: ex.category || "Other",
-          notes: ex.notes ?? null,
+          notes: noteParts.length > 0 ? noteParts.join(" · ") : null,
           items: sanitizeItems(ex.items),
         },
         extractionOk: true,
@@ -172,17 +217,14 @@ export const extractReceipt = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[extractReceipt] extraction failed", e);
       return {
-        originalPath,
-        scanPath,
-        originalUrl,
-        scanUrl,
-        mime,
+        ...base,
         extracted: fallback,
         extractionOk: false,
         errorMessage: "Vi kunne ikke aflæse dokumentet automatisk. Udfyld felterne selv nedenfor.",
       };
     }
   });
+
 
 export const findDuplicates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
