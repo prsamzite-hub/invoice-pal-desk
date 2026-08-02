@@ -284,6 +284,7 @@ export type Database = {
           document_type: string
           due_date: string | null
           id: string
+          is_business: boolean
           issued_date: string | null
           notes: string | null
           original_path: string | null
@@ -304,6 +305,7 @@ export type Database = {
           document_type?: string
           due_date?: string | null
           id?: string
+          is_business?: boolean
           issued_date?: string | null
           notes?: string | null
           original_path?: string | null
@@ -324,6 +326,7 @@ export type Database = {
           document_type?: string
           due_date?: string | null
           id?: string
+          is_business?: boolean
           issued_date?: string | null
           notes?: string | null
           original_path?: string | null
