@@ -133,6 +133,8 @@ export const extractReceipt = createServerFn({ method: "POST" })
       document_type: "receipt",
       category: "Other",
       notes: null,
+      supplier_invoice_number: null,
+      supplier_cvr: null,
       items: [],
     };
 
