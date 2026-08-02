@@ -570,7 +570,7 @@ export const updateReceipt = createServerFn({ method: "POST" })
     if (!data?.id) throw new Error("Missing id");
     return {
       id: data.id,
-      fields: normalizeFields(data.fields),
+      fields: normalizeFields(data.fields, data.isBusiness === true),
       isBusiness: typeof data.isBusiness === "boolean" ? data.isBusiness : undefined,
     };
   })
