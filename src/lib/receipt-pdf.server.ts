@@ -68,8 +68,10 @@ const L = {
     unit: "Enhedspris",
     total: "Beløb",
     exVat: "Beløb ekskl. moms",
-    vat: "Moms 25%",
+    vat: "Moms",
+    vatCalculated: "beregnet",
     grandTotal: "I ALT INKL. MOMS",
+
     notes: "Bemærkninger",
     generated: "Genereret",
     footer: "Genereret af Kvitregn - din digitale kvitteringsmappe.",
