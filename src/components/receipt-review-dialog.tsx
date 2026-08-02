@@ -146,12 +146,23 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
             <div className="flex justify-center overflow-hidden rounded-2xl border border-border bg-muted">
               {(() => {
                 const src = useScan && initial?.scanUrl ? initial.scanUrl : initial?.originalUrl;
-                return src ? (
+                if (!src) return null;
+                const isPdf =
+                  initial?.mime === "application/pdf" ||
+                  (!initial?.scanUrl && /\.pdf(\?|$)/i.test(src));
+                return isPdf ? (
+                  <iframe
+                    src={`${src}#toolbar=1&navpanes=0&view=FitH`}
+                    title={t("review.preview")}
+                    className="h-64 w-full bg-white"
+                  />
+                ) : (
                   <img src={src} alt={useScan ? t("review.scan") : t("review.original")}
                     className="max-h-64 w-auto object-contain" />
-                ) : null;
+                );
               })()}
             </div>
+
             {initial?.scanUrl && !useScan && (
               <p className="text-xs text-muted-foreground">{t("review.originalNote")}</p>
             )}
