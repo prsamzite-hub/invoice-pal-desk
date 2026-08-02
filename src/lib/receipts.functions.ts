@@ -193,15 +193,10 @@ export const extractReceipt = createServerFn({ method: "POST" })
       const type: "receipt" | "invoice" =
         invoiceNo || dueDate ? "invoice" : ex.document_type === "invoice" ? "invoice" : "receipt";
 
-      const noteParts = [
-        ex.notes?.trim() || "",
-        invoiceNo ? `Fakturanr.: ${invoiceNo}` : "",
-        ex.supplier_cvr ? `CVR: ${ex.supplier_cvr}` : "",
-        Number.isFinite(Number(ex.amount_excl_vat)) && ex.amount_excl_vat
-          ? `Ekskl. moms: ${ex.amount_excl_vat}`
-          : "",
-        Number.isFinite(Number(ex.vat_amount)) && ex.vat_amount ? `Moms: ${ex.vat_amount}` : "",
-      ].filter(Boolean);
+      // Bemærkninger must contain ONLY genuine free text from the document —
+      // structured values live in their own columns.
+      const freeNote = ex.notes?.trim() || null;
+      const cvr = ex.supplier_cvr?.toString().trim() || null;
 
       return {
         ...base,
@@ -213,7 +208,9 @@ export const extractReceipt = createServerFn({ method: "POST" })
           due_date: dueDate,
           document_type: type,
           category: ex.category || "Other",
-          notes: noteParts.length > 0 ? noteParts.join(" · ") : null,
+          notes: freeNote,
+          supplier_invoice_number: invoiceNo,
+          supplier_cvr: cvr,
           items: sanitizeItems(ex.items),
         },
         extractionOk: true,
