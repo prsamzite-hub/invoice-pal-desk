@@ -359,7 +359,11 @@ function AnalyticsPage() {
             </div>
           </div>
 
-          {prefs.category === "list" ? (
+          {scaledCategories.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              {t("analytics.noData")}
+            </p>
+          ) : prefs.category === "list" ? (
             <>
               <div className="flex h-3 w-full overflow-hidden rounded-full">
                 {scaledCategories.map((c) => (
