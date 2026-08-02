@@ -18,6 +18,9 @@ import { useLang } from "@/lib/i18n";
 import { useAppMode } from "@/lib/app-mode";
 import { Switch } from "@/components/ui/switch";
 import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
+import { VatFields } from "@/components/vat-fields";
+import { resolveVat, vatFromRate } from "@/lib/vat";
+
 
 interface Props {
   open: boolean;
