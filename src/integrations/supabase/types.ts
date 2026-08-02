@@ -295,6 +295,9 @@ export type Database = {
           supplier_invoice_number: string | null
           updated_at: string
           user_id: string
+          vat_amount: number | null
+          vat_is_calculated: boolean
+          vat_rate: number | null
         }
         Insert: {
           amount?: number
@@ -316,6 +319,9 @@ export type Database = {
           supplier_invoice_number?: string | null
           updated_at?: string
           user_id: string
+          vat_amount?: number | null
+          vat_is_calculated?: boolean
+          vat_rate?: number | null
         }
         Update: {
           amount?: number
@@ -337,6 +343,9 @@ export type Database = {
           supplier_invoice_number?: string | null
           updated_at?: string
           user_id?: string
+          vat_amount?: number | null
+          vat_is_calculated?: boolean
+          vat_rate?: number | null
         }
         Relationships: []
       }
