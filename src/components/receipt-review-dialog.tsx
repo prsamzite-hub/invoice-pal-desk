@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CompanyCombobox } from "@/components/company-combobox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ItemsEditor } from "@/components/items-editor";
+import { PdfCanvas } from "@/components/pdf-canvas";
 import { useLang } from "@/lib/i18n";
 import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
 
