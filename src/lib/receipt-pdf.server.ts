@@ -301,9 +301,17 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   }
 
   // ---------- Totals ----------
+  // Uses the VAT stored on the document — never recomputed here.
   const gross = data.amount || 0;
-  const exVat = gross / 1.25;
-  const vat = gross - exVat;
+  const hasVat = data.vat_amount != null && Number.isFinite(Number(data.vat_amount));
+  const vat = hasVat ? Number(data.vat_amount) : 0;
+  const exVat = gross - vat;
+  const rateLabel =
+    data.vat_rate != null && Number.isFinite(Number(data.vat_rate))
+      ? ` ${String(Number(data.vat_rate)).replace(".", ",")}%`
+      : "";
+  const vatLabel =
+    `${t.vat}${rateLabel}` + (data.vat_is_calculated === true ? ` (${t.vatCalculated})` : "");
 
   const boxW = 250;
   const boxX = right - boxW;
@@ -311,17 +319,20 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const boxY = y - rowsH;
 
   let ty = y - 14;
-  drawRight(t.exVat, boxX + 150, ty, BODY, font, MUTED);
-  drawRight(fmtMoney(exVat, currency, lang), right, ty, BODY, font, INK);
-  ty -= 16;
-  drawRight(t.vat, boxX + 150, ty, BODY, font, MUTED);
-  drawRight(fmtMoney(vat, currency, lang), right, ty, BODY, font, INK);
-  ty -= 12;
+  if (hasVat) {
+    drawRight(t.exVat, boxX + 150, ty, BODY, font, MUTED);
+    drawRight(fmtMoney(exVat, currency, lang), right, ty, BODY, font, INK);
+    ty -= 16;
+    drawRight(vatLabel, boxX + 150, ty, BODY, font, MUTED);
+    drawRight(fmtMoney(vat, currency, lang), right, ty, BODY, font, INK);
+    ty -= 12;
+  }
   page.drawLine({ start: { x: boxX, y: ty }, end: { x: right, y: ty }, thickness: 0.8, color: INK });
   ty -= 22;
   page.drawRectangle({ x: boxX, y: ty - 8, width: boxW, height: 28, color: SOFT });
-  draw(t.grandTotal, { x: boxX + 8, y: ty, size: 9, font: bold, color: INK });
+  draw(hasVat ? t.grandTotal : t.total, { x: boxX + 8, y: ty, size: 9, font: bold, color: INK });
   drawRight(fmtMoney(gross, currency, lang), right - 8, ty - 1, 13, bold, INK);
+
 
   // Forfaldsdato highlighted, left of the totals
   if (data.due_date) {
