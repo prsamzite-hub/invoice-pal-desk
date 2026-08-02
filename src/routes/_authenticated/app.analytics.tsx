@@ -32,6 +32,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLang } from "@/lib/i18n";
+import { useAppMode } from "@/lib/app-mode";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listMyReceipts } from "@/lib/receipts.functions";
 
 export const Route = createFileRoute("/_authenticated/app/analytics")({
   head: () => ({
@@ -52,58 +56,41 @@ const BRAND_PRIMARY_DARK = "#4d7488";
 const BRAND_INK = "#23241f";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Dagligvarer: "#6b93a8",
-  Forsyning: "#8fb3c4",
-  Abonnementer: "#4d7488",
-  "Mad ude": "#c5a880",
+  Groceries: "#6b93a8",
+  Utilities: "#8fb3c4",
+  Subscriptions: "#4d7488",
+  Dining: "#c5a880",
+  Transport: "#7fa5a0",
   Shopping: "#a8846b",
+  Health: "#9db98f",
+  Other: "#b0aca4",
 };
-
-const CATEGORY_LABEL_KEYS: Record<string, string> = {
-  Dagligvarer: "analytics.cat.groceries",
-  Forsyning: "analytics.cat.utilities",
-  Abonnementer: "analytics.cat.subscriptions",
-  "Mad ude": "analytics.cat.dining",
-  Shopping: "analytics.cat.shopping",
-};
-
-const CATEGORIES: Array<{ label: string; value: number }> = [
-  { label: "Dagligvarer", value: 1850 },
-  { label: "Forsyning", value: 892 },
-  { label: "Abonnementer", value: 620 },
-  { label: "Mad ude", value: 410 },
-  { label: "Shopping", value: 515 },
-];
 
 const DEFAULT_BUDGETS: Record<string, number> = {
   "I alt": 6000,
-  Dagligvarer: 2500,
-  Forsyning: 1200,
-  Abonnementer: 500,
-  "Mad ude": 800,
+  Groceries: 2500,
+  Utilities: 1200,
+  Subscriptions: 500,
+  Dining: 800,
   Shopping: 1000,
 };
 
 const STORAGE_KEY = "kvitregn.budgets";
 const PREFS_KEY = "kvitregn.analytics.prefs";
 
-const MONTH_SERIES = [
-  { monthIndex: 0, value: 3200 },
-  { monthIndex: 1, value: 4100 },
-  { monthIndex: 2, value: 3650 },
-  { monthIndex: 3, value: 4480 },
-  { monthIndex: 4, value: 3920 },
-];
+type Scope = "all" | "private" | "business";
 
-const WEEK_SERIES = [
-  { weekNum: 18, value: 820 },
-  { weekNum: 19, value: 1180 },
-  { weekNum: 20, value: 940 },
-  { weekNum: 21, value: 1360 },
-  { weekNum: 22, value: 1010 },
-  { weekNum: 23, value: 970 },
-  { weekNum: 24, value: 890 },
-];
+function ymKey(iso: string) {
+  return iso.slice(0, 7);
+}
+
+function isoWeek(d: Date) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
 
 type TrendChart = "bar" | "line";
 type CategoryChart = "list" | "donut";
@@ -165,18 +152,57 @@ function BrandTooltip({ active, payload, label, formatMoney }: any) {
 }
 
 function AnalyticsPage() {
-  const { t, lang, locale, formatMoney } = useLang();
+  const { t, tCategory, locale, formatMoney } = useLang();
+  const { mode } = useAppMode();
   const [budgets, setBudgets] = useState<Record<string, number>>(DEFAULT_BUDGETS);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
-  const scaledCategories = CATEGORIES;
-  const total = scaledCategories.reduce((s, c) => s + c.value, 0);
+  const [scope, setScope] = useState<Scope>("all");
+  const [scopeTouched, setScopeTouched] = useState(false);
+
+  const listFn = useServerFn(listMyReceipts);
+  const receipts = useQuery({ queryKey: ["receipts"], queryFn: () => listFn() });
 
   useEffect(() => {
     setBudgets(loadBudgets());
     setPrefs(loadPrefs());
   }, []);
+
+  useEffect(() => {
+    if (!scopeTouched) setScope(mode === "erhverv" ? "business" : "all");
+  }, [mode, scopeTouched]);
+
+  const rows = useMemo(() => {
+    const all = receipts.data ?? [];
+    if (scope === "business") return all.filter((r) => r.is_business === true);
+    if (scope === "private") return all.filter((r) => r.is_business !== true);
+    return all;
+  }, [receipts.data, scope]);
+
+  const now = new Date();
+  const currentMonth = now.toISOString().slice(0, 7);
+
+  const monthRows = useMemo(
+    () =>
+      rows.filter(
+        (r) => ymKey(r.issued_date ?? r.created_at?.slice(0, 10) ?? "") === currentMonth,
+      ),
+    [rows, currentMonth],
+  );
+
+  const scaledCategories = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of monthRows) {
+      const key = r.category ?? "Other";
+      map.set(key, (map.get(key) ?? 0) + (Number(r.amount) || 0));
+    }
+    return [...map.entries()]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [monthRows]);
+
+  const total = scaledCategories.reduce((s, c) => s + c.value, 0);
 
   const updatePref = <K extends keyof Prefs>(key: K, value: Prefs[K]) => {
     setPrefs((prev) => {
@@ -215,21 +241,49 @@ function AnalyticsPage() {
     scaledCategories.map((c) => [c.label, c.value]),
   );
 
-  const catLabel = (label: string) => {
-    const key = CATEGORY_LABEL_KEYS[label];
-    return key ? t(key) : label;
-  };
-
-  const monthName = (monthIndex: number) =>
-    new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(2026, monthIndex, 1));
+  const catLabel = (label: string) => tCategory(label);
+  const colorFor = (label: string) => CATEGORY_COLORS[label] ?? "#b0aca4";
 
   const trendData = useMemo(() => {
+    const out: Array<{ name: string; value: number }> = [];
     if (prefs.grouping === "week") {
-      return WEEK_SERIES.map((p) => ({ name: `${t("analytics.weekPrefix")}${p.weekNum}`, value: p.value }));
+      for (let i = 7; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 7 * 86400000);
+        const wk = isoWeek(d);
+        const start = new Date(d);
+        start.setDate(start.getDate() - ((start.getDay() || 7) - 1));
+        const end = new Date(start.getTime() + 6 * 86400000);
+        const from = start.toISOString().slice(0, 10);
+        const to = end.toISOString().slice(0, 10);
+        const value = rows.reduce((sum, r) => {
+          const iso = (r.issued_date ?? r.created_at ?? "").slice(0, 10);
+          return iso >= from && iso <= to ? sum + (Number(r.amount) || 0) : sum;
+        }, 0);
+        out.push({ name: `${t("analytics.weekPrefix")}${wk}`, value });
+      }
+      return out;
     }
-    const series = [...MONTH_SERIES, { monthIndex: 5, value: total }];
-    return series.map((p) => ({ name: monthName(p.monthIndex), value: p.value }));
-  }, [prefs.grouping, total, lang]);
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const value = rows.reduce((sum, r) => {
+        const iso = (r.issued_date ?? r.created_at ?? "").slice(0, 10);
+        return ymKey(iso) === ym ? sum + (Number(r.amount) || 0) : sum;
+      }, 0);
+      out.push({
+        name: new Intl.DateTimeFormat(locale, { month: "short" }).format(d),
+        value,
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs.grouping, rows, locale, t]);
+
+  const monthlyAvg = useMemo(() => {
+    const months = trendData.filter((p) => p.value > 0);
+    if (!months.length) return 0;
+    return months.reduce((s, p) => s + p.value, 0) / months.length;
+  }, [trendData]);
 
   const pieData = [...scaledCategories]
     .sort((a, b) => b.value - a.value)
@@ -242,6 +296,19 @@ function AnalyticsPage() {
         description={t("analytics.pageDesc")}
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            <SegmentedControl<Scope>
+              ariaLabel={t("analytics.scope")}
+              value={scope}
+              onChange={(v) => {
+                setScopeTouched(true);
+                setScope(v);
+              }}
+              options={[
+                { value: "all", label: t("biz.all") },
+                { value: "private", label: t("biz.private") },
+                { value: "business", label: t("biz.business") },
+              ]}
+            />
             <Button variant="outline" className="rounded-full" onClick={openEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               {t("analytics.editBudgets")}
@@ -254,13 +321,13 @@ function AnalyticsPage() {
         <StatCard
           label={t("analytics.stat.spent")}
           value={<MoneyAmount value={total} size="lg" />}
-          hint={t("analytics.stat.vsMay")}
+          hint={`${monthRows.length} ${t("dashboard.biz.docs")}`}
           icon={Wallet}
           tone="lavender"
         />
         <StatCard
           label={t("analytics.stat.avg")}
-          value={<MoneyAmount value={3920} size="lg" />}
+          value={<MoneyAmount value={Math.round(monthlyAvg)} size="lg" />}
           hint={t("analytics.stat.avgHint")}
           icon={TrendingUp}
           tone="sky"
@@ -299,8 +366,8 @@ function AnalyticsPage() {
                   <div
                     key={c.label}
                     style={{
-                      width: `${(c.value / total) * 100}%`,
-                      background: CATEGORY_COLORS[c.label],
+                      width: `${total > 0 ? (c.value / total) * 100 : 0}%`,
+                      background: colorFor(c.label),
                     }}
                     aria-label={catLabel(c.label)}
                   />
@@ -312,12 +379,12 @@ function AnalyticsPage() {
                     <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <span
                         className="h-2.5 w-2.5 rounded-full"
-                        style={{ background: CATEGORY_COLORS[c.label] }}
+                        style={{ background: colorFor(c.label) }}
                       />
                       {catLabel(c.label)}
                     </span>
                     <span className="flex items-baseline gap-3 text-xs text-muted-foreground">
-                      <span>{Math.round((c.value / total) * 100)}%</span>
+                      <span>{total > 0 ? Math.round((c.value / total) * 100) : 0}%</span>
                       <MoneyAmount value={c.value} size="sm" className="text-foreground" />
                     </span>
                   </li>
@@ -340,7 +407,7 @@ function AnalyticsPage() {
                       strokeWidth={2}
                     >
                       {pieData.map((entry) => (
-                        <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
+                        <Cell key={entry.name} fill={colorFor(entry.name)} />
                       ))}
                     </Pie>
                     <Tooltip content={<BrandTooltip formatMoney={formatMoney} />} cursor={false} />
@@ -356,7 +423,7 @@ function AnalyticsPage() {
                     <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <span
                         className="h-3 w-3 shrink-0 rounded-full"
-                        style={{ background: CATEGORY_COLORS[entry.name] }}
+                        style={{ background: colorFor(entry.name) }}
                       />
                       {catLabel(entry.name)}
                     </span>
