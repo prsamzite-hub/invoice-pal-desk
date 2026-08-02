@@ -337,6 +337,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         supplier_cvr: f.supplier_cvr ?? null,
         original_path: data.originalPath,
         scan_path: data.scanPath,
+        is_business: data.isBusiness,
         status: f.due_date ? "unpaid" : "paid",
       })
       .select("*")
