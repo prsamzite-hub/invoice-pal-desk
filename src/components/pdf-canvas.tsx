@@ -28,22 +28,58 @@ export function PdfCanvas({
     (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
-        const workerSrc = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
-        pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+        // Mobile Safari / older Android WebViews can fail on module workers.
+        // Try the worker, and silently fall back to main-thread rendering.
+        try {
+          const workerSrc = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
+          pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+        } catch {
+          (pdfjs.GlobalWorkerOptions as { workerSrc?: string }).workerSrc = "";
+        }
 
-        const res = await fetch(url);
+        const res = await fetch(url, { mode: "cors", credentials: "omit" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = new Uint8Array(await res.arrayBuffer());
-        const doc = await pdfjs.getDocument({ data }).promise;
+
+        const open = async (useWorker: boolean) => {
+          if (!useWorker) {
+            (pdfjs.GlobalWorkerOptions as { workerSrc?: string }).workerSrc = "";
+          }
+          return await pdfjs.getDocument({
+            data: data.slice(),
+            isEvalSupported: false,
+            useWorkerFetch: false,
+            disableAutoFetch: true,
+            ...(useWorker ? {} : { disableWorker: true }),
+          } as never).promise;
+        };
+
+        let doc;
+        try {
+          doc = await open(true);
+        } catch (err) {
+          console.warn("[PdfCanvas] worker render failed, retrying on main thread", err);
+          doc = await open(false);
+        }
         if (cancelled) return;
 
-        const width = host.clientWidth || 600;
+        const width = host.clientWidth || host.parentElement?.clientWidth || 600;
+        // iOS Safari hard-caps canvas area (~16.7M px) — keep well below it.
+        const MAX_PIXELS = 4_000_000;
+        const MAX_SIDE = 4096;
         const pages = Math.min(doc.numPages, maxPages);
         for (let p = 1; p <= pages; p++) {
           const page = await doc.getPage(p);
           if (cancelled) return;
           const base = page.getViewport({ scale: 1 });
-          const scale = (width / base.width) * Math.min(window.devicePixelRatio || 1, 2);
+          let scale = (width / base.width) * Math.min(window.devicePixelRatio || 1, 2);
+          const clampSide = Math.min(
+            MAX_SIDE / base.width,
+            MAX_SIDE / base.height,
+            Math.sqrt(MAX_PIXELS / (base.width * base.height)),
+          );
+          if (scale > clampSide) scale = clampSide;
+          if (!Number.isFinite(scale) || scale <= 0) scale = 1;
           const viewport = page.getViewport({ scale });
           const canvas = document.createElement("canvas");
           canvas.width = Math.floor(viewport.width);
@@ -57,6 +93,7 @@ export function PdfCanvas({
           await page.render({ canvas, canvasContext: ctx, viewport } as never).promise;
           if (cancelled) return;
           host.appendChild(canvas);
+          setState("ok");
         }
         setState("ok");
       } catch (e) {
