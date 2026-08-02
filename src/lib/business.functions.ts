@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isBusinessProfileComplete } from "@/lib/business-gate";
 
 const SELECT = "id, user_id, company_name, cvr, address, postal_code, city, phone, email";
 
@@ -15,6 +16,36 @@ export const getMyBusinessProfile = createServerFn({ method: "GET" })
     if (error) throw error;
     return data;
   });
+
+/** Server-side truth for the erhvervs-mode gate. */
+export const getMyBusinessGate = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("business_profiles")
+      .select(SELECT)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return { complete: isBusinessProfileComplete(data), hasProfile: Boolean(data) };
+  });
+
+/** Any business-only server feature must call this first. Throws when the gate isn't passed. */
+export const requireBusinessAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("business_profiles")
+      .select(SELECT)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!isBusinessProfileComplete(data)) throw new Error("BUSINESS_PROFILE_REQUIRED");
+    return data;
+  });
+
 
 function clean(v: unknown, max = 200): string | null {
   if (typeof v !== "string") return null;
