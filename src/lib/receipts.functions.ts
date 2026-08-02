@@ -371,6 +371,10 @@ export const saveReceipt = createServerFn({ method: "POST" })
         notes: f.notes,
         supplier_invoice_number: f.supplier_invoice_number ?? null,
         supplier_cvr: f.supplier_cvr ?? null,
+        vat_amount: f.vat_amount ?? null,
+        vat_rate: f.vat_rate ?? null,
+        vat_is_calculated: f.vat_is_calculated === true,
+
         original_path: data.originalPath,
         scan_path: data.scanPath,
         is_business: data.isBusiness,
