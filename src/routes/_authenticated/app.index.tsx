@@ -27,6 +27,7 @@ import { useLang } from "@/lib/i18n";
 import { useVendorLogoByName } from "@/hooks/use-vendor-logos";
 import { useAppMode } from "@/lib/app-mode";
 import { getMyBusinessProfile } from "@/lib/business.functions";
+import { MonthCloseCard } from "@/components/month-close-card";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -284,6 +285,10 @@ function DashboardPage() {
           </>
         )}
       </section>
+
+      {isBiz && !isLoading ? (
+        <MonthCloseCard rows={stats.rows} onOpenDoc={openDoc} />
+      ) : null}
 
       {!isLoading && stats.overdue.length > 0 ? (
         <section className="shadow-soft flex flex-col gap-3 rounded-2xl border border-status-overdue/40 bg-status-overdue/10 p-5">
