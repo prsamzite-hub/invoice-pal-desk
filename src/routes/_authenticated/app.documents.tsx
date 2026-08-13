@@ -534,7 +534,19 @@ function DocumentsPage() {
             {t("docs.count.showing")} {filtered.length} {t("docs.count.of")} {docs.length} {docs.length === 1 ? t("docs.count.one") : t("docs.count.many")}
           </p>
           {filtered.map((d) => (
-            <DocumentCard key={d.id} doc={d} onClick={() => openDoc(d.id)} />
+            <DocumentCard
+              key={d.id}
+              doc={d}
+              onClick={() => openDoc(d.id)}
+              duplicateLabel={
+                duplicateIds.has(d.id) && !dismissedDups.includes(d.id)
+                  ? t("docs.dup.badge")
+                  : undefined
+              }
+              dismissLabel={t("docs.dup.dismiss")}
+              onDismissDuplicate={() => dismissDup(d.id)}
+            />
+
           ))}
         </div>
       )}
