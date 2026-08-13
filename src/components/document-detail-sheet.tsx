@@ -84,6 +84,8 @@ export interface DetailRow extends DocumentCardData {
   vatRate?: number | null;
   vatIsCalculated?: boolean;
   privateSharePct?: number | null;
+  /** Untranslated category value as stored in the database. */
+  categoryRaw?: string | null;
 }
 
 
@@ -458,7 +460,7 @@ function EditReceiptDialog({
     issued_date: doc.issuedDate ? doc.issuedDate.slice(0, 10) : null,
     due_date: doc.dueDate ? doc.dueDate.slice(0, 10) : null,
     document_type: doc.type,
-    category: doc.category?.label ?? null,
+    category: doc.categoryRaw ?? doc.category?.label ?? null,
     notes: doc.notes ?? null,
     vat_amount: doc.vatAmount ?? null,
     vat_rate: doc.vatRate ?? null,
