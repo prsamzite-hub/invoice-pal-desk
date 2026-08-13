@@ -291,17 +291,23 @@ export const findDuplicates = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!data.company || !data.issued_date) return [];
+    const base = new Date(data.issued_date + "T00:00:00Z");
+    if (Number.isNaN(base.getTime())) return [];
+    const shift = (days: number) =>
+      new Date(base.getTime() + days * 86400000).toISOString().slice(0, 10);
     const { data: rows, error } = await supabase
       .from("receipts")
-      .select("id, company, amount, issued_date, document_type")
+      .select("id, company, amount, issued_date, document_type, doc_number")
       .eq("user_id", userId)
-      .eq("issued_date", data.issued_date)
+      .gte("issued_date", shift(-3))
+      .lte("issued_date", shift(3))
       .ilike("company", data.company)
       .limit(5);
     if (error) return [];
     const amt = Number(data.amount);
     return (rows ?? []).filter((r) => Math.abs(Number(r.amount) - amt) < 0.01);
   });
+
 
 function normalizeFields(f: ExtractedFields, isBusiness = false): ExtractedFields {
   if (!f.company || f.company.trim().length === 0) throw new Error("Firma mangler");

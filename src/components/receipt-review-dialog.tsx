@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -204,17 +205,32 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
 
           <div className="flex min-w-0 flex-col gap-4">
             {duplicates.length > 0 && (
-              <Alert variant="destructive">
+              <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>{t("review.dup.title")}</AlertTitle>
                 <AlertDescription>
-                  {t("review.dup.desc.pre")} {duplicates.length}{" "}
-                  {duplicates.length === 1 ? t("review.dup.doc.one") : t("review.dup.doc.many")}{" "}
-                  {t("review.dup.desc.mid")} “{fields.company}” {t("review.dup.desc.on")}{" "}
-                  {fields.issued_date} {t("review.dup.desc.suffix")}
+                  <div className="flex flex-col gap-1">
+                    <span>{t("review.dup.desc")}</span>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                      {duplicates.map((d) => (
+                        <Link
+                          key={d.id}
+                          to="/app/documents"
+                          search={{ doc: d.id }}
+                          className="font-medium underline underline-offset-2"
+                        >
+                          {t("review.dup.see")}{" "}
+                          {d.doc_number != null
+                            ? String(d.doc_number).padStart(4, "0")
+                            : d.company}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
+
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
