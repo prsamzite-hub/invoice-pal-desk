@@ -280,10 +280,9 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   y = Math.min(ly, ry) - 14;
   const meta: Array<[string, string]> = [
     [t.dateIssued, fmtDate(data.date, lang)],
-    ...(data.due_date
-      ? ([] as Array<[string, string]>) // shown in the highlighted callout near the total
-      : []),
     [t.category, data.category || t.uncategorized],
+    [t.typeLabel, data.document_type === "invoice" ? t.invoice : t.receipt],
+    [t.currencyLabel, currency],
   ];
   page.drawLine({ start: { x: MARGIN, y: y + 10 }, end: { x: right, y: y + 10 }, thickness: 0.5, color: LINE });
   let mx = MARGIN;
