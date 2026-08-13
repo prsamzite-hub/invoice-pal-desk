@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
-import { rateFromVat, resolveVat } from "./vat";
+import { normalizeSharePct, rateFromVat, resolveVat } from "./vat";
 
 
+/** Private-mode categories (unchanged). */
 export const CATEGORIES = [
   "Groceries",
   "Utilities",
@@ -14,7 +15,31 @@ export const CATEGORIES = [
   "Health",
   "Other",
 ] as const;
-export type Category = (typeof CATEGORIES)[number];
+
+/** Danish business expense types, used when a document is marked "Erhverv". */
+export const BUSINESS_CATEGORIES = [
+  "Representation",
+  "TravelTransport",
+  "Fuel",
+  "OfficeSupplies",
+  "SoftwareSubscriptions",
+  "PhoneInternet",
+  "ToolsMaterials",
+  "Marketing",
+  "Insurance",
+  "Accounting",
+  "OperatingCosts",
+] as const;
+
+export const ALL_CATEGORIES = [...CATEGORIES, ...BUSINESS_CATEGORIES] as const;
+
+/** Options to offer in a category picker for a private or business document. */
+export function categoriesFor(isBusiness: boolean): string[] {
+  return isBusiness ? [...BUSINESS_CATEGORIES, "Other"] : [...CATEGORIES];
+}
+
+export type Category = (typeof ALL_CATEGORIES)[number];
+
 
 export interface LineItem {
   description: string;
