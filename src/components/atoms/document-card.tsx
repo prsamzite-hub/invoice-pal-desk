@@ -32,10 +32,16 @@ export function DocumentCard({
   doc,
   onClick,
   className,
+  duplicateLabel,
+  onDismissDuplicate,
+  dismissLabel,
 }: {
   doc: DocumentCardData;
   onClick?: () => void;
   className?: string;
+  duplicateLabel?: string;
+  onDismissDuplicate?: () => void;
+  dismissLabel?: string;
 }) {
   const TypeIcon = doc.type === "invoice" ? FileText : Receipt;
   return (
@@ -49,7 +55,7 @@ export function DocumentCard({
     >
       <VendorAvatar name={doc.company} logoUrl={doc.vendorLogoUrl} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-sm font-semibold text-foreground">{doc.company}</p>
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <TypeIcon className="h-3 w-3" />
@@ -60,7 +66,36 @@ export function DocumentCard({
               Erhverv
             </span>
           ) : null}
+          {duplicateLabel ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+              <AlertTriangle className="h-3 w-3" />
+              {duplicateLabel}
+              {onDismissDuplicate ? (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={dismissLabel}
+                  title={dismissLabel}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDismissDuplicate();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onDismissDuplicate();
+                    }
+                  }}
+                  className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-amber-500/20"
+                >
+                  <X className="h-3 w-3" />
+                </span>
+              ) : null}
+            </span>
+          ) : null}
         </div>
+
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           {doc.docNumber != null ? (
             <span className="font-medium tabular-nums text-foreground/70">
