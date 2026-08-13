@@ -19,6 +19,12 @@ export interface ExportDoc {
   documentType: "receipt" | "invoice";
   status: string;
   isBusiness: boolean;
+  /** Privat andel i procent (0-100), null when the document has no split. */
+  privateSharePct: number | null;
+  /** Amount incl. VAT that counts as a business expense. */
+  businessAmount: number;
+  /** VAT that counts as a business expense. */
+  businessVat: number | null;
 }
 
 const CATEGORY_DA: Record<string, string> = {
@@ -30,6 +36,17 @@ const CATEGORY_DA: Record<string, string> = {
   Shopping: "Shopping",
   Health: "Sundhed",
   Other: "Andet",
+  Representation: "Repræsentation",
+  TravelTransport: "Rejse og transport",
+  Fuel: "Brændstof",
+  OfficeSupplies: "Kontorartikler",
+  SoftwareSubscriptions: "Software og abonnementer",
+  PhoneInternet: "Telefon og internet",
+  ToolsMaterials: "Håndværktøj/materialer",
+  Marketing: "Markedsføring",
+  Insurance: "Forsikring",
+  Accounting: "Revisor og rådgivning",
+  OperatingCosts: "Øvrige driftsudgifter",
 };
 
 export function padDocNumber(n: number | null | undefined): string {
@@ -91,6 +108,9 @@ const HEADERS = [
   "Type",
   "Status",
   "Erhverv",
+  "Privat andel %",
+  "Erhvervsandel beløb",
+  "Erhvervsandel moms",
   "Filnavn",
 ];
 
@@ -114,6 +134,9 @@ export function buildCsv(docs: ExportDoc[]): string {
         d.documentType === "invoice" ? "Faktura" : "Kvittering",
         d.status === "paid" ? "Betalt" : "Ubetalt",
         d.isBusiness ? "Ja" : "Nej",
+        d.privateSharePct == null ? "" : daNumber(d.privateSharePct),
+        daNumber(d.businessAmount),
+        daNumber(d.businessVat),
         d.filename,
       ]
         .map((v) => cell(String(v)))

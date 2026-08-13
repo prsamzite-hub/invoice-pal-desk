@@ -50,6 +50,7 @@ export async function regeneratePdfFor(
     vat_amount: row.vat_amount == null ? null : Number(row.vat_amount),
     vat_rate: row.vat_rate == null ? null : Number(row.vat_rate),
     vat_is_calculated: row.vat_is_calculated === true,
+    private_share_pct: row.private_share_pct == null ? null : Number(row.private_share_pct),
     items: (items ?? []).map((it: any) => ({
       description: it.description ?? "",
       quantity: it.quantity == null ? null : Number(it.quantity),

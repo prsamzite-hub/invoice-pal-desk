@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
-import { rateFromVat, resolveVat } from "./vat";
+import { normalizeSharePct, rateFromVat, resolveVat } from "./vat";
 
 
+/** Private-mode categories (unchanged). */
 export const CATEGORIES = [
   "Groceries",
   "Utilities",
@@ -14,7 +15,31 @@ export const CATEGORIES = [
   "Health",
   "Other",
 ] as const;
-export type Category = (typeof CATEGORIES)[number];
+
+/** Danish business expense types, used when a document is marked "Erhverv". */
+export const BUSINESS_CATEGORIES = [
+  "Representation",
+  "TravelTransport",
+  "Fuel",
+  "OfficeSupplies",
+  "SoftwareSubscriptions",
+  "PhoneInternet",
+  "ToolsMaterials",
+  "Marketing",
+  "Insurance",
+  "Accounting",
+  "OperatingCosts",
+] as const;
+
+export const ALL_CATEGORIES = [...CATEGORIES, ...BUSINESS_CATEGORIES] as const;
+
+/** Options to offer in a category picker for a private or business document. */
+export function categoriesFor(isBusiness: boolean): string[] {
+  return isBusiness ? [...BUSINESS_CATEGORIES, "Other"] : [...CATEGORIES];
+}
+
+export type Category = (typeof ALL_CATEGORIES)[number];
+
 
 export interface LineItem {
   description: string;
@@ -40,6 +65,8 @@ export interface ExtractedFields {
   vat_rate?: number | null;
   /** True when the VAT was calculated from the total, not read from the document. */
   vat_is_calculated?: boolean;
+  /** Privat andel i procent (0-100) af et erhvervsbilag. Null = ingen deling. */
+  private_share_pct?: number | null;
   items: LineItem[];
 }
 
@@ -147,6 +174,7 @@ export const extractReceipt = createServerFn({ method: "POST" })
       vat_amount: null,
       vat_rate: null,
       vat_is_calculated: false,
+      private_share_pct: null,
       items: [],
     };
 
@@ -239,6 +267,7 @@ export const extractReceipt = createServerFn({ method: "POST" })
           vat_amount: statedVat,
           vat_rate: derivedRate,
           vat_is_calculated: false,
+          private_share_pct: null,
           items: sanitizeItems(ex.items),
         },
 
@@ -294,6 +323,7 @@ function normalizeFields(f: ExtractedFields, isBusiness = false): ExtractedField
     vat_amount: vat.vat_amount,
     vat_rate: vat.vat_rate,
     vat_is_calculated: vat.vat_is_calculated,
+    private_share_pct: isBusiness ? normalizeSharePct(f.private_share_pct) : null,
     items: sanitizeItems(f.items),
   };
 }
@@ -375,6 +405,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         vat_amount: f.vat_amount ?? null,
         vat_rate: f.vat_rate ?? null,
         vat_is_calculated: f.vat_is_calculated === true,
+        private_share_pct: f.private_share_pct ?? null,
 
         original_path: data.originalPath,
         scan_path: data.scanPath,
@@ -415,6 +446,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
         vat_amount: row.vat_amount == null ? null : Number(row.vat_amount),
         vat_rate: row.vat_rate == null ? null : Number(row.vat_rate),
         vat_is_calculated: row.vat_is_calculated === true,
+        private_share_pct: row.private_share_pct == null ? null : Number(row.private_share_pct),
 
         items: f.items,
         receipt_id: row.id,
@@ -519,6 +551,7 @@ async function regenerateAndStorePdf(
     vat_amount: row.vat_amount == null ? null : Number(row.vat_amount),
     vat_rate: row.vat_rate == null ? null : Number(row.vat_rate),
     vat_is_calculated: row.vat_is_calculated === true,
+    private_share_pct: row.private_share_pct == null ? null : Number(row.private_share_pct),
 
     items: (items ?? []).map((it: any) => ({
       description: it.description ?? "",
@@ -619,6 +652,7 @@ export const updateReceipt = createServerFn({ method: "POST" })
         vat_amount: f.vat_amount ?? null,
         vat_rate: f.vat_rate ?? null,
         vat_is_calculated: f.vat_is_calculated === true,
+        private_share_pct: f.private_share_pct ?? null,
 
         status: nextStatus,
       })

@@ -39,6 +39,29 @@ export const appPages2 = {
     "vat.calculatedHint": "Momsen er beregnet ud fra totalen — ikke aflæst fra dokumentet.",
     "vat.clear": "Ryd moms",
     "vat.exVatShort": "Ekskl. moms",
+
+    // Privat andel (private share of a business expense)
+    "share.label": "Privat andel",
+    "share.field": "Privat andel (%)",
+    "share.hint": "Fx en telefonregning delt 50/50 mellem privat og erhverv.",
+    "share.business": "Erhvervsandel",
+    "share.private": "Privat andel",
+    "share.businessVat": "Erhvervsandel moms",
+    "share.privateVat": "Privat andel moms",
+    "share.none": "Ingen deling",
+
+    // Erhvervskategorier
+    "cat.Representation": "Repræsentation",
+    "cat.TravelTransport": "Rejse og transport",
+    "cat.Fuel": "Brændstof",
+    "cat.OfficeSupplies": "Kontorartikler",
+    "cat.SoftwareSubscriptions": "Software og abonnementer",
+    "cat.PhoneInternet": "Telefon og internet",
+    "cat.ToolsMaterials": "Håndværktøj/materialer",
+    "cat.Marketing": "Markedsføring",
+    "cat.Insurance": "Forsikring",
+    "cat.Accounting": "Revisor og rådgivning",
+    "cat.OperatingCosts": "Øvrige driftsudgifter",
   } as Record<string, string>,
 
   en: {
@@ -80,6 +103,27 @@ export const appPages2 = {
     "vat.calculatedHint": "The VAT was calculated from the total — not read from the document.",
     "vat.clear": "Clear VAT",
     "vat.exVatShort": "Excl. VAT",
+
+    "share.label": "Private share",
+    "share.field": "Private share (%)",
+    "share.hint": "E.g. a phone bill split 50/50 between private and business use.",
+    "share.business": "Business share",
+    "share.private": "Private share",
+    "share.businessVat": "Business share VAT",
+    "share.privateVat": "Private share VAT",
+    "share.none": "No split",
+
+    "cat.Representation": "Entertainment",
+    "cat.TravelTransport": "Travel and transport",
+    "cat.Fuel": "Fuel",
+    "cat.OfficeSupplies": "Office supplies",
+    "cat.SoftwareSubscriptions": "Software and subscriptions",
+    "cat.PhoneInternet": "Phone and internet",
+    "cat.ToolsMaterials": "Tools and materials",
+    "cat.Marketing": "Marketing",
+    "cat.Insurance": "Insurance",
+    "cat.Accounting": "Accounting and advisory",
+    "cat.OperatingCosts": "Other operating costs",
   } as Record<string, string>,
 
 };

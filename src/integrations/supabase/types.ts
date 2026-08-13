@@ -311,6 +311,7 @@ export type Database = {
           notes: string | null
           original_path: string | null
           pdf_path: string | null
+          private_share_pct: number | null
           scan_path: string | null
           status: string
           supplier_cvr: string | null
@@ -337,6 +338,7 @@ export type Database = {
           notes?: string | null
           original_path?: string | null
           pdf_path?: string | null
+          private_share_pct?: number | null
           scan_path?: string | null
           status?: string
           supplier_cvr?: string | null
@@ -363,6 +365,7 @@ export type Database = {
           notes?: string | null
           original_path?: string | null
           pdf_path?: string | null
+          private_share_pct?: number | null
           scan_path?: string | null
           status?: string
           supplier_cvr?: string | null

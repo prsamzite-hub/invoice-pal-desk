@@ -18,6 +18,7 @@ import {
 
 import { PageHeader } from "@/components/atoms/page-header";
 import { StatCard } from "@/components/atoms/stat-card";
+import { businessShareOf } from "@/lib/vat";
 import { MoneyAmount } from "@/components/atoms/money-amount";
 import { BudgetProgressBar } from "@/components/atoms/budget-progress-bar";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
@@ -64,6 +65,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   Shopping: "#a8846b",
   Health: "#9db98f",
   Other: "#b0aca4",
+  Representation: "#c58a80",
+  TravelTransport: "#7fa5a0",
+  Fuel: "#c5a880",
+  OfficeSupplies: "#9aa3b8",
+  SoftwareSubscriptions: "#4d7488",
+  PhoneInternet: "#8fb3c4",
+  ToolsMaterials: "#a8846b",
+  Marketing: "#bf9bb0",
+  Insurance: "#9db98f",
+  Accounting: "#6b93a8",
+  OperatingCosts: "#b0aca4",
 };
 
 const DEFAULT_BUDGETS: Record<string, number> = {
@@ -79,6 +91,19 @@ const STORAGE_KEY = "kvitregn.budgets";
 const PREFS_KEY = "kvitregn.analytics.prefs";
 
 type Scope = "all" | "private" | "business";
+
+/** Amount that counts toward totals: business share when a "privat andel" is set. */
+function amountOf(r: { amount: unknown; is_business?: boolean | null; private_share_pct?: unknown }) {
+  return r.is_business === true
+    ? businessShareOf(r.amount as number, r.private_share_pct as number)
+    : Number(r.amount) || 0;
+}
+
+function vatOf(r: { vat_amount: unknown; is_business?: boolean | null; private_share_pct?: unknown }) {
+  return r.is_business === true
+    ? businessShareOf(r.vat_amount as number, r.private_share_pct as number)
+    : Number(r.vat_amount) || 0;
+}
 
 function ymKey(iso: string) {
   return iso.slice(0, 7);
@@ -195,7 +220,7 @@ function AnalyticsPage() {
     const map = new Map<string, number>();
     for (const r of monthRows) {
       const key = r.category ?? "Other";
-      map.set(key, (map.get(key) ?? 0) + (Number(r.amount) || 0));
+      map.set(key, (map.get(key) ?? 0) + amountOf(r));
     }
     return [...map.entries()]
       .map(([label, value]) => ({ label, value }))
@@ -204,7 +229,7 @@ function AnalyticsPage() {
 
   const total = scaledCategories.reduce((s, c) => s + c.value, 0);
   const totalVat = useMemo(
-    () => monthRows.reduce((s, r) => s + (Number(r.vat_amount) || 0), 0),
+    () => monthRows.reduce((s, r) => s + vatOf(r), 0),
     [monthRows],
   );
   const totalExVat = total - totalVat;
@@ -263,7 +288,7 @@ function AnalyticsPage() {
         const to = end.toISOString().slice(0, 10);
         const value = rows.reduce((sum, r) => {
           const iso = (r.issued_date ?? r.created_at ?? "").slice(0, 10);
-          return iso >= from && iso <= to ? sum + (Number(r.amount) || 0) : sum;
+          return iso >= from && iso <= to ? sum + amountOf(r) : sum;
         }, 0);
         out.push({ name: `${t("analytics.weekPrefix")}${wk}`, value });
       }
@@ -274,7 +299,7 @@ function AnalyticsPage() {
       const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const value = rows.reduce((sum, r) => {
         const iso = (r.issued_date ?? r.created_at ?? "").slice(0, 10);
-        return ymKey(iso) === ym ? sum + (Number(r.amount) || 0) : sum;
+        return ymKey(iso) === ym ? sum + amountOf(r) : sum;
       }, 0);
       out.push({
         name: new Intl.DateTimeFormat(locale, { month: "short" }).format(d),

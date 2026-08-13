@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { shareSplit } from "./vat";
 import { buildCsv, exportFilename, type ExportDoc, type ExportScope } from "./export-format";
 
 export const getExportManifest = createServerFn({ method: "POST" })
@@ -15,7 +16,7 @@ export const getExportManifest = createServerFn({ method: "POST" })
     let q = supabase
       .from("receipts")
       .select(
-        "id, doc_number, issued_date, due_date, company, supplier_cvr, amount, currency, category, document_type, status, is_business, vat_amount, vat_rate, created_at",
+        "id, doc_number, issued_date, due_date, company, supplier_cvr, amount, currency, category, document_type, status, is_business, vat_amount, vat_rate, private_share_pct, created_at",
       )
       .eq("user_id", userId)
       .gte("issued_date", data.from)
@@ -29,6 +30,8 @@ export const getExportManifest = createServerFn({ method: "POST" })
     const docs: ExportDoc[] = (rows ?? []).map((r: any) => {
       const total = Number(r.amount ?? 0);
       const vat = r.vat_amount == null ? null : Number(r.vat_amount);
+      const split = shareSplit(total, vat, r.private_share_pct);
+      const hasSplit = r.private_share_pct != null;
       return {
         id: r.id,
         docNumber: r.doc_number ?? null,
@@ -46,6 +49,9 @@ export const getExportManifest = createServerFn({ method: "POST" })
         documentType: r.document_type === "invoice" ? "invoice" : "receipt",
         status: r.status ?? "paid",
         isBusiness: r.is_business === true,
+        privateSharePct: hasSplit ? split.pct : null,
+        businessAmount: split.businessAmount,
+        businessVat: split.businessVat,
       };
     });
 

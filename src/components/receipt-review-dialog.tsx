@@ -17,7 +17,8 @@ import { PdfCanvas } from "@/components/pdf-canvas";
 import { useLang } from "@/lib/i18n";
 import { useAppMode } from "@/lib/app-mode";
 import { Switch } from "@/components/ui/switch";
-import { CATEGORIES, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
+import { categoriesFor, findDuplicates, listMyReceipts, saveReceipt, type ExtractResult, type ExtractedFields, type LineItem } from "@/lib/receipts.functions";
+import { PrivateShareField } from "@/components/private-share-field";
 import { VatFields } from "@/components/vat-fields";
 import { resolveVat, vatFromRate } from "@/lib/vat";
 
@@ -272,7 +273,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 <Select value={fields.category ?? "Other"} onValueChange={(v) => set("category", v)}>
                   <SelectTrigger id="category"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{tCategory(c)}</SelectItem>)}
+                    {categoriesFor(isBusiness).map((c) => <SelectItem key={c} value={c}>{tCategory(c)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -294,6 +295,19 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                   onChange={(e) => set("supplier_cvr", e.target.value || null)}
                 />
               </div>
+
+              {isBusiness ? (
+                <div className="sm:col-span-2">
+                  <PrivateShareField
+                    idPrefix="r-share"
+                    amount={Number(fields.amount) || 0}
+                    vatAmount={fields.vat_amount ?? null}
+                    currency={fields.currency}
+                    value={fields.private_share_pct ?? null}
+                    onChange={(pct) => set("private_share_pct", pct)}
+                  />
+                </div>
+              ) : null}
 
               <div className="sm:col-span-2">
                 <VatFields
