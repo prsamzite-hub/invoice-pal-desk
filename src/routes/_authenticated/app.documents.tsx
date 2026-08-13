@@ -36,6 +36,8 @@ import { useVendorLogoByName } from "@/hooks/use-vendor-logos";
 import { useLang } from "@/lib/i18n";
 import { useAppMode } from "@/lib/app-mode";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
+import { ExportDialog } from "@/components/export-dialog";
+import { getMyBusinessGate } from "@/lib/business.functions";
 
 export const Route = createFileRoute("/_authenticated/app/documents")({
   head: () => ({
@@ -108,6 +110,8 @@ function DocumentsPage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const receipts = useQuery({ queryKey: ["receipts"], queryFn: () => listFn() });
+  const gateFn = useServerFn(getMyBusinessGate);
+  const bizGate = useQuery({ queryKey: ["business-gate"], queryFn: () => gateFn() });
   const { lookup: logoFor } = useVendorLogoByName();
 
   const docs: EnrichedDoc[] = useMemo(() => {
@@ -235,12 +239,17 @@ function DocumentsPage() {
         title={t("docs.title")}
         description={t("docs.description")}
         actions={
-          <Button asChild className="rounded-full">
-            <Link to="/app/upload">
-              <Plus className="mr-2 h-4 w-4" />
-              {t("docs.new")}
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {bizGate.data?.complete && (
+              <ExportDialog defaultScope={mode === "privat" ? "all" : "business"} />
+            )}
+            <Button asChild className="rounded-full">
+              <Link to="/app/upload">
+                <Plus className="mr-2 h-4 w-4" />
+                {t("docs.new")}
+              </Link>
+            </Button>
+          </div>
         }
       />
 
