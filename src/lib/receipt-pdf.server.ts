@@ -391,25 +391,93 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   y = Math.min(boxY, ty - 30);
 
   // ---------- Notes ----------
-  if (data.notes && y > 150) {
+  const hasQr = !!data.verification_url;
+  if (data.notes && y > 165) {
     draw(t.notes, { x: MARGIN, y, size: 8, font, color: MUTED });
     y -= 14;
     const words = sanitize(data.notes).split(/\s+/);
     let cur = "";
-    const maxW = right - MARGIN;
+    const maxW = right - MARGIN - (hasQr ? 190 : 0);
     for (const word of words) {
       const test = cur ? `${cur} ${word}` : word;
       if (font.widthOfTextAtSize(test, BODY) > maxW) {
         draw(cur, { x: MARGIN, y, size: BODY, font, color: INK });
         y -= 13;
         cur = word;
-        if (y < 120) break;
+        if (y < 135) break;
       } else cur = test;
     }
-    if (cur && y > 110) draw(cur, { x: MARGIN, y, size: BODY, font, color: INK });
+    if (cur && y > 125) draw(cur, { x: MARGIN, y, size: BODY, font, color: INK });
   }
 
+  // ---------- QR verification ----------
+  if (data.verification_url) {
+    const qrSize = 68;
+    const qrX = right - qrSize;
+    const qrY = 96;
+    try {
+      const qr = QRCode.create(data.verification_url, { errorCorrectionLevel: "M" });
+      const n = qr.modules.size;
+      const bits = qr.modules.data;
+      const cell = qrSize / n;
+      page.drawRectangle({
+        x: qrX - 6,
+        y: qrY - 6,
+        width: qrSize + 12,
+        height: qrSize + 12,
+        color: rgb(1, 1, 1),
+      });
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (!bits[r * n + c]) continue;
+          page.drawRectangle({
+            x: qrX + c * cell,
+            y: qrY + (n - 1 - r) * cell,
+            width: cell,
+            height: cell,
+            color: INK,
+          });
+        }
+      }
+      drawRight(t.verify, qrX - 12, qrY + qrSize - 10, 8, bold, INK);
+      drawRight(t.verifyHint, qrX - 12, qrY + qrSize - 22, 7.5, font, MUTED);
+    } catch (e) {
+      console.warn("[receipt-pdf] qr failed", e);
+    }
+  }
+
+  // ---------- Original document notice ----------
+  draw(data.attachment ? t.originalFollows : t.noOriginal, {
+    x: MARGIN,
+    y: 92,
+    size: 8,
+    font: bold,
+    color: data.attachment ? ACCENT : MUTED,
+  });
+
   // ---------- Footer ----------
+  const now = new Date();
+  const stamp = (() => {
+    try {
+      const locale = lang === "da" ? "da-DK" : "en-GB";
+      const d = new Intl.DateTimeFormat(locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Europe/Copenhagen",
+      }).format(now);
+      const time = new Intl.DateTimeFormat(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Europe/Copenhagen",
+      }).format(now);
+      return `${d} ${t.at} ${time}`;
+    } catch {
+      return now.toISOString().slice(0, 16).replace("T", " ");
+    }
+  })();
+
   page.drawLine({
     start: { x: MARGIN, y: 78 },
     end: { x: right, y: 78 },
@@ -417,7 +485,7 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
     color: LINE,
   });
   draw(`${t.documentId}: ${data.receipt_id}`, { x: MARGIN, y: 62, size: 7.5, font, color: MUTED });
-  draw(`${t.generated}: ${new Date().toISOString().slice(0, 10)}`, {
+  draw(`${t.generatedBy} ${stamp}`, {
     x: MARGIN,
     y: 50,
     size: 7.5,
@@ -426,5 +494,74 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   });
   drawRight(t.footer, right, 50, 7.5, font, MUTED);
 
+  // ---------- Original document pages ----------
+  if (data.attachment) {
+    try {
+      await appendOriginal(doc, data.attachment, t.original, lang, data.doc_number ?? null);
+    } catch (e) {
+      console.error("[receipt-pdf] failed to append original", e);
+    }
+  }
+
   return await doc.save();
+}
+
+/**
+ * Appends the original document after the summary page. Images become full
+ * pages at their native pixel dimensions (1 px = 1 pt) so nothing is
+ * downscaled and barcodes stay scannable; PDFs are merged page-for-page.
+ */
+async function appendOriginal(
+  doc: PDFDocument,
+  attachment: NonNullable<ReceiptPdfData["attachment"]>,
+  label: string,
+  lang: PdfLang,
+  docNumber: number | null,
+): Promise<void> {
+  const font = await doc.embedFont(StandardFonts.HelveticaBold);
+  const stampPage = (page: (typeof doc)["getPages"] extends never ? never : any) => {
+    const { width, height } = page.getSize();
+    const text = sanitize(
+      docNumber != null
+        ? `${label} - ${lang === "da" ? "Bilagsnr." : "Doc. no."} ${String(docNumber).padStart(4, "0")}`
+        : label,
+    );
+    const size = Math.max(7, Math.min(11, width / 60));
+    const tw = font.widthOfTextAtSize(text, size);
+    page.drawRectangle({
+      x: 0,
+      y: height - size - 12,
+      width: tw + 20,
+      height: size + 12,
+      color: rgb(1, 1, 1),
+      opacity: 0.85,
+    });
+    page.drawText(text, {
+      x: 10,
+      y: height - size - 6,
+      size,
+      font,
+      color: ACCENT,
+    });
+  };
+
+  if (attachment.kind === "pdf") {
+    const src = await PDFDocument.load(attachment.bytes, { ignoreEncryption: true });
+    const pages = await doc.copyPages(src, src.getPageIndices());
+    for (const p of pages) {
+      doc.addPage(p);
+      stampPage(p);
+    }
+    return;
+  }
+
+  const img =
+    attachment.kind === "png"
+      ? await doc.embedPng(attachment.bytes)
+      : await doc.embedJpg(attachment.bytes);
+  const page = doc.addPage([img.width, img.height]);
+  page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+  stampPage(page);
+}
+
 }
