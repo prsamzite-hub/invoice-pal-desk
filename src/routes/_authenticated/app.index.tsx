@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptStatus } from "@/components/atoms/status-badge";
 import { listMyReceipts, getReceiptPdfUrl } from "@/lib/receipts.functions";
+import { businessShareOf } from "@/lib/vat";
 import { useLang } from "@/lib/i18n";
 import { useVendorLogoByName } from "@/hooks/use-vendor-logos";
 import { useAppMode } from "@/lib/app-mode";
@@ -102,10 +103,16 @@ function DashboardPage() {
     for (const r of rows) {
       const iso = r.issued_date ?? r.created_at?.slice(0, 10) ?? "";
       const ym = ymKey(iso);
-      const amt = Number(r.amount) || 0;
+      const amt =
+        r.is_business === true
+          ? businessShareOf(r.amount, (r as { private_share_pct?: number | null }).private_share_pct)
+          : Number(r.amount) || 0;
       if (ym === currentMonth) {
         currentTotal += amt;
-        currentVat += Number(r.vat_amount) || 0;
+        currentVat +=
+          r.is_business === true
+            ? businessShareOf(r.vat_amount, (r as { private_share_pct?: number | null }).private_share_pct)
+            : Number(r.vat_amount) || 0;
       }
       if (ym === prevMonth) prevTotal += amt;
 
