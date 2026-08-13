@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensureLogoForCompany, loadLogoBytesByName } from "./vendor-logos.functions";
 import { rateFromVat, resolveVat } from "./vat";
-import { loadOriginalAttachment, verificationUrl } from "./pdf-attachment.server";
 
 
 export const CATEGORIES = [
@@ -356,6 +355,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
+  const { loadOriginalAttachment, verificationUrl } = await import("./pdf-attachment.server");
     const f = data.fields;
 
     const insert = await supabase
@@ -490,6 +490,7 @@ async function regenerateAndStorePdf(
   lang: "da" | "en",
 ): Promise<string> {
   const { generateReceiptPdf } = await import("./receipt-pdf.server");
+  const { loadOriginalAttachment, verificationUrl } = await import("./pdf-attachment.server");
   const { data: row, error } = await supabase
     .from("receipts")
     .select("*")
