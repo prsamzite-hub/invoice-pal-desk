@@ -47,7 +47,15 @@ export interface ReceiptPdfData {
     email?: string | null;
   } | null;
   lang?: PdfLang;
+  /**
+   * The original document (processed scan when available, otherwise the raw
+   * upload) appended after the summary page as "Originalbilag".
+   */
+  attachment?: { bytes: Uint8Array; kind: "pdf" | "jpg" | "png" } | null;
+  /** Public verification URL encoded as a QR code on the summary page. */
+  verification_url?: string | null;
 }
+
 
 const L = {
   da: {
