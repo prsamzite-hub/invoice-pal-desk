@@ -1,5 +1,6 @@
 /** Server-only helper: (re)generate and store a document PDF. */
 import { loadLogoBytesByName } from "./vendor-logos.functions";
+import { loadOriginalAttachment, verificationUrl } from "./pdf-attachment.server";
 
 async function loadSenderProfile(supabase: any, userId: string) {
   try {
