@@ -320,6 +320,7 @@ export type Database = {
           vat_amount: number | null
           vat_is_calculated: boolean
           vat_rate: number | null
+          verification_token: string
         }
         Insert: {
           amount?: number
@@ -345,6 +346,7 @@ export type Database = {
           vat_amount?: number | null
           vat_is_calculated?: boolean
           vat_rate?: number | null
+          verification_token?: string
         }
         Update: {
           amount?: number
@@ -370,6 +372,7 @@ export type Database = {
           vat_amount?: number | null
           vat_is_calculated?: boolean
           vat_rate?: number | null
+          verification_token?: string
         }
         Relationships: []
       }
@@ -454,6 +457,17 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      verify_document: {
+        Args: { _token: string }
+        Returns: {
+          amount: number
+          company: string
+          currency: string
+          document_type: string
+          issued_date: string
+          registered_at: string
         }[]
       }
     }
