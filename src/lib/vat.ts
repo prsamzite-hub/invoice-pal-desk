@@ -66,3 +66,58 @@ export function resolveVat(
   }
   return { vat_amount: null, vat_rate: rateIn, vat_is_calculated: false };
 }
+
+// ---------------------------------------------------------------------------
+// Privat andel (private share of a business expense)
+// ---------------------------------------------------------------------------
+
+/** Clamp a user-entered private share to 0-100, or null when unset. */
+export function normalizeSharePct(input: unknown): number | null {
+  if (input === null || input === undefined || input === "") return null;
+  const n = Number(input);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.min(100, Math.max(0, n));
+  return Math.round(clamped * 100) / 100;
+}
+
+export interface ShareSplit {
+  /** Private share in percent (0-100). 0 when no split is set. */
+  pct: number;
+  businessAmount: number;
+  privateAmount: number;
+  businessVat: number | null;
+  privateVat: number | null;
+}
+
+/** Split a gross amount and its VAT into the business and private share. */
+export function shareSplit(
+  gross: number,
+  vatAmount: number | null | undefined,
+  pct: number | null | undefined,
+): ShareSplit {
+  const total = Number.isFinite(gross) ? gross : 0;
+  const share = normalizeSharePct(pct) ?? 0;
+  const bizFactor = (100 - share) / 100;
+  const vat = vatAmount == null || !Number.isFinite(Number(vatAmount)) ? null : Number(vatAmount);
+  return {
+    pct: share,
+    businessAmount: round2(total * bizFactor),
+    privateAmount: round2(total - total * bizFactor),
+    businessVat: vat == null ? null : round2(vat * bizFactor),
+    privateVat: vat == null ? null : round2(vat - vat * bizFactor),
+  };
+}
+
+/**
+ * The amount that counts as a business expense for totals and analytics:
+ * the full amount, or the business share when a "privat andel" is set.
+ */
+export function businessShareOf(
+  amount: number | string | null | undefined,
+  privateSharePct: number | string | null | undefined,
+): number {
+  const total = Number(amount) || 0;
+  const pct = normalizeSharePct(privateSharePct);
+  if (pct == null || pct <= 0) return total;
+  return round2(total * ((100 - pct) / 100));
+}
