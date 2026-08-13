@@ -86,8 +86,18 @@ const L = {
 
     notes: "Bemærkninger",
     generated: "Genereret",
+    generatedBy: "Genereret af Kvitregn",
+    at: "kl.",
+    original: "Originalbilag",
+    originalFollows: "Originalbilaget følger på de næste sider.",
+    noOriginal: "Intet originalbilag vedhæftet",
+    verify: "Verificér dokumentet",
+    verifyHint: "Scan QR-koden",
+    currencyLabel: "Valuta",
+    typeLabel: "Dokumenttype",
     footer: "Genereret af Kvitregn - din digitale kvitteringsmappe.",
   },
+
   en: {
     tagline: "Digital receipts wallet",
     receipt: "RECEIPT",
