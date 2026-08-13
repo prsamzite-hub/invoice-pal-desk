@@ -228,6 +228,47 @@ function DocumentsPage() {
     return list;
   }, [docs, q, biz, typeFilter, statusFilter, category, dateFrom, dateTo, sort]);
 
+  // Flag likely duplicates: same supplier + amount within +/- 3 days.
+  const duplicateIds = useMemo(() => {
+    const flagged = new Set<string>();
+    const groups = new Map<string, EnrichedDoc[]>();
+    for (const d of docs) {
+      const key = `${d.company.trim().toLowerCase()}|${d.amountNumber.toFixed(2)}`;
+      const arr = groups.get(key);
+      if (arr) arr.push(d);
+      else groups.set(key, [d]);
+    }
+    for (const arr of groups.values()) {
+      if (arr.length < 2) continue;
+      for (const a of arr) {
+        for (const b of arr) {
+          if (a.id === b.id) continue;
+          const diff = Math.abs(
+            (new Date(a.dateIso).getTime() - new Date(b.dateIso).getTime()) / 86400000,
+          );
+          if (diff <= 3) {
+            flagged.add(a.id);
+            flagged.add(b.id);
+          }
+        }
+      }
+    }
+    return flagged;
+  }, [docs]);
+
+  const [dismissedDups, setDismissedDups] = useState<string[]>([]);
+  useEffect(() => setDismissedDups(loadDismissed()), []);
+  const dismissDup = (id: string) =>
+    setDismissedDups((prev) => {
+      const next = prev.includes(id) ? prev : [...prev, id];
+      try {
+        window.localStorage.setItem(DUP_DISMISS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+
   const selected: DetailRow | null = useMemo(() => {
     const found = docs.find((d) => d.id === selectedId);
     if (!found) return null;
@@ -244,6 +285,14 @@ function DocumentsPage() {
       setPdfUrl(null);
     }
   };
+
+  // Deep link from the duplicate warning in the review dialog.
+  const searchDoc = Route.useSearch().doc;
+  useEffect(() => {
+    if (searchDoc && docs.some((d) => d.id === searchDoc)) void openDoc(searchDoc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchDoc, docs.length]);
+
 
   const activeFilterCount =
     (typeFilter !== "all" ? 1 : 0) +
