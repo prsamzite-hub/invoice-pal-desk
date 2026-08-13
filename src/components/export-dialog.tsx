@@ -39,15 +39,25 @@ function b64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
-export function ExportDialog({ defaultScope = "business" }: { defaultScope?: ExportScope }) {
+export function ExportDialog({
+  defaultScope = "business",
+  defaultFrom,
+  defaultTo,
+  triggerLabel,
+}: {
+  defaultScope?: ExportScope;
+  defaultFrom?: string;
+  defaultTo?: string;
+  triggerLabel?: string;
+}) {
   const { lang } = useLang();
   const manifestFn = useServerFn(getExportManifest);
   const batchFn = useServerFn(getExportPdfBatch);
 
   const [open, setOpen] = useState(false);
   const initial = quickRange("thisMonth");
-  const [from, setFrom] = useState(initial.from);
-  const [to, setTo] = useState(initial.to);
+  const [from, setFrom] = useState(defaultFrom ?? initial.from);
+  const [to, setTo] = useState(defaultTo ?? initial.to);
   const [scope, setScope] = useState<ExportScope>(defaultScope);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(0);
@@ -116,7 +126,7 @@ export function ExportDialog({ defaultScope = "business" }: { defaultScope?: Exp
       <DialogTrigger asChild>
         <Button variant="outline" className="rounded-full">
           <Download className="mr-2 h-4 w-4" />
-          Eksportér til bogholder
+          {triggerLabel ?? "Eksportér til bogholder"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
