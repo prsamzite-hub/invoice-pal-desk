@@ -235,12 +235,17 @@ function DocumentsPage() {
         title={t("docs.title")}
         description={t("docs.description")}
         actions={
-          <Button asChild className="rounded-full">
-            <Link to="/app/upload">
-              <Plus className="mr-2 h-4 w-4" />
-              {t("docs.new")}
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {bizGate.data?.complete && (
+              <ExportDialog defaultScope={mode === "privat" ? "all" : "business"} />
+            )}
+            <Button asChild className="rounded-full">
+              <Link to="/app/upload">
+                <Plus className="mr-2 h-4 w-4" />
+                {t("docs.new")}
+              </Link>
+            </Button>
+          </div>
         }
       />
 
