@@ -73,7 +73,7 @@ import {
 } from "@/lib/receipts.functions";
 import { PrivateShareField } from "@/components/private-share-field";
 import { VatFields } from "@/components/vat-fields";
-import { resolveVat, vatBreakdown, vatFromRate } from "@/lib/vat";
+import { resolveVat, shareSplit, vatBreakdown, vatFromRate } from "@/lib/vat";
 
 
 const CURRENCIES = ["DKK", "EUR", "USD", "GBP", "SEK", "NOK"];
