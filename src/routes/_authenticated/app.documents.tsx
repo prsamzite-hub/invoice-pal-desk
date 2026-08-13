@@ -131,6 +131,7 @@ function DocumentsPage() {
         categoryRaw: r.category ?? null,
         notes: r.notes ?? null,
         isBusiness: r.is_business === true,
+        docNumber: r.doc_number ?? null,
         vatAmount: r.vat_amount == null ? null : Number(r.vat_amount),
         vatRate: r.vat_rate == null ? null : Number(r.vat_rate),
         vatIsCalculated: r.vat_is_calculated === true,
@@ -161,13 +162,18 @@ function DocumentsPage() {
         (d.categoryRaw ?? "").toLowerCase().includes(lowered) ||
         catLabel.includes(lowered) ||
         (d.notes ?? "").toLowerCase().includes(lowered);
+      const docNo = d.docNumber != null ? String(d.docNumber).padStart(4, "0") : "";
+      const digits = term.replace(/\D/g, "");
+      const inDocNo =
+        digits.length > 0 &&
+        (docNo.includes(digits) || String(d.docNumber ?? "").startsWith(digits));
       let inAmount = false;
       if (isAmountPrefix) {
         const amtStr = String(d.amountNumber);
         const amtFixed = d.amountNumber.toFixed(2);
         inAmount = amtStr.startsWith(normalized) || amtFixed.startsWith(normalized);
       }
-      return inText || inAmount;
+      return inText || inAmount || inDocNo;
     });
 
     list.sort((a, b) => {

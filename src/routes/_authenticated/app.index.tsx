@@ -147,6 +147,7 @@ function DashboardPage() {
       : undefined,
     vendorLogoUrl: logoFor(r.company),
     isBusiness: r.is_business === true,
+    docNumber: r.doc_number ?? null,
   });
 
   const selectedRow = (receipts.data ?? []).find((r) => r.id === selectedId);

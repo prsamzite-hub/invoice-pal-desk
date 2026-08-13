@@ -274,6 +274,27 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_counters: {
+        Row: {
+          created_at: string
+          last_number: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_number?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_number?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       receipts: {
         Row: {
           amount: number
@@ -281,6 +302,7 @@ export type Database = {
           company: string
           created_at: string
           currency: string
+          doc_number: number | null
           document_type: string
           due_date: string | null
           id: string
@@ -305,6 +327,7 @@ export type Database = {
           company?: string
           created_at?: string
           currency?: string
+          doc_number?: number | null
           document_type?: string
           due_date?: string | null
           id?: string
@@ -329,6 +352,7 @@ export type Database = {
           company?: string
           created_at?: string
           currency?: string
+          doc_number?: number | null
           document_type?: string
           due_date?: string | null
           id?: string

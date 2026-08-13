@@ -17,6 +17,7 @@ export interface DocumentCardData {
   category?: { label: string; tone?: "mint" | "peach" | "lavender" | "butter" | "sky" };
   vendorLogoUrl?: string | null;
   isBusiness?: boolean;
+  docNumber?: number | null;
 }
 
 function formatDate(iso: string) {
@@ -61,6 +62,11 @@ export function DocumentCard({
           ) : null}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {doc.docNumber != null ? (
+            <span className="font-medium tabular-nums text-foreground/70">
+              Bilagsnr. {String(doc.docNumber).padStart(4, "0")}
+            </span>
+          ) : null}
           <span>{formatDate(doc.issuedDate)}</span>
           {doc.dueDate ? <span>· Forfald {formatDate(doc.dueDate)}</span> : null}
           {doc.category ? (
