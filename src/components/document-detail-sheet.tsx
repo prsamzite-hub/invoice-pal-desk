@@ -171,6 +171,9 @@ export function DocumentDetailSheet({
                     <SheetDescription className="text-xs">
                       {doc.type === "invoice" ? t("docs.type.invoice") : t("docs.type.receipt")}
                       {doc.isBusiness ? ` · ${t("biz.badge")}` : ""}
+                      {doc.docNumber != null
+                        ? ` · Bilagsnr. ${String(doc.docNumber).padStart(4, "0")}`
+                        : ""}
                     </SheetDescription>
                   </div>
                   <StatusBadge status={doc.status} />
