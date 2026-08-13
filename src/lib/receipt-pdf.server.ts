@@ -421,10 +421,10 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
       const bits = qr.modules.data;
       const cell = qrSize / n;
       page.drawRectangle({
-        x: qrX - 6,
-        y: qrY - 6,
-        width: qrSize + 12,
-        height: qrSize + 12,
+        x: qrX - 10,
+        y: qrY - 10,
+        width: qrSize + 20,
+        height: qrSize + 20,
         color: rgb(1, 1, 1),
       });
       for (let r = 0; r < n; r++) {
