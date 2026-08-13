@@ -31,6 +31,8 @@ export interface ReceiptPdfData {
   items?: ReceiptPdfLineItem[];
 
   receipt_id: string;
+  /** Sequential per-user document number (bilagsnummer). */
+  doc_number?: number | null;
   /** Kept for API compatibility; no longer rendered (no avatar on financial documents). */
   vendor_logo?: Uint8Array | null;
   /** Business profile of the user, rendered as an "Afsender" block. */
@@ -62,6 +64,7 @@ const L = {
     uncategorized: "Ukategoriseret",
     documentId: "Dokument-ID",
     number: "Nr.",
+    docNo: "Bilagsnr.",
     invoiceNo: "Fakturanr.",
     description: "Beskrivelse",
     qty: "Antal",
@@ -91,6 +94,7 @@ const L = {
     uncategorized: "Uncategorized",
     documentId: "Document ID",
     number: "No.",
+    docNo: "Doc. no.",
     invoiceNo: "Invoice no.",
     description: "Description",
     qty: "Qty",
@@ -179,7 +183,9 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Uint8Arr
   const title = data.document_type === "invoice" ? t.invoice : t.receipt;
   drawRight(title, right, y - 14, 20, bold, INK);
   drawRight(
-    `${t.number} ${data.receipt_id.slice(0, 8).toUpperCase()}`,
+    data.doc_number != null
+      ? `${t.docNo} ${String(data.doc_number).padStart(4, "0")}`
+      : `${t.number} ${data.receipt_id.slice(0, 8).toUpperCase()}`,
     right,
     y - 30,
     BODY,

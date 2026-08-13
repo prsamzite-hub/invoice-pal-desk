@@ -417,6 +417,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
 
         items: f.items,
         receipt_id: row.id,
+    doc_number: row.doc_number ?? null,
         vendor_logo: vendorLogo,
         sender: await loadSenderProfile(supabase, userId),
         lang: data.lang,
