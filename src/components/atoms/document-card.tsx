@@ -1,4 +1,4 @@
-import { Receipt, FileText } from "lucide-react";
+import { Receipt, FileText, AlertTriangle, X } from "lucide-react";
 import { VendorAvatar } from "./vendor-avatar";
 import { StatusBadge } from "./status-badge";
 import { MoneyAmount } from "./money-amount";
