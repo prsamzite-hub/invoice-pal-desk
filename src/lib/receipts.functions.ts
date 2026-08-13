@@ -355,6 +355,7 @@ export const saveReceipt = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { generateReceiptPdf } = await import("./receipt-pdf.server");
+  const { loadOriginalAttachment, verificationUrl } = await import("./pdf-attachment.server");
     const f = data.fields;
 
     const insert = await supabase
@@ -421,6 +422,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         vendor_logo: vendorLogo,
         sender: await loadSenderProfile(supabase, userId),
         lang: data.lang,
+        attachment: await loadOriginalAttachment(supabase, row),
+        verification_url: verificationUrl(row.verification_token),
       });
       const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
       const up2 = await supabase.storage
@@ -487,6 +490,7 @@ async function regenerateAndStorePdf(
   lang: "da" | "en",
 ): Promise<string> {
   const { generateReceiptPdf } = await import("./receipt-pdf.server");
+  const { loadOriginalAttachment, verificationUrl } = await import("./pdf-attachment.server");
   const { data: row, error } = await supabase
     .from("receipts")
     .select("*")
@@ -527,6 +531,8 @@ async function regenerateAndStorePdf(
     vendor_logo: vendorLogo,
     sender: await loadSenderProfile(supabase, userId),
     lang,
+    attachment: await loadOriginalAttachment(supabase, row),
+    verification_url: verificationUrl(row.verification_token),
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;
   const up = await supabase.storage

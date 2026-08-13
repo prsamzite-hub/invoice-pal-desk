@@ -1,5 +1,6 @@
 /** Server-only helper: (re)generate and store a document PDF. */
 import { loadLogoBytesByName } from "./vendor-logos.functions";
+import { loadOriginalAttachment, verificationUrl } from "./pdf-attachment.server";
 
 async function loadSenderProfile(supabase: any, userId: string) {
   try {
@@ -60,6 +61,8 @@ export async function regeneratePdfFor(
     vendor_logo: vendorLogo,
     sender: await loadSenderProfile(supabase, userId),
     lang,
+    attachment: await loadOriginalAttachment(supabase, row),
+    verification_url: verificationUrl(row.verification_token),
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;
   const up = await supabase.storage
