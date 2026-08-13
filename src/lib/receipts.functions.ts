@@ -523,6 +523,7 @@ async function regenerateAndStorePdf(
       total: Number(it.total ?? 0),
     })),
     receipt_id: row.id,
+    doc_number: row.doc_number ?? null,
     vendor_logo: vendorLogo,
     sender: await loadSenderProfile(supabase, userId),
     lang,
