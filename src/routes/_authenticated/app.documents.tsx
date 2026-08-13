@@ -40,9 +40,9 @@ import { ExportDialog } from "@/components/export-dialog";
 import { getMyBusinessGate } from "@/lib/business.functions";
 
 export const Route = createFileRoute("/_authenticated/app/documents")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    doc: typeof search.doc === "string" ? search.doc : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { doc?: string } =>
+    typeof search.doc === "string" ? { doc: search.doc } : {},
+
   head: () => ({
     meta: [
       { title: "Dokumenter — Kvitregn" },
