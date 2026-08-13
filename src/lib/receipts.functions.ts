@@ -421,6 +421,8 @@ export const saveReceipt = createServerFn({ method: "POST" })
         vendor_logo: vendorLogo,
         sender: await loadSenderProfile(supabase, userId),
         lang: data.lang,
+        attachment: await loadOriginalAttachment(supabase, row),
+        verification_url: verificationUrl(row.verification_token),
       });
       const pdfPath = `${userId}/pdfs/${row.id}.pdf`;
       const up2 = await supabase.storage
@@ -527,6 +529,8 @@ async function regenerateAndStorePdf(
     vendor_logo: vendorLogo,
     sender: await loadSenderProfile(supabase, userId),
     lang,
+    attachment: await loadOriginalAttachment(supabase, row),
+    verification_url: verificationUrl(row.verification_token),
   });
   const pdfPath = row.pdf_path || `${userId}/pdfs/${row.id}.pdf`;
   const up = await supabase.storage
