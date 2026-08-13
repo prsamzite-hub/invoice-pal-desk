@@ -40,6 +40,9 @@ import { ExportDialog } from "@/components/export-dialog";
 import { getMyBusinessGate } from "@/lib/business.functions";
 
 export const Route = createFileRoute("/_authenticated/app/documents")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    doc: typeof search.doc === "string" ? search.doc : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Dokumenter — Kvitregn" },
@@ -51,6 +54,20 @@ export const Route = createFileRoute("/_authenticated/app/documents")({
   }),
   component: DocumentsPage,
 });
+
+const DUP_DISMISS_KEY = "kvitregn.dupDismissed";
+
+function loadDismissed(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(DUP_DISMISS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 
 type TypeFilter = "all" | "receipt" | "invoice";
 type StatusFilter = "all" | "paid" | "unpaid" | "overdue";
