@@ -64,6 +64,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   Shopping: "#a8846b",
   Health: "#9db98f",
   Other: "#b0aca4",
+  Representation: "#c58a80",
+  TravelTransport: "#7fa5a0",
+  Fuel: "#c5a880",
+  OfficeSupplies: "#9aa3b8",
+  SoftwareSubscriptions: "#4d7488",
+  PhoneInternet: "#8fb3c4",
+  ToolsMaterials: "#a8846b",
+  Marketing: "#bf9bb0",
+  Insurance: "#9db98f",
+  Accounting: "#6b93a8",
+  OperatingCosts: "#b0aca4",
 };
 
 const DEFAULT_BUDGETS: Record<string, number> = {

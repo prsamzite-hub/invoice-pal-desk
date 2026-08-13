@@ -66,6 +66,17 @@ const CATEGORY_TONE: Record<string, "mint" | "peach" | "lavender" | "butter" | "
   Transport: "sky",
   Health: "mint",
   Other: "lavender",
+  Representation: "peach",
+  TravelTransport: "sky",
+  Fuel: "butter",
+  OfficeSupplies: "lavender",
+  SoftwareSubscriptions: "lavender",
+  PhoneInternet: "sky",
+  ToolsMaterials: "butter",
+  Marketing: "peach",
+  Insurance: "mint",
+  Accounting: "sky",
+  OperatingCosts: "lavender",
 };
 
 function toneFor(cat?: string | null) {

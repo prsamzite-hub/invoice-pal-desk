@@ -45,7 +45,9 @@ const EXTRACT_SYS =
 
   '"items":[{"description":string,"quantity":number|null,"unit_price":number|null,"total":number}]}. ' +
   "Use DKK if currency unclear. " +
-  "category ∈ {Groceries, Utilities, Subscriptions, Dining, Transport, Shopping, Health, Other}.";
+  "category ∈ {Groceries, Utilities, Subscriptions, Dining, Transport, Shopping, Health, Other} for private documents, " +
+  "or, for business documents (company purchases, invoices with CVR), one of " +
+  "{Representation, TravelTransport, Fuel, OfficeSupplies, SoftwareSubscriptions, PhoneInternet, ToolsMaterials, Marketing, Insurance, Accounting, OperatingCosts, Other}.";
 
 async function callGateway(model: string, userContent: unknown): Promise<ExtractedDocument> {
   const apiKey = process.env.LOVABLE_API_KEY;
