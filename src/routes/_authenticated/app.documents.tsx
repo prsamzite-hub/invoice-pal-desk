@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { deriveReceiptStatus, type ReceiptStatus } from "@/components/atoms/status-badge";
 import {
-  CATEGORIES,
+  ALL_CATEGORIES,
   getReceiptPdfUrl,
   listMyReceipts,
 } from "@/lib/receipts.functions";
@@ -82,6 +82,7 @@ interface EnrichedDoc extends DocumentCardData {
   vatAmount: number | null;
   vatRate: number | null;
   vatIsCalculated: boolean;
+  privateSharePct: number | null;
 }
 
 
@@ -139,6 +140,7 @@ function DocumentsPage() {
         vatAmount: r.vat_amount == null ? null : Number(r.vat_amount),
         vatRate: r.vat_rate == null ? null : Number(r.vat_rate),
         vatIsCalculated: r.vat_is_calculated === true,
+        privateSharePct: r.private_share_pct == null ? null : Number(r.private_share_pct),
         vendorLogoUrl: logoFor(r.company),
 
       };
@@ -325,7 +327,7 @@ function DocumentsPage() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("docs.filter.allCategories")}</SelectItem>
-                      {CATEGORIES.map((c) => (
+                      {ALL_CATEGORIES.map((c) => (
                         <SelectItem key={c} value={c}>{labelForCategory(c)}</SelectItem>
                       ))}
                     </SelectContent>

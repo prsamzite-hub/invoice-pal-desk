@@ -61,7 +61,7 @@ import { Switch } from "@/components/ui/switch";
 import { PdfViewerDialog } from "./pdf-viewer-dialog";
 import type { DocumentCardData } from "@/components/atoms/document-card";
 import {
-  CATEGORIES,
+  categoriesFor,
   deleteReceipt,
   getReceiptItems,
   getReceiptOriginalUrl,
@@ -71,6 +71,7 @@ import {
   type ExtractedFields,
   type LineItem,
 } from "@/lib/receipts.functions";
+import { PrivateShareField } from "@/components/private-share-field";
 import { VatFields } from "@/components/vat-fields";
 import { resolveVat, vatBreakdown, vatFromRate } from "@/lib/vat";
 
@@ -82,6 +83,7 @@ export interface DetailRow extends DocumentCardData {
   vatAmount?: number | null;
   vatRate?: number | null;
   vatIsCalculated?: boolean;
+  privateSharePct?: number | null;
 }
 
 
@@ -208,6 +210,43 @@ export function DocumentDetailSheet({
                 ) : null}
               </div>
 
+              {doc.isBusiness && doc.privateSharePct != null && doc.privateSharePct > 0 ? (
+                <dl className="flex flex-col gap-1 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t("share.label")}</dt>
+                    <dd className="tabular-nums font-medium">{doc.privateSharePct}%</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t("share.business")}</dt>
+                    <dd className="tabular-nums">
+                      {formatMoney(
+                        shareSplit(doc.amount, doc.vatAmount ?? null, doc.privateSharePct).businessAmount,
+                        doc.currency ?? "DKK",
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t("share.private")}</dt>
+                    <dd className="tabular-nums">
+                      {formatMoney(
+                        shareSplit(doc.amount, doc.vatAmount ?? null, doc.privateSharePct).privateAmount,
+                        doc.currency ?? "DKK",
+                      )}
+                    </dd>
+                  </div>
+                  {doc.vatAmount != null ? (
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">{t("share.businessVat")}</dt>
+                      <dd className="tabular-nums">
+                        {formatMoney(
+                          shareSplit(doc.amount, doc.vatAmount, doc.privateSharePct).businessVat ?? 0,
+                          doc.currency ?? "DKK",
+                        )}
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+              ) : null}
 
               <div className="grid grid-cols-2 gap-3">
                 <Field icon={CalendarDays} label={t("detail.date")} value={formatDate(doc.issuedDate)} />
@@ -424,6 +463,7 @@ function EditReceiptDialog({
     vat_amount: doc.vatAmount ?? null,
     vat_rate: doc.vatRate ?? null,
     vat_is_calculated: doc.vatIsCalculated === true,
+    private_share_pct: doc.privateSharePct ?? null,
     items: itemsQuery.data ?? [],
   });
 
@@ -558,7 +598,7 @@ function EditReceiptDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => (
+                {categoriesFor(isBusiness).map((c) => (
                   <SelectItem key={c} value={c}>
                     {tCategory(c)}
                   </SelectItem>
@@ -581,6 +621,19 @@ function EditReceiptDialog({
             </div>
             <Switch id="e-business" checked={isBusiness} onCheckedChange={toggleBusiness} />
           </div>
+
+          {isBusiness ? (
+            <div className="sm:col-span-2">
+              <PrivateShareField
+                idPrefix="e-share"
+                amount={Number(fields.amount) || 0}
+                vatAmount={fields.vat_amount ?? null}
+                currency={fields.currency}
+                value={fields.private_share_pct ?? null}
+                onChange={(pct) => set("private_share_pct", pct)}
+              />
+            </div>
+          ) : null}
 
           <div className="sm:col-span-2">
             <Label htmlFor="e-notes">{t("detail.edit.notes")}</Label>
