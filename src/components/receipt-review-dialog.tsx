@@ -273,7 +273,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 <Select value={fields.category ?? "Other"} onValueChange={(v) => set("category", v)}>
                   <SelectTrigger id="category"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {categoriesFor(fields.is_business === true).map((c) => <SelectItem key={c} value={c}>{tCategory(c)}</SelectItem>)}
+                    {categoriesFor(isBusiness).map((c) => <SelectItem key={c} value={c}>{tCategory(c)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -296,7 +296,7 @@ export function ReceiptReviewDialog({ open, onOpenChange, initial, lang, onSaved
                 />
               </div>
 
-              {fields.is_business ? (
+              {isBusiness ? (
                 <div className="sm:col-span-2">
                   <PrivateShareField
                     idPrefix="r-share"
