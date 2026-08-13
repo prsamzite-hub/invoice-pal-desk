@@ -519,7 +519,7 @@ async function appendOriginal(
   docNumber: number | null,
 ): Promise<void> {
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
-  const stampPage = (page: (typeof doc)["getPages"] extends never ? never : any) => {
+  const stampPage = (page: any) => {
     const { width, height } = page.getSize();
     const text = sanitize(
       docNumber != null
