@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InboundEmailCard } from "@/components/inbound-email-card";
 import { BusinessProfileForm } from "@/components/business-profile-form";
+import { FullExportCard } from "@/components/full-export-card";
 import { useLang } from "@/lib/i18n";
 import { authErrorKey } from "@/lib/auth-errors";
 
