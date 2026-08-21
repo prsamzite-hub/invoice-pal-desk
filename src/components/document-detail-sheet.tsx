@@ -396,6 +396,9 @@ export function DocumentDetailSheet({
               {t("detail.deleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs leading-relaxed text-foreground">
+            {t("detail.deleteWarning")}
+          </p>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={del.isPending}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
