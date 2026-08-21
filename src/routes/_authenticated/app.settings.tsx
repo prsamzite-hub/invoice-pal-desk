@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InboundEmailCard } from "@/components/inbound-email-card";
 import { BusinessProfileForm } from "@/components/business-profile-form";
+import { FullExportCard } from "@/components/full-export-card";
 import { useLang } from "@/lib/i18n";
 import { authErrorKey } from "@/lib/auth-errors";
 
@@ -196,6 +197,13 @@ function SettingsPage() {
             {t("user.signOut")}
           </Button>
         </div>
+      </section>
+
+      <FullExportCard />
+
+      <section className="shadow-soft flex flex-col gap-2 rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-base font-bold text-foreground">{t("retention.title")}</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">{t("retention.body")}</p>
       </section>
 
       <section className="shadow-soft flex flex-col gap-4 rounded-2xl border border-destructive/40 bg-card p-6">

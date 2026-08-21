@@ -104,3 +104,96 @@ export const getExportPdfBatch = createServerFn({ method: "POST" })
     }
     return out;
   });
+
+/** Full account export: every document, no date filter. */
+export const getFullExportManifest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("receipts")
+      .select(
+        "id, doc_number, issued_date, due_date, company, supplier_cvr, amount, currency, category, document_type, status, is_business, vat_amount, vat_rate, private_share_pct, created_at, original_path, scan_path",
+      )
+      .eq("user_id", userId)
+      .order("doc_number", { ascending: true });
+    if (error) throw error;
+
+    const docs: (ExportDoc & { hasOriginal: boolean })[] = (rows ?? []).map((r: any) => {
+      const total = Number(r.amount ?? 0);
+      const vat = r.vat_amount == null ? null : Number(r.vat_amount);
+      const split = shareSplit(total, vat, r.private_share_pct);
+      const hasSplit = r.private_share_pct != null;
+      return {
+        id: r.id,
+        docNumber: r.doc_number ?? null,
+        filename: exportFilename(r.doc_number ?? null, r.issued_date ?? null, r.company ?? ""),
+        date: r.issued_date ?? null,
+        dueDate: r.due_date ?? null,
+        company: r.company ?? "",
+        cvr: r.supplier_cvr ?? null,
+        amountExVat: vat == null ? total : Math.round((total - vat) * 100) / 100,
+        vatAmount: vat,
+        vatRate: r.vat_rate == null ? null : Number(r.vat_rate),
+        amountInclVat: total,
+        currency: r.currency ?? "DKK",
+        category: r.category ?? null,
+        documentType: r.document_type === "invoice" ? "invoice" : "receipt",
+        status: r.status ?? "paid",
+        isBusiness: r.is_business === true,
+        privateSharePct: hasSplit ? split.pct : null,
+        businessAmount: split.businessAmount,
+        businessVat: split.businessVat,
+        hasOriginal: Boolean(r.original_path || r.scan_path),
+      };
+    });
+
+    return { docs, csv: buildCsv(docs) };
+  });
+
+/** Fetch original uploaded files (or processed scans) as base64 for the full export. */
+export const getExportOriginalBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ids: string[] }) => {
+    const ids = Array.isArray(data?.ids) ? data.ids.filter(Boolean).slice(0, 5) : [];
+    if (!ids.length) throw new Error("Ingen dokumenter");
+    return { ids };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const toBase64 = (bytes: Uint8Array) => {
+      let s = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) s += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      return btoa(s);
+    };
+
+    const out: { id: string; base64: string | null; ext: string }[] = [];
+    for (const id of data.ids) {
+      try {
+        const { data: row } = await supabase
+          .from("receipts")
+          .select("original_path, scan_path")
+          .eq("id", id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        const path: string | null = row?.original_path ?? row?.scan_path ?? null;
+        if (!path) {
+          out.push({ id, base64: null, ext: "" });
+          continue;
+        }
+        const dl = await supabase.storage.from("receipts").download(path);
+        if (dl.error || !dl.data) {
+          out.push({ id, base64: null, ext: "" });
+          continue;
+        }
+        const bytes = new Uint8Array(await dl.data.arrayBuffer());
+        const m = /\.([a-z0-9]{2,5})$/i.exec(path);
+        out.push({ id, base64: toBase64(bytes), ext: m?.[1]?.toLowerCase() ?? "bin" });
+      } catch (e) {
+        console.error("[export] original failed", id, e);
+        out.push({ id, base64: null, ext: "" });
+      }
+    }
+    return out;
+  });
