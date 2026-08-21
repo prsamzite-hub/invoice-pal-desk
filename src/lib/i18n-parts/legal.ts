@@ -66,8 +66,11 @@ export const legal = {
       "Du kan når som helst slette din konto fra indstillingerne. Vi kan lukke konti, der bryder disse vilkår eller misbruger tjenesten.",
     "terms.section8.title": "8. Lovvalg",
     "terms.section8.body": "Vilkårene er underlagt dansk ret. Eventuelle tvister afgøres ved de danske domstole.",
-    "terms.section9.title": "9. Kontakt",
-    "terms.section9.body": "Har du spørgsmål til vilkårene, så skriv til",
+    "terms.section9.title": "9. Opbevaring og sletning af data",
+    "terms.section9.body":
+      "Dine bilag opbevares i mindst 5 år, så du kan opfylde de danske bogføringsregler (bogføringsloven kræver som udgangspunkt 5 års opbevaring). Du kan til enhver tid hente alle dine data som ZIP med PDF'er, originalfiler og CSV under Indstillinger, og du kan slette enkelte bilag eller hele din konto. Sletter du data, er de væk permanent — også selvom bogføringsreglerne stadig kræver, at du kan fremvise bilaget.",
+    "terms.section10.title": "10. Kontakt",
+    "terms.section10.body": "Har du spørgsmål til vilkårene, så skriv til",
   },
   en: {
     "privacy.title": "Privacy Policy",
@@ -135,7 +138,10 @@ export const legal = {
       "You can delete your account from the settings at any time. We may close accounts that violate these terms or misuse the service.",
     "terms.section8.title": "8. Governing law",
     "terms.section8.body": "These terms are governed by Danish law. Any disputes are settled in the Danish courts.",
-    "terms.section9.title": "9. Contact",
-    "terms.section9.body": "If you have questions about these terms, write to",
+    "terms.section9.title": "9. Data retention and deletion",
+    "terms.section9.body":
+      "Your documents are stored for at least 5 years so you can meet Danish bookkeeping requirements. You can download all your data as a ZIP with PDFs, original files and a CSV from Settings at any time, and you can delete individual documents or your whole account. Deleted data is gone permanently, even if bookkeeping rules still require you to produce the document.",
+    "terms.section10.title": "10. Contact",
+    "terms.section10.body": "If you have questions about these terms, write to",
   },
 };

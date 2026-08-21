@@ -68,7 +68,10 @@ function TermsPage() {
           <p>{t("terms.section8.body")}</p>
 
           <h2>{t("terms.section9.title")}</h2>
-          <p>{t("terms.section9.body")} <a href="mailto:hej@kvitregn.dk" className="text-primary hover:underline">hej@kvitregn.dk</a>.</p>
+          <p>{t("terms.section9.body")}</p>
+
+          <h2>{t("terms.section10.title")}</h2>
+          <p>{t("terms.section10.body")} <a href="mailto:hej@kvitregn.dk" className="text-primary hover:underline">hej@kvitregn.dk</a>.</p>
         </div>
       </main>
     </div>
